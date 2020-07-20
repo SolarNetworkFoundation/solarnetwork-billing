@@ -101,6 +101,28 @@ public class Address extends BasicLongEntity implements Differentiable<Address> 
 		return !isSameAs(other);
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Address{");
+		if ( email != null ) {
+			builder.append("email=");
+			builder.append(email);
+			builder.append(", ");
+		}
+		if ( country != null ) {
+			builder.append("country=");
+			builder.append(country);
+			builder.append(", ");
+		}
+		if ( timeZoneId != null ) {
+			builder.append("timeZoneId=");
+			builder.append(timeZoneId);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
 	/**
 	 * Get the display name.
 	 * 

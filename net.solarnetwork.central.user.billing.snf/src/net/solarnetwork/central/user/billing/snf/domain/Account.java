@@ -25,10 +25,12 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * Billing account entity.
@@ -36,7 +38,8 @@ import net.solarnetwork.dao.BasicEntity;
  * @author matt
  * @version 1.0
  */
-public class Account extends BasicEntity<UserLongPK> implements UserRelatedEntity<UserLongPK> {
+public class Account extends BasicEntity<UserLongPK>
+		implements UserRelatedEntity<UserLongPK>, Differentiable<Account> {
 
 	private Address address;
 	private String currencyCode;
@@ -110,6 +113,63 @@ public class Account extends BasicEntity<UserLongPK> implements UserRelatedEntit
 		if ( id != null ) {
 			id.setUserId(userId);
 		}
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code id} and {@code created} properties are not compared by this
+	 * method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(Account other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(address, other.address)
+				&& Objects.equals(currencyCode, other.currencyCode)
+				&& Objects.equals(locale, other.locale);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(Account other) {
+		return !isSameAs(other);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("Account{");
+		if ( getId() != null ) {
+			builder.append("id=");
+			builder.append(getId());
+		}
+		if ( address != null ) {
+			builder.append("address=");
+			builder.append(address);
+			builder.append(", ");
+		}
+		if ( currencyCode != null ) {
+			builder.append("currencyCode=");
+			builder.append(currencyCode);
+			builder.append(", ");
+		}
+		if ( locale != null ) {
+			builder.append("locale=");
+			builder.append(locale);
+			builder.append(", ");
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**

@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisAddressDaoTests.java - 27/02/2020 4:47:12 pm
+ * MyBatisAccountDaoTests.java - 21/07/2020 7:55:24 AM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -23,31 +23,41 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
+import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
- * Test cases for the {@link MyBatisAddressDao}.
+ * Test cases for the {@link MyBatisAccountDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
+public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
-	private MyBatisAddressDao dao;
+	private MyBatisAddressDao addressDao;
+	private MyBatisAccountDao dao;
 
-	private Address last;
+	private Address address;
+	private Account last;
 
 	@Before
 	public void setUp() throws Exception {
-		dao = new MyBatisAddressDao();
+		addressDao = new MyBatisAddressDao();
+		addressDao.setSqlSessionTemplate(getSqlSessionTemplate());
+		dao = new MyBatisAccountDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
+
+		address = addressDao.get(addressDao.save(createTestAddress()));
 		last = null;
 	}
 
@@ -65,48 +75,45 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 		return s;
 	}
 
-	@Test
-	public void insert() {
-		Address entity = createTestAddress();
-		Long pk = dao.save(entity);
-		assertThat("PK preserved", pk, equalTo(entity.getId()));
-		last = entity;
+	private Account createTestAccount(Address address) {
+		Account account = new Account(null, UUID.randomUUID().getMostSignificantBits(),
+				Instant.ofEpochMilli(System.currentTimeMillis()));
+		account.setAddress(address);
+		account.setCurrencyCode("NZD");
+		account.setLocale("en_NZ");
+		return account;
 	}
 
 	@Test
-	public void insert_duplicate() {
-		insert();
-		Address entity = createTestAddress();
-		dao.save(entity);
-		getSqlSessionTemplate().flushStatements();
+	public void insert() {
+		Account entity = createTestAccount(address);
+		UserLongPK pk = dao.save(entity);
+		assertThat("PK created", pk, notNullValue());
+		assertThat("PK userId preserved", pk.getUserId(), equalTo(entity.getUserId()));
+		last = entity;
+		last.getId().setId(pk.getId());
 	}
 
 	@Test
 	public void getByPK() {
 		insert();
-		Address entity = dao.get(last.getId());
+		Account entity = dao.get(last.getId());
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
-		assertThat("Address", entity.isSameAs(last), equalTo(true));
+		assertThat("Account", entity.isSameAs(last), equalTo(true));
 	}
 
 	@Test
 	public void update() {
 		insert();
-		Address obj = dao.get(last.getId());
-		obj.setName("Tester Dudette");
-		obj.setEmail("test2@localhost");
-		obj.setCountry("US");
-		obj.setTimeZoneId("America/Los_Angeles");
-		obj.setRegion("R");
-		obj.setStateOrProvince("CA");
-		obj.setLocality("SF");
-		obj.setPostalCode("94114");
-		Long pk = dao.save(obj);
+		Account obj = dao.get(last.getId());
+		obj.setCurrencyCode("USD");
+		obj.setLocale("en_US");
+		UserLongPK pk = dao.save(obj);
 		assertThat("PK unchanged", pk, equalTo(obj.getId()));
 
-		Address entity = dao.get(pk);
+		Account entity = dao.get(pk);
 		assertThat("Entity updated", entity.isSameAs(obj), equalTo(true));
 	}
 
@@ -120,10 +127,10 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 	@Test
 	public void delete_noMatch() {
 		insert();
-		Address someAddr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		Account someAddr = createTestAccount(address);
 		dao.delete(someAddr);
 
-		Address entity = dao.get(last.getId());
+		Account entity = dao.get(last.getId());
 		assertThat("Entity unchanged", entity.isSameAs(last), equalTo(true));
 	}
 
