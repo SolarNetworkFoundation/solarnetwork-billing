@@ -23,7 +23,10 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Objects;
 import net.solarnetwork.dao.BasicLongEntity;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * An address for billing.
@@ -31,7 +34,7 @@ import net.solarnetwork.dao.BasicLongEntity;
  * @author matt
  * @version 1.0
  */
-public class Address extends BasicLongEntity {
+public class Address extends BasicLongEntity implements Differentiable<Address> {
 
 	private String name;
 	private String email;
@@ -60,6 +63,42 @@ public class Address extends BasicLongEntity {
 	 */
 	public Address(Long id, Instant created) {
 		super(id, created);
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code id} and {@code created} properties are not compared by this
+	 * method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(Address other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(country, other.country)
+				&& Objects.equals(email, other.email)
+				&& Objects.equals(locality, other.locality)
+				&& Objects.equals(name, other.name)
+				&& Objects.equals(postalCode, other.postalCode)
+				&& Objects.equals(region, other.region)
+				&& Objects.equals(stateOrProvince, other.stateOrProvince)
+				&& Arrays.equals(street, other.street)
+				&& Objects.equals(timeZoneId, other.timeZoneId);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(Address other) {
+		return !isSameAs(other);
 	}
 
 	/**

@@ -45,6 +45,9 @@ public class SnfInvoiceItem extends BasicEntity<UUID> {
 
 	/**
 	 * Constructor.
+	 * 
+	 * @param invoiceId
+	 *        the invoice ID
 	 */
 	public SnfInvoiceItem(UUID invoiceId) {
 		super(null, Instant.now());
