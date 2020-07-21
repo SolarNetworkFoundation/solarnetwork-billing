@@ -88,7 +88,8 @@ public class InvoiceGenerationTaskCreator {
 	 */
 	public void createTasks() {
 		// get the invoice end date, which is the start of the current month (exclusive)
-		final LocalDate endDate = LocalDateTime.now().truncatedTo(ChronoUnit.MONTHS).toLocalDate();
+		final LocalDate endDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1)
+				.toLocalDate();
 		createTasks(endDate);
 	}
 

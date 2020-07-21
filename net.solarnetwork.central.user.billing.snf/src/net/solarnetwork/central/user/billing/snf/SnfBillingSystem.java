@@ -26,12 +26,15 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
+import net.solarnetwork.central.security.AuthorizationException;
+import net.solarnetwork.central.security.AuthorizationException.Reason;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -56,16 +59,29 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
 	private final SnfInvoiceDao invoiceDao;
+	private final MessageSource messageSource;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param invoiceDao
 	 *        the invoice DAO
+	 * @param messageSource
+	 *        the message source
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	public SnfBillingSystem(SnfInvoiceDao invoiceDao) {
+	public SnfBillingSystem(SnfInvoiceDao invoiceDao,
+			MessageSource messageSource) {
 		super();
+		if ( invoiceDao == null ) {
+			throw new IllegalArgumentException("The invoiceDao argument must be provided.");
+		}
 		this.invoiceDao = invoiceDao;
+		if ( messageSource == null ) {
+			throw new IllegalArgumentException("The messageSource argument must be provided.");
+		}
+		this.messageSource = messageSource;
 	}
 
 	@Override
@@ -94,6 +110,10 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	@Override
 	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
 		final UserUuidPK id = new UserUuidPK(userId, UUID.fromString(invoiceId));
+		final SnfInvoice invoice = invoiceDao.get(id);
+		if ( invoice == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
+		}
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
@@ -38,6 +39,18 @@ import net.solarnetwork.domain.Differentiable;
  * @version 1.0
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
+
+	public static final String META_NODE_ID = "nodeId";
+
+	/**
+	 * The metadata key for a {@code Map} of usage information.
+	 * 
+	 * <p>
+	 * The usage is stored with mep keys that match the properties of the
+	 * {@link UsageInfo} class.
+	 * </p>
+	 */
+	public static final String META_USAGE = "usage";
 
 	private final UUID invoiceId;
 	private InvoiceItemType itemType;
@@ -194,6 +207,18 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	@Override
 	public boolean differsFrom(SnfInvoiceItem other) {
 		return !isSameAs(other);
+	}
+
+	/**
+	 * Get usage information, if available.
+	 * 
+	 * @return the usage info, or {@literal null} if none available
+	 */
+	@JsonIgnore
+	public UsageInfo getUsageInfo() {
+		@SuppressWarnings("unchecked")
+		Map<String, ?> usage = (metadata != null ? (Map<String, ?>) metadata.get(META_USAGE) : null);
+		return UsageInfo.of(usage);
 	}
 
 	/**

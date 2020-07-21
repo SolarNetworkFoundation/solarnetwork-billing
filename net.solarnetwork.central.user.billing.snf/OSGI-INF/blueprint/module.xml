@@ -24,16 +24,20 @@
 	
 	<reference id="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 
-	<reference id="transactionManager"
-		interface="org.springframework.transaction.PlatformTransactionManager"
-		filter="(db=central)"/>
-
+	<reference id="transactionManager" filter="(db=central)"
+		interface="org.springframework.transaction.PlatformTransactionManager"/>
+		
 	<!-- Use Java @Transactional annotations to declare transactions. -->
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 
 	<!-- Support -->
 	<bean id="billingSystem" class="net.solarnetwork.central.user.billing.snf.SnfBillingSystem">
 		<argument ref="invoiceDao"/>
+		<argument>
+			<bean class="org.springframework.context.support.ResourceBundleMessageSource">
+				<property name="basename" value="net.solarnetwork.central.user.billing.snf.SnfBillingSystem"/>
+			</bean>
+		</argument>
 	</bean>
 	
 	<!-- Published Services -->
