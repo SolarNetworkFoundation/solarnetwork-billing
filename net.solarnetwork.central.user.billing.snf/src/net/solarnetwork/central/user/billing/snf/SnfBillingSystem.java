@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.core.io.Resource;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
@@ -35,10 +37,12 @@ import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
@@ -50,6 +54,19 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
+
+	private final SnfInvoiceDao invoiceDao;
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param invoiceDao
+	 *        the invoice DAO
+	 */
+	public SnfBillingSystem(SnfInvoiceDao invoiceDao) {
+		super();
+		this.invoiceDao = invoiceDao;
+	}
 
 	@Override
 	public String getAccountingSystemKey() {
@@ -73,30 +90,36 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 		return null;
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
+		final UserUuidPK id = new UserUuidPK(userId, UUID.fromString(invoiceId));
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Account accountForUser(Long userId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
 			boolean dryRun) {
@@ -104,6 +127,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 		return null;
 	}
 
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public boolean deliverInvoice(UUID invoiceId) {
 		// TODO Auto-generated method stub

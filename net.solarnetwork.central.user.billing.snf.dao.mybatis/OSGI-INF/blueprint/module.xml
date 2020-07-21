@@ -31,6 +31,8 @@
 	<service ref="accountDao" interface="net.solarnetwork.central.user.billing.snf.dao.AccountDao"/>
 	<service ref="accountTaskDao" interface="net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao"/>
 	<service ref="addresssDao" interface="net.solarnetwork.central.user.billing.snf.dao.AddressDao"/>
+	<service ref="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
+	<service ref="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
 
 	<!-- Supporting Services -->
 	
@@ -44,6 +46,12 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	<bean id="addresssDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+	<bean id="invoiceDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+	<bean id="invoiceItemDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceItemDao">
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	

@@ -43,6 +43,8 @@
 
 	<reference id="transactionManager" interface="org.springframework.transaction.PlatformTransactionManager" filter="(db=central)"/>
 
+	<reference id="invoicingSystem" interface="net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem"/>
+
 	<!-- Support -->
 
 	<bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
@@ -58,16 +60,13 @@
 		</argument>
 	</bean>
 	
-	<bean id="billingSystem" class="net.solarnetwork.central.user.billing.snf.SnfBillingSystem">
-	</bean>
-	
 	<bean id="invoiceGenerator" class="net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator">
 		<argument ref="accountDao"/>
-		<argument ref="billingSystem"/>
+		<argument ref="invoicingSystem"/>
 	</bean>
 	
 	<bean id="invoiceDeliverer" class="net.solarnetwork.central.user.billing.snf.jobs.InvoiceDeliverer">
-		<argument ref="billingSystem"/>
+		<argument ref="invoicingSystem"/>
 	</bean>
 	
 	<!-- Published Services -->
@@ -116,7 +115,7 @@
 		<argument>
 			<bean class="net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerationTaskCreator">
 				<argument ref="userDao"/>
-				<argument ref="billingSystem"/>
+				<argument ref="invoicingSystem"/>
 				<argument ref="taskDao"/>
 			</bean>
 		</argument>
