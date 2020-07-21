@@ -28,6 +28,7 @@ import java.util.UUID;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
+import org.junit.After;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -61,6 +62,11 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 	@Autowired
 	public void setSqlSessionFactory(SqlSessionFactory sqlSessionFactory) {
 		this.sqlSessionFactory = sqlSessionFactory;
+	}
+
+	@After
+	public void flushStatements() {
+		getSqlSessionTemplate().flushStatements();
 	}
 
 	protected void setupTestUser(Long userId) {

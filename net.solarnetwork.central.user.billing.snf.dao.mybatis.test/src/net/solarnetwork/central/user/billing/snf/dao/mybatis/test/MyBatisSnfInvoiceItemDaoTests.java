@@ -95,4 +95,14 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 		last = entity;
 	}
 
+	@Test
+	public void getByPK() {
+		insert();
+		SnfInvoiceItem entity = dao.get(last.getId());
+
+		assertThat("ID", entity.getId(), equalTo(last.getId()));
+		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("Invoice sameness", entity.isSameAs(last), equalTo(true));
+	}
+
 }

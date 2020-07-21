@@ -196,7 +196,7 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 		if ( getItemCount() != other.getItemCount() ) {
 			return false;
 		}
-		Map<UUID, SnfInvoiceItem> otherItems = other.toItemMap();
+		Map<UUID, SnfInvoiceItem> otherItems = other.itemMap();
 		for ( SnfInvoiceItem item : items ) {
 			otherItems.remove(item.getId());
 		}
@@ -223,7 +223,7 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 	 * 
 	 * @return the map
 	 */
-	public Map<UUID, SnfInvoiceItem> toItemMap() {
+	public Map<UUID, SnfInvoiceItem> itemMap() {
 		if ( items == null ) {
 			return Collections.emptyMap();
 		}

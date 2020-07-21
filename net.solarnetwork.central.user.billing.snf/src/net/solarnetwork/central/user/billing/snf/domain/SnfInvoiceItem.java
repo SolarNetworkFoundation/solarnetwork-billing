@@ -48,6 +48,25 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	/**
 	 * Create a new invoice item.
 	 * 
+	 * @param invoice
+	 *        the invoice to associate this item with; it must already have a
+	 *        valid ID defined
+	 * @param type
+	 *        the type
+	 * @param quantity
+	 *        the quantity
+	 * @param amount
+	 *        the amount
+	 * @return the new item, never {@literal null}
+	 */
+	public static SnfInvoiceItem newItem(SnfInvoice invoice, InvoiceItemType type, BigDecimal quantity,
+			BigDecimal amount) {
+		return newItem(invoice.getId().getId(), type, quantity, amount);
+	}
+
+	/**
+	 * Create a new invoice item.
+	 * 
 	 * @param invoiceId
 	 *        the invoice item ID
 	 * @param type
