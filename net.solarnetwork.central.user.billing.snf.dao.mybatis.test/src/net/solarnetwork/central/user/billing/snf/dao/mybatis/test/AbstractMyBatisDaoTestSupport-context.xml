@@ -9,7 +9,6 @@
 		<property name="dataSource" ref="dataSource"/>
 		<property name="typeHandlers">
 			<list>
-				<bean class="net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler"/>
 				<bean class="net.solarnetwork.central.dao.mybatis.type.UUIDTypeHandler"/>
 			</list>
 		</property>

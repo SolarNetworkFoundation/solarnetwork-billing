@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import java.time.LocalDate;
+import java.util.UUID;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -73,5 +74,13 @@ public interface SnfInvoicingSystem {
 	 * @return the generated invoice
 	 */
 	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate, boolean dryRun);
+	
+	/**
+	 * Deliver an invoice via an account-specific delivery mechanism (such as email).
+	 * 
+	 * @param invoiceId the ID of the invoice to deliver
+	 * @return {@literal true} if the invoice was delivered successfully
+	 */
+	boolean deliverInvoice(UUID invoiceId);
 
 }

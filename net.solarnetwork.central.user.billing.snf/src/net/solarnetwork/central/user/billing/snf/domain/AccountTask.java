@@ -37,9 +37,48 @@ import net.solarnetwork.domain.Differentiable;
  */
 public class AccountTask extends BasicUuidEntity implements Differentiable<AccountTask> {
 
+	/**
+	 * The task data property name for a String {@code java.util.UUID} value of
+	 * a related {@code SnfInvoice} ID value.
+	 */
+	public static final String INVOICE_ID_PARAM = "invoiceId";
+
 	private final AccountTaskType taskType;
 	private final Long accountId;
 	private final Map<String, Object> taskData;
+
+	/**
+	 * Create a new task instance.
+	 * 
+	 * @param date
+	 *        the task date
+	 * @param taskType
+	 *        the task type
+	 * @param accountId
+	 *        the account ID
+	 * @return the new task instance, with a new ID
+	 */
+	public static AccountTask newTask(Instant date, AccountTaskType taskType, Long accountId) {
+		return newTask(date, taskType, accountId, null);
+	}
+
+	/**
+	 * Create a new task instance.
+	 * 
+	 * @param date
+	 *        the task date
+	 * @param taskType
+	 *        the task type
+	 * @param accountId
+	 *        the account ID
+	 * @param taskData
+	 *        the task data, or {@literal null}
+	 * @return the new task instance, with a new ID
+	 */
+	public static AccountTask newTask(Instant date, AccountTaskType taskType, Long accountId,
+			Map<String, Object> taskData) {
+		return new AccountTask(UUID.randomUUID(), date, taskType, accountId, taskData);
+	}
 
 	/**
 	 * Constructor.

@@ -22,34 +22,25 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs.test;
 
-import static java.util.Arrays.asList;
-import static org.easymock.EasyMock.capture;
-import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isNull;
-import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
-import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import net.solarnetwork.central.domain.FilterResults;
-import net.solarnetwork.central.support.BasicFilterResults;
-import net.solarnetwork.central.user.billing.domain.BillingDataConstants;
-import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
+import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
+import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator;
-import net.solarnetwork.central.user.dao.UserDao;
-import net.solarnetwork.central.user.domain.UserFilter;
-import net.solarnetwork.central.user.domain.UserFilterMatch;
-import net.solarnetwork.central.user.domain.UserMatch;
+import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link InvoiceGenerator} class.
@@ -60,27 +51,26 @@ import net.solarnetwork.central.user.domain.UserMatch;
 public class InvoiceGeneratorTests {
 
 	private static final Long TEST_USER_ID = 1L;
-	private static final String TEST_EMAIL = "test@localhost";
 
-	private UserDao userDao;
+	private AccountDao accountDao;
 	private SnfInvoicingSystem invoicingSystem;
 	private InvoiceGenerator generator;
 
 	@Before
 	public void setup() {
-		userDao = EasyMock.createMock(UserDao.class);
+		accountDao = EasyMock.createMock(AccountDao.class);
 		invoicingSystem = EasyMock.createMock(SnfInvoicingSystem.class);
 
-		generator = new InvoiceGenerator(userDao, invoicingSystem);
+		generator = new InvoiceGenerator(accountDao, invoicingSystem);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(userDao, invoicingSystem);
+		EasyMock.replay(accountDao, invoicingSystem);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(userDao, invoicingSystem);
+		EasyMock.verify(accountDao, invoicingSystem);
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
@@ -101,73 +91,53 @@ public class InvoiceGeneratorTests {
 	@Test
 	public void generateInitialInvoices_oneAccount_nz() {
 		// GIVEN
-		final LocalDate endDate = LocalDate.of(2020, 1, 1);
-		final Capture<UserFilter> userFilterCaptor = new Capture<>();
-		final UserMatch user = new UserMatch(TEST_USER_ID, TEST_EMAIL);
-		final FilterResults<UserFilterMatch> userMatches = new BasicFilterResults<>(asList(user));
+		final LocalDate date = LocalDate.of(2019, 12, 1);
 
-		// find users configured with SNF billing
-		expect(userDao.findFiltered(capture(userFilterCaptor), isNull(), eq(0),
-				eq(InvoiceGenerator.DEFAULT_BATCH_SIZE))).andReturn(userMatches);
-
-		// get Account for found user
+		// get account
 		final Account account = createAccount(TEST_USER_ID, "en_NZ",
 				createAddress("NZ", "Pacific/Auckland"));
-		expect(invoicingSystem.accountForUser(TEST_USER_ID)).andReturn(account);
-
-		// get latest invoice for account (there is none)
-		expect(invoicingSystem.findLatestInvoiceForAccount(account.getId())).andReturn(null);
+		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(account.getId().getId(), UUID.randomUUID(),
 				account.getUserId(), Instant.now());
-		expect(invoicingSystem.generateInvoice(TEST_USER_ID, endDate.minusMonths(1), endDate, false))
+		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 
 		// WHEN
 		replayAll();
-		generator.generateInvoices(endDate);
+		boolean result = generator
+				.handleTask(AccountTask.newTask(date.atStartOfDay(account.getTimeZone()).toInstant(),
+						AccountTaskType.GenerateInvoice, account.getId().getId()));
 
 		// THEN
-		UserFilter userFilter = userFilterCaptor.getValue();
-		assertThat("User filter queried for SNF accounts", userFilter.getInternalData(), hasEntry(
-				BillingDataConstants.ACCOUNTING_DATA_PROP, SnfBillingSystem.ACCOUNTING_SYSTEM_KEY));
+		assertThat("Task handled", result, equalTo(true));
 	}
 
 	@Test
 	public void generateInitialInvoices_oneAccount_us() {
 		// GIVEN
-		final LocalDate endDate = LocalDate.of(2020, 1, 1);
-		final Capture<UserFilter> userFilterCaptor = new Capture<>();
-		final UserMatch user = new UserMatch(TEST_USER_ID, TEST_EMAIL);
-		final FilterResults<UserFilterMatch> userMatches = new BasicFilterResults<>(asList(user));
+		final LocalDate date = LocalDate.of(2019, 12, 1);
 
-		// find users configured with SNF billing
-		expect(userDao.findFiltered(capture(userFilterCaptor), isNull(), eq(0),
-				eq(InvoiceGenerator.DEFAULT_BATCH_SIZE))).andReturn(userMatches);
-
-		// get Account for found user
+		// get account
 		final Account account = createAccount(TEST_USER_ID, "en_US",
 				createAddress("US", "America/Los_Angeles"));
-		expect(invoicingSystem.accountForUser(TEST_USER_ID)).andReturn(account);
-
-		// get latest invoice for account (there is none)
-		expect(invoicingSystem.findLatestInvoiceForAccount(account.getId())).andReturn(null);
+		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
 
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(account.getId().getId(), UUID.randomUUID(),
 				account.getUserId(), Instant.now());
-		expect(invoicingSystem.generateInvoice(TEST_USER_ID, endDate.minusMonths(1), endDate, false))
+		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 
 		// WHEN
 		replayAll();
-		generator.generateInvoices(endDate);
+		boolean result = generator
+				.handleTask(AccountTask.newTask(date.atStartOfDay(account.getTimeZone()).toInstant(),
+						AccountTaskType.GenerateInvoice, account.getId().getId()));
 
 		// THEN
-		UserFilter userFilter = userFilterCaptor.getValue();
-		assertThat("User filter queried for SNF accounts", userFilter.getInternalData(), hasEntry(
-				BillingDataConstants.ACCOUNTING_DATA_PROP, SnfBillingSystem.ACCOUNTING_SYSTEM_KEY));
+		assertThat("Task handled", result, equalTo(true));
 	}
 
 }

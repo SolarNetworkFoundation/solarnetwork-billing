@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.domain.FilterResults;
@@ -101,6 +102,12 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 			boolean dryRun) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public boolean deliverInvoice(UUID invoiceId) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }
