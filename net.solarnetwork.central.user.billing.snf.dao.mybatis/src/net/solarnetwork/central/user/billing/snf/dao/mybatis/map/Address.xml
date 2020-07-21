@@ -33,11 +33,6 @@
 		)
 	</insert>
 	
-	<!-- 
-	<if test="registrationStatus != null">, #{registrationStatus,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}</if>
-	<result property="timeZoneId" column="node_event_task_jdata" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
-	 -->
-	
 	<sql id="fragment-Address-full-result">
 		addr.id AS bill_address_id
 		, addr.created AS bill_address_created

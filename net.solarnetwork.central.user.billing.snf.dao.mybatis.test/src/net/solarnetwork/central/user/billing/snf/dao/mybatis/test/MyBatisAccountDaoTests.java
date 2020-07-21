@@ -26,8 +26,6 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
-import java.time.Instant;
-import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
@@ -59,29 +57,6 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		address = addressDao.get(addressDao.save(createTestAddress()));
 		last = null;
-	}
-
-	private Address createTestAddress() {
-		Address s = new Address(null, Instant.ofEpochMilli(System.currentTimeMillis()));
-		s.setName("Tester Dude");
-		s.setEmail("test@localhost");
-		s.setCountry("NZ");
-		s.setTimeZoneId("Pacific/Auckland");
-		s.setRegion("Region");
-		s.setStateOrProvince("State");
-		s.setLocality("Wellington");
-		s.setPostalCode("1001");
-		s.setStreet(new String[] { "Level 1", "123 Main Street" });
-		return s;
-	}
-
-	private Account createTestAccount(Address address) {
-		Account account = new Account(null, UUID.randomUUID().getMostSignificantBits(),
-				Instant.ofEpochMilli(System.currentTimeMillis()));
-		account.setAddress(address);
-		account.setCurrencyCode("NZD");
-		account.setLocale("en_NZ");
-		return account;
 	}
 
 	@Test

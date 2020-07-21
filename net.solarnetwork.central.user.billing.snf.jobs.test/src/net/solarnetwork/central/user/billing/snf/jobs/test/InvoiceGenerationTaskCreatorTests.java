@@ -211,8 +211,8 @@ public class InvoiceGenerationTaskCreatorTests {
 		expect(invoicingSystem.accountForUser(TEST_USER_ID)).andReturn(account);
 
 		// get latest invoice for account, which is a few months behind
-		SnfInvoice lastInvoice = new SnfInvoice(account.getId().getId(), UUID.randomUUID(),
-				account.getUserId(), Instant.ofEpochMilli(System.currentTimeMillis()));
+		SnfInvoice lastInvoice = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
+				account.getId().getId(), Instant.ofEpochMilli(System.currentTimeMillis()));
 		lastInvoice.setStartDate(LocalDate.of(2019, 9, 1));
 		lastInvoice.setEndDate(LocalDate.of(2019, 10, 1));
 		lastInvoice.setAddress(account.getAddress());

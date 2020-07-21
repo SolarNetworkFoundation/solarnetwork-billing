@@ -22,14 +22,22 @@
 
 package net.solarnetwork.central.user.billing.snf.domain.test;
 
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 
 /**
  * Test cases for the {@link SnfInvoice} class.
@@ -79,6 +87,107 @@ public class SnfInvoiceTests {
 
 		// THEN
 		assertThat("Zone", zone, equalTo(ZoneId.of(addr.getTimeZoneId())));
+	}
+
+	@Test
+	public void sameness_basic() {
+		// GIVEN
+		SnfInvoice inv1 = new SnfInvoice(UUID.randomUUID(), UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setStartDate(LocalDate.of(2020, 1, 1));
+		inv1.setEndDate(LocalDate.of(2020, 2, 1));
+		inv1.setCurrencyCode("NZD");
+
+		Address addr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setAddress(addr);
+
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
+		inv2.setStartDate(inv1.getStartDate());
+		inv2.setEndDate(inv1.getEndDate());
+		inv2.setCurrencyCode(inv1.getCurrencyCode());
+		inv2.setAddress(new Address(addr.getId(), addr.getCreated()));
+
+		// THEN
+		assertThat("Entities have sameness", inv1.isSameAs(inv2), equalTo(true));
+		assertThat("Entities do not differ", inv1.differsFrom(inv2), equalTo(false));
+	}
+
+	@Test
+	public void sameness_basic_diffStartDate() {
+		// GIVEN
+		SnfInvoice inv1 = new SnfInvoice(UUID.randomUUID(), UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setStartDate(LocalDate.of(2020, 1, 1));
+		inv1.setEndDate(LocalDate.of(2020, 2, 1));
+		inv1.setCurrencyCode("NZD");
+
+		Address addr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setAddress(addr);
+
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
+		inv2.setStartDate(inv1.getStartDate().plusDays(1));
+		inv2.setEndDate(inv1.getEndDate());
+		inv2.setCurrencyCode(inv1.getCurrencyCode());
+		inv2.setAddress(new Address(addr.getId(), addr.getCreated()));
+
+		// THEN
+		assertThat("Entities do not have sameness", inv1.isSameAs(inv2), equalTo(false));
+		assertThat("Entities differ", inv1.differsFrom(inv2), equalTo(true));
+	}
+
+	@Test
+	public void sameness_basic_diffAddress() {
+		// GIVEN
+		SnfInvoice inv1 = new SnfInvoice(UUID.randomUUID(), UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setStartDate(LocalDate.of(2020, 1, 1));
+		inv1.setEndDate(LocalDate.of(2020, 2, 1));
+		inv1.setCurrencyCode("NZD");
+
+		Address addr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setAddress(addr);
+
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
+		inv2.setStartDate(inv1.getStartDate());
+		inv2.setEndDate(inv1.getEndDate());
+		inv2.setCurrencyCode(inv1.getCurrencyCode());
+		inv2.setAddress(new Address(UUID.randomUUID().getMostSignificantBits(), addr.getCreated()));
+
+		// THEN
+		assertThat("Entities do not have sameness", inv1.isSameAs(inv2), equalTo(false));
+		assertThat("Entities differ", inv1.differsFrom(inv2), equalTo(true));
+	}
+
+	@Test
+	public void sameness_withItems() {
+		// GIVEN
+		SnfInvoice inv1 = new SnfInvoice(UUID.randomUUID(), UUID.randomUUID().getMostSignificantBits(),
+				UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setStartDate(LocalDate.of(2020, 1, 1));
+		inv1.setEndDate(LocalDate.of(2020, 2, 1));
+		inv1.setCurrencyCode("NZD");
+
+		Address addr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		inv1.setAddress(addr);
+
+		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed,
+				new BigDecimal("1.23"), new BigDecimal("12345"), inv1.getCreated());
+		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed,
+				new BigDecimal("2.34"), new BigDecimal("23456"), inv1.getCreated());
+		inv1.setItems(new HashSet<>(Arrays.asList(item1, item2)));
+
+		SnfInvoice inv2 = new SnfInvoice(inv1.getId(), inv1.getAccountId(), inv1.getCreated());
+		inv2.setStartDate(inv1.getStartDate());
+		inv2.setEndDate(inv1.getEndDate());
+		inv2.setCurrencyCode(inv1.getCurrencyCode());
+
+		inv2.setAddress(new Address(addr.getId(), addr.getCreated()));
+
+		inv2.setItems(new HashSet<>(Arrays.asList(item1, item2)));
+
+		// THEN
+		assertThat("Entities have sameness", inv1.isSameAs(inv2), equalTo(true));
+		assertThat("Entities do not differ", inv1.differsFrom(inv2), equalTo(false));
 	}
 
 }

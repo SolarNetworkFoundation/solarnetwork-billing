@@ -99,8 +99,8 @@ public class InvoiceGeneratorTests {
 		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
 
 		// generate invoice for month ending on endDate
-		SnfInvoice generatedInvoice = new SnfInvoice(account.getId().getId(), UUID.randomUUID(),
-				account.getUserId(), Instant.now());
+		SnfInvoice generatedInvoice = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
+				account.getId().getId(), Instant.now());
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 
@@ -125,8 +125,8 @@ public class InvoiceGeneratorTests {
 		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
 
 		// generate invoice for month ending on endDate
-		SnfInvoice generatedInvoice = new SnfInvoice(account.getId().getId(), UUID.randomUUID(),
-				account.getUserId(), Instant.now());
+		SnfInvoice generatedInvoice = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
+				account.getId().getId(), Instant.now());
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 

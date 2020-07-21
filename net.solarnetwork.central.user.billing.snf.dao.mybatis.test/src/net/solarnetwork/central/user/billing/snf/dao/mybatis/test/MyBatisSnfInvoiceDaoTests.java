@@ -1,5 +1,5 @@
 /* ==================================================================
- * MyBatisAccountTaskDaoTests.java - 21/07/2020 6:57:07 AM
+ * MyBatisSnfInvoiceDaoTests.java - 21/07/2020 3:28:34 PM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -23,36 +23,33 @@
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
-import java.util.Collections;
+import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
-import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountTaskDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
+import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
-import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
-import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
- * Test cases for the {@link MyBatisAccountTaskDao} class.
+ * Test cases for the {@link MyBatisSnfInvoiceDao} class.
  * 
  * @author matt
  * @version 1.0
  */
-public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
+public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	private MyBatisAddressDao addressDao;
 	private MyBatisAccountDao accountDao;
-	private MyBatisAccountTaskDao dao;
+	private MyBatisSnfInvoiceDao dao;
 
-	private Address address;
-	private Account account;
-	private AccountTask last;
+	private SnfInvoice last;
 
 	@Before
 	public void setUp() throws Exception {
@@ -62,74 +59,33 @@ public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
 		accountDao = new MyBatisAccountDao();
 		accountDao.setSqlSessionTemplate(getSqlSessionTemplate());
 
-		dao = new MyBatisAccountTaskDao();
+		dao = new MyBatisSnfInvoiceDao();
 		dao.setSqlSessionTemplate(getSqlSessionTemplate());
-
-		address = createTestAddress();
-		account = createTestAccount(address);
 		last = null;
-	}
-
-	@Override
-	protected Address createTestAddress() {
-		Address s = super.createTestAddress();
-		return addressDao.get(addressDao.save(s));
-	}
-
-	@Override
-	protected Account createTestAccount(Address address) {
-		Account account = super.createTestAccount(address);
-		return accountDao.get(accountDao.save(account));
-	}
-
-	private AccountTask createTestAccountTask(Account account) {
-		AccountTask t = new AccountTask(UUID.randomUUID(),
-				Instant.ofEpochMilli(System.currentTimeMillis()), AccountTaskType.GenerateInvoice,
-				account.getId().getId(), Collections.singletonMap("foo", "bar"));
-		return t;
 	}
 
 	@Test
 	public void insert() {
-		AccountTask entity = createTestAccountTask(account);
-		UUID pk = dao.save(entity);
+		Address address = addressDao.get(addressDao.save(createTestAddress()));
+		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
+		SnfInvoice entity = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
+				account.getId().getId(), Instant.ofEpochMilli(System.currentTimeMillis()));
+		entity.setAddress(address);
+		entity.setCurrencyCode("NZD");
+		entity.setStartDate(LocalDate.of(2019, 12, 1));
+		entity.setEndDate(LocalDate.of(2020, 1, 1));
+		UserUuidPK pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
 		last = entity;
 	}
 
 	@Test
-	public void insert_duplicate() {
-		insert();
-		AccountTask entity = createTestAccountTask(account);
-		dao.save(entity);
-		getSqlSessionTemplate().flushStatements();
-	}
-
-	@Test
 	public void getByPK() {
 		insert();
-		AccountTask entity = dao.get(last.getId());
+		SnfInvoice entity = dao.get(last.getId());
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
-		assertThat("AccountTask", entity.isSameAs(last), equalTo(true));
+		assertThat("Invoice sameness", entity.isSameAs(last), equalTo(true));
 	}
-
-	@Test
-	public void delete() {
-		insert();
-		dao.delete(last);
-		assertThat("No longer found", dao.get(last.getId()), nullValue());
-	}
-
-	@Test
-	public void delete_noMatch() {
-		insert();
-		AccountTask someAddr = createTestAccountTask(account);
-		dao.delete(someAddr);
-
-		AccountTask entity = dao.get(last.getId());
-		assertThat("Entity unchanged", entity.isSameAs(last), equalTo(true));
-	}
-
 }

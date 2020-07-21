@@ -51,20 +51,6 @@ public class MyBatisAddressDaoTests extends AbstractMyBatisDaoTestSupport {
 		last = null;
 	}
 
-	private Address createTestAddress() {
-		Address s = new Address(null, Instant.ofEpochMilli(System.currentTimeMillis()));
-		s.setName("Tester Dude");
-		s.setEmail("test@localhost");
-		s.setCountry("NZ");
-		s.setTimeZoneId("Pacific/Auckland");
-		s.setRegion("Region");
-		s.setStateOrProvince("State");
-		s.setLocality("Wellington");
-		s.setPostalCode("1001");
-		s.setStreet(new String[] { "Level 1", "123 Main Street" });
-		return s;
-	}
-
 	@Test
 	public void insert() {
 		Address entity = createTestAddress();

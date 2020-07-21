@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem">
+	
+	<sql id="fragment-SnfInvoiceItem-full-result">
+		  invi.id 			AS bill_invoice_item_id
+		, invi.created 		AS bill_invoice_item_created
+		, invi.inv_id 		AS bill_invoice_item_inv_id
+		, invi.item_type 	AS bill_invoice_item_item_type
+		, invi.amount 		AS bill_invoice_item_amount
+		, invi.quantity 	AS bill_invoice_item_quantity
+		, invi.jmeta 		AS bill_invoice_item_jmeta
+	</sql>
+
+	<resultMap id="SnfInvoiceItem-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem">
+		<constructor>
+			<idArg column="bill_invoice_item_id" javaType="java.util.UUID"/>
+			<arg column="bill_invoice_item_inv_id" javaType="java.util.UUID"/>
+			<arg column="bill_invoice_item_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="itemType" column="bill_invoice_item_item_type" javaType="net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+		<result property="amount" column="bill_invoice_item_amount"/>
+		<result property="quantity" column="bill_invoice_item_quantity"/>
+		<result property="metadata" column="bill_invoice_item_jmeta" javaType="java.util.Map" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>
+	</resultMap>
+
+</mapper>

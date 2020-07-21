@@ -17,6 +17,8 @@
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Address.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Account.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/AccountTask.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceItem.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoice.xml</value>
 			</list>
 		</property>
 	</bean>

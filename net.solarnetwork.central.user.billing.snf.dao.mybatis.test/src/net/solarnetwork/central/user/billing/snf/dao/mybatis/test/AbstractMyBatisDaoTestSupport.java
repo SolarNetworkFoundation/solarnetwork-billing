@@ -22,7 +22,9 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -30,6 +32,8 @@ import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import net.solarnetwork.central.test.AbstractCentralTransactionalTest;
+import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.Address;
 
 /**
  * Base class for MyBatis DAO tests.
@@ -92,6 +96,41 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Create a test address instance.
+	 * 
+	 * @return the address
+	 */
+	protected Address createTestAddress() {
+		Address s = new Address(null, Instant.ofEpochMilli(System.currentTimeMillis()));
+		s.setName("Tester Dude");
+		s.setEmail("test@localhost");
+		s.setCountry("NZ");
+		s.setTimeZoneId("Pacific/Auckland");
+		s.setRegion("Region");
+		s.setStateOrProvince("State");
+		s.setLocality("Wellington");
+		s.setPostalCode("1001");
+		s.setStreet(new String[] { "Level 1", "123 Main Street" });
+		return s;
+	}
+
+	/**
+	 * Create a test account for a given address.
+	 * 
+	 * @param address
+	 *        the address
+	 * @return the account
+	 */
+	protected Account createTestAccount(Address address) {
+		Account account = new Account(null, UUID.randomUUID().getMostSignificantBits(),
+				Instant.ofEpochMilli(System.currentTimeMillis()));
+		account.setAddress(address);
+		account.setCurrencyCode("NZD");
+		account.setLocale("en_NZ");
+		return account;
 	}
 
 }

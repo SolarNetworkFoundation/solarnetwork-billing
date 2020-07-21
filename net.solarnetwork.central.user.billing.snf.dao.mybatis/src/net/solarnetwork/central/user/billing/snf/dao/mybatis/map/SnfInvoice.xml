@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoice">
+
+	<insert id="update-SnfInvoice" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoice">
+		INSERT INTO solarbill.bill_invoice (
+			id
+			<if test="created != null">,created</if>
+			, acct_id
+			, addr_id
+			, date_start
+			, date_end
+			, currency
+		) VALUES (
+			#{id.id}
+			<if test="created != null">,#{created}</if>
+			, #{accountId}
+			, #{address.id}
+			, #{startDate}
+			, #{endDate}
+			, #{currencyCode}
+		)
+		ON CONFLICT (id) DO NOTHING
+	</insert>
+	
+	<sql id="fragment-SnfInvoice-full-result">
+		  inv.id 			AS bill_invoice_id
+		, inv.created 		AS bill_invoice_created
+		, inv.acct_id 		AS bill_invoice_acct_id
+		, inv.addr_id 		AS bill_invoice_addr_id
+		, inv.date_start 	AS bill_invoice_date_start
+		, inv.date_end 		AS bill_invoice_date_end
+		, inv.currency 		AS bill_invoice_currency
+	</sql>
+
+	<resultMap id="SnfInvoice-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoice">
+		<constructor>
+			<idArg column="bill_invoice_id" javaType="java.util.UUID"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_invoice_acct_id" javaType="Long"/>
+			<arg column="bill_invoice_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="startDate" column="bill_invoice_date_start"/>
+		<result property="endDate" column="bill_invoice_date_end"/>
+		<result property="currencyCode" column="bill_invoice_currency"/>
+		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
+		<association property="items" notNullColumn="bill_invoice_item_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.SnfInvoiceItem-FullResult"/>
+	</resultMap>
+	
+	<select id="get-SnfInvoice-for-id" parameterType="net.solarnetwork.central.user.domain.UserUuidPK" resultMap="SnfInvoice-FullResult">
+		SELECT
+			<include refid="fragment-SnfInvoice-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+		FROM
+			solarbill.bill_invoice inv
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = inv.acct_id
+		INNER JOIN
+			solarbill.bill_address addr ON addr.id = inv.addr_id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
+		WHERE
+			inv.id = #{id}
+			AND acct.user_id = #{userId}
+	</select>
+	
+</mapper>

@@ -25,9 +25,11 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.dao.BasicEntity;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * SNF invoice item entity.
@@ -35,13 +37,78 @@ import net.solarnetwork.dao.BasicEntity;
  * @author matt
  * @version 1.0
  */
-public class SnfInvoiceItem extends BasicEntity<UUID> {
+public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
 
 	private final UUID invoiceId;
 	private InvoiceItemType itemType;
 	private BigDecimal amount;
 	private BigDecimal quantity;
 	private Map<String, Object> metadata;
+
+	/**
+	 * Create a new invoice item.
+	 * 
+	 * @param invoiceId
+	 *        the invoice item ID
+	 * @param type
+	 *        the type
+	 * @param quantity
+	 *        the quantity
+	 * @param amount
+	 *        the amount
+	 * @return the new item, never {@literal null}
+	 */
+	public static SnfInvoiceItem newItem(UUID invoiceId, InvoiceItemType type, BigDecimal quantity,
+			BigDecimal amount) {
+		return newItem(invoiceId, type, quantity, amount, Instant.now(), null);
+	}
+
+	/**
+	 * Create a new invoice item.
+	 * 
+	 * @param invoiceId
+	 *        the invoice item ID
+	 * @param type
+	 *        the type
+	 * @param quantity
+	 *        the quantity
+	 * @param amount
+	 *        the amount
+	 * @param date
+	 *        the date
+	 * @return the new item, never {@literal null}
+	 */
+	public static SnfInvoiceItem newItem(UUID invoiceId, InvoiceItemType type, BigDecimal quantity,
+			BigDecimal amount, Instant date) {
+		return newItem(invoiceId, type, quantity, amount, date, null);
+	}
+
+	/**
+	 * Create a new invoice item.
+	 * 
+	 * @param invoiceId
+	 *        the invoice item ID
+	 * @param type
+	 *        the type
+	 * @param quantity
+	 *        the quantity
+	 * @param amount
+	 *        the amount
+	 * @param date
+	 *        the date
+	 * @param metadata
+	 *        the metadata
+	 * @return the new item, never {@literal null}
+	 */
+	public static SnfInvoiceItem newItem(UUID invoiceId, InvoiceItemType type, BigDecimal quantity,
+			BigDecimal amount, Instant date, Map<String, Object> metadata) {
+		SnfInvoiceItem item = new SnfInvoiceItem(UUID.randomUUID(), invoiceId, date);
+		item.setItemType(type);
+		item.setAmount(amount);
+		item.setQuantity(quantity);
+		item.setMetadata(metadata);
+		return item;
+	}
 
 	/**
 	 * Constructor.
@@ -57,14 +124,14 @@ public class SnfInvoiceItem extends BasicEntity<UUID> {
 	/**
 	 * Constructor.
 	 * 
-	 * @param invoiceId
-	 *        the invoice ID
 	 * @param id
 	 *        the invoice item ID
+	 * @param invoiceId
+	 *        the invoice ID
 	 * @param created
 	 *        the creation date
 	 */
-	public SnfInvoiceItem(UUID invoiceId, UUID id, Instant created) {
+	public SnfInvoiceItem(UUID id, UUID invoiceId, Instant created) {
 		super(id, created);
 		this.invoiceId = invoiceId;
 	}
@@ -77,6 +144,37 @@ public class SnfInvoiceItem extends BasicEntity<UUID> {
 	public InvoiceItem toInvoiceItem() {
 		// TODO
 		return null;
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code id} and {@code created} properties are not compared by this
+	 * method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(SnfInvoiceItem other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(invoiceId, other.invoiceId)
+				&& Objects.equals(itemType, other.itemType)
+				&& Objects.equals(quantity, other.quantity)
+				&& Objects.equals(metadata, other.metadata);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(SnfInvoiceItem other) {
+		return !isSameAs(other);
 	}
 
 	/**
@@ -110,10 +208,17 @@ public class SnfInvoiceItem extends BasicEntity<UUID> {
 	/**
 	 * Get the amount.
 	 * 
-	 * @return the amount
+	 * <p>
+	 * This value represents the total cost for the associated
+	 * {@link #getQuantity()}. Thus the individual quantity cost is derived via
+	 * {@code amount / quantity}. The {@link #getUnitQuantityAmount()} returns
+	 * the individual quantity cost.
+	 * </p>
+	 * 
+	 * @return the amount, never {@literal null}
 	 */
 	public BigDecimal getAmount() {
-		return amount;
+		return amount != null ? amount : BigDecimal.ZERO;
 	}
 
 	/**
@@ -127,12 +232,31 @@ public class SnfInvoiceItem extends BasicEntity<UUID> {
 	}
 
 	/**
+	 * Get the individual quantity cost.
+	 * 
+	 * <p>
+	 * This returns {@code amount / quantity}. If {@code quantity} is
+	 * {@literal 0} then {@code amount} is returned.
+	 * </p>
+	 * 
+	 * @return the cost per individual quantity
+	 */
+	public BigDecimal getUnitQuantityAmount() {
+		BigDecimal amount = getAmount();
+		BigDecimal quantity = getQuantity();
+		if ( quantity.compareTo(BigDecimal.ZERO) == 0 ) {
+			return amount;
+		}
+		return amount.divide(quantity);
+	}
+
+	/**
 	 * Get the quantity.
 	 * 
-	 * @return the quantity
+	 * @return the quantity, never {@literal null}
 	 */
 	public BigDecimal getQuantity() {
-		return quantity;
+		return quantity != null ? quantity : BigDecimal.ONE;
 	}
 
 	/**
