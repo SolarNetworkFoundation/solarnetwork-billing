@@ -164,7 +164,7 @@ public class SnfInvoicingSystemTests {
 		Account result = system.accountForUser(userId);
 
 		// THEN
-		assertThat("DAO result returned.", account, sameInstance(account));
+		assertThat("DAO result returned.", result, sameInstance(account));
 	}
 
 	@Test
