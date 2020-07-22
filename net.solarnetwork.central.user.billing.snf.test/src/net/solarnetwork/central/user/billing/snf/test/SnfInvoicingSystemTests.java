@@ -22,12 +22,23 @@
 
 package net.solarnetwork.central.user.billing.snf.test;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
+import static java.util.UUID.randomUUID;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.eq;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.same;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -37,6 +48,9 @@ import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.BasicFilterResults;
 
 /**
  * Test cases for the {@link SnfBillingSystem} implementation of
@@ -76,6 +90,47 @@ public class SnfInvoicingSystemTests {
 	@After
 	public void teardown() {
 		EasyMock.verify(invoiceDao);
+	}
+
+	@Test
+	public void findLatestInvoice_none() {
+		// GIVEN
+		UserLongPK pk = new UserLongPK(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits());
+		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
+		expect(invoiceDao.findFiltered(capture(filterCaptor),
+				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0), eq(1)))
+						.andReturn(new BasicFilterResults<>(emptyList()));
+
+		// WHEN
+		replayAll();
+		SnfInvoice invoice = system.findLatestInvoiceForAccount(pk);
+
+		// THEN
+		assertThat("Invoice not found.", invoice, nullValue());
+		SnfInvoiceFilter filter = filterCaptor.getValue();
+		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
+	}
+
+	@Test
+	public void findLatestInvoice_found() {
+		// GIVEN
+		UserLongPK pk = new UserLongPK(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits());
+		Capture<SnfInvoiceFilter> filterCaptor = new Capture<>();
+		SnfInvoice inv = new SnfInvoice(pk.getId());
+		expect(invoiceDao.findFiltered(capture(filterCaptor),
+				same(SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING), eq(0), eq(1)))
+						.andReturn(new BasicFilterResults<>(singleton(inv)));
+
+		// WHEN
+		replayAll();
+		SnfInvoice invoice = system.findLatestInvoiceForAccount(pk);
+
+		// THEN
+		assertThat("Invoice returned from DAO.", invoice, sameInstance(inv));
+		SnfInvoiceFilter filter = filterCaptor.getValue();
+		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
 	}
 
 	@Test

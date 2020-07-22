@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import java.time.LocalDate;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -43,6 +44,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
 
@@ -133,8 +135,11 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId) {
-		// TODO Auto-generated method stub
-		return null;
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(accountId.getId());
+		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
+				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+		Iterator<SnfInvoice> itr = (results != null ? results.iterator() : null);
+		return (itr != null && itr.hasNext() ? itr.next() : null);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
