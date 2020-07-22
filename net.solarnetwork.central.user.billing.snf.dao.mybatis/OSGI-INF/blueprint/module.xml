@@ -33,6 +33,7 @@
 	<service ref="addresssDao" interface="net.solarnetwork.central.user.billing.snf.dao.AddressDao"/>
 	<service ref="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 	<service ref="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
+	<service ref="nodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao"/>
 
 	<!-- Supporting Services -->
 	
@@ -54,6 +55,9 @@
 	<bean id="invoiceItemDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceItemDao">
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
+	<bean id="nodeUsageDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
 	
 	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
 		<property name="dataSource" ref="dataSource"/>
@@ -71,6 +75,7 @@
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/AccountTask.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceItem.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoice.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/NodeUsage.xml</value>
 			</list>
 		</property>
 	</bean>

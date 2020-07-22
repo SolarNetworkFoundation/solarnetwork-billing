@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.NodeUsage">
+	
+	<sql id="fragment-NodeUsage-full-result">
+		  nu.node_id 			AS node_usage_node_id
+		, nu.prop_in 			AS node_usage_prop_in
+		, nu.prop_in_cost 		AS node_usage_prop_in_cost
+		, nu.datum_stored 		AS node_usage_datum_stored
+		, nu.datum_stored_cost 	AS node_usage_datum_stored_cost
+		, nu.datum_out 			AS node_usage_datum_out
+		, nu.datum_out_cost 	AS node_usage_datum_out_cost
+		, nu.total_cost			AS node_usage_total_cost
+	</sql>
+
+	<resultMap id="NodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
+		<constructor>
+			<idArg column="node_usage_node_id" javaType="long"/>
+			<arg column="node_usage_created" javaType="java.time.Instant"/>
+		</constructor>
+		<result property="datumPropertiesIn" 		column="node_usage_prop_in"/>
+		<result property="datumPropertiesInCost"	column="node_usage_prop_in_cost"/>
+		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
+		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
+		<result property="datumOut"	 				column="node_usage_datum_out"/>
+		<result property="datumOutCost"				column="node_usage_datum_out_cost"/>
+		<result property="totalCost"				column="node_usage_total_cost"/>
+	</resultMap>
+
+	<select id="find-NodeUsage-for-user-month" parameterType="map" resultMap="NodeUsage-FullResult">
+		SELECT
+			<include refid="fragment-NodeUsage-full-result"/>
+			, CURRENT_TIMESTAMP AS node_usage_created
+		FROM
+			solarbill.billing_details(
+			      #{userId,jdbcType=BIGINT}
+				, #{startDate,jdbcType=TIMESTAMP}
+				, #{endDate,jdbcType=TIMESTAMP}) nu
+		ORDER BY nu.node_id
+	</select>
+
+</mapper>
