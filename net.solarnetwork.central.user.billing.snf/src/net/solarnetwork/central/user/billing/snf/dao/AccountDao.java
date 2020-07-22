@@ -34,4 +34,13 @@ import net.solarnetwork.dao.GenericDao;
  */
 public interface AccountDao extends GenericDao<Account, UserLongPK> {
 
+	/**
+	 * Get an account for a given user ID.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the account for
+	 * @return the account, or {@literal null} if not available
+	 */
+	Account getForUser(Long userId);
+
 }

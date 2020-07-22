@@ -36,11 +36,37 @@ import net.solarnetwork.central.user.domain.UserLongPK;
 public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, UserLongPK>
 		implements AccountDao {
 
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		GetForUser("get-Account-for-user");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 */
 	public MyBatisAccountDao() {
 		super(Account.class, UserLongPK.class);
+	}
+
+	@Override
+	public Account getForUser(Long userId) {
+		return selectFirst(QueryName.GetForUser.getQueryName(), userId);
 	}
 
 }

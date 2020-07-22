@@ -80,6 +80,16 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
+	public void getByUser() {
+		insert();
+		Account entity = dao.getForUser(last.getUserId());
+
+		assertThat("ID", entity.getId(), equalTo(last.getId()));
+		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
+		assertThat("Account", entity.isSameAs(last), equalTo(true));
+	}
+
+	@Test
 	public void update() {
 		insert();
 		Account obj = dao.get(last.getId());
