@@ -36,7 +36,7 @@
 	<resultMap id="SnfInvoiceItem-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem">
 		<constructor>
 			<idArg column="bill_invoice_item_id" javaType="java.util.UUID"/>
-			<arg column="bill_invoice_item_inv_id" javaType="java.util.UUID"/>
+			<arg column="bill_invoice_item_inv_id" javaType="Long"/>
 			<arg column="bill_invoice_item_created" javaType="java.time.Instant"/>
 		</constructor>
 		<result property="itemType" column="bill_invoice_item_item_type" javaType="net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>

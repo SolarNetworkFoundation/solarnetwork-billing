@@ -45,7 +45,6 @@ import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
-import net.solarnetwork.central.user.domain.UserUuidPK;
 
 /**
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
@@ -71,8 +70,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SnfBillingSystem(SnfInvoiceDao invoiceDao,
-			MessageSource messageSource) {
+	public SnfBillingSystem(SnfInvoiceDao invoiceDao, MessageSource messageSource) {
 		super();
 		if ( invoiceDao == null ) {
 			throw new IllegalArgumentException("The invoiceDao argument must be provided.");
@@ -109,7 +107,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
-		final UserUuidPK id = new UserUuidPK(userId, UUID.fromString(invoiceId));
+		final UserLongPK id = new UserLongPK(userId, Long.valueOf(invoiceId));
 		final SnfInvoice invoice = invoiceDao.get(id);
 		if ( invoice == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);

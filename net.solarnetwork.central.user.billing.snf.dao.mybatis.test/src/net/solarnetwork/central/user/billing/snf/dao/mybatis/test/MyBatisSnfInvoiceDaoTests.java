@@ -26,6 +26,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.F
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -45,7 +46,7 @@ import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
-import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link MyBatisSnfInvoiceDao} class.
@@ -82,14 +83,14 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void insert() {
 		Address address = addressDao.get(addressDao.save(createTestAddress()));
 		Account account = accountDao.get(accountDao.save(createTestAccount(address)));
-		SnfInvoice entity = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
-				account.getId().getId(), Instant.ofEpochMilli(System.currentTimeMillis()));
+		SnfInvoice entity = new SnfInvoice(account.getId().getId(), account.getUserId(),
+				Instant.ofEpochMilli(System.currentTimeMillis()));
 		entity.setAddress(address);
 		entity.setCurrencyCode("NZD");
 		entity.setStartDate(LocalDate.of(2019, 12, 1));
 		entity.setEndDate(LocalDate.of(2020, 1, 1));
-		UserUuidPK pk = dao.save(entity);
-		assertThat("PK preserved", pk, equalTo(entity.getId()));
+		UserLongPK pk = dao.save(entity);
+		assertThat("PK created", pk.getId(), notNullValue());
 		last = entity;
 	}
 

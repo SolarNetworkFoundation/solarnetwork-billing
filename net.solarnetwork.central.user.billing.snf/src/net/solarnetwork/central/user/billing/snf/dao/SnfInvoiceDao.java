@@ -23,7 +23,9 @@
 package net.solarnetwork.central.user.billing.snf.dao;
 
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
-import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 
 /**
@@ -32,6 +34,7 @@ import net.solarnetwork.dao.GenericDao;
  * @author matt
  * @version 1.0
  */
-public interface SnfInvoiceDao extends GenericDao<SnfInvoice, UserUuidPK> {
+public interface SnfInvoiceDao extends GenericDao<SnfInvoice, UserLongPK>,
+		FilterableDao<SnfInvoice, UserLongPK, SnfInvoiceFilter> {
 
 }

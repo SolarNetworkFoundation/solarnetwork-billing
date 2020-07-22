@@ -55,7 +55,7 @@ public class SnfInvoiceItemTests {
 		usage.put("unitType", "foo");
 		usage.put("amount", "12345");
 		usage.put("cost", "123.45");
-		SnfInvoiceItem item = newItem(randomUUID(), Recurring, ONE, ONE, now(),
+		SnfInvoiceItem item = newItem(randomUUID().getMostSignificantBits(), Recurring, ONE, ONE, now(),
 				singletonMap(META_USAGE, usage));
 
 		// WHEN
@@ -71,7 +71,7 @@ public class SnfInvoiceItemTests {
 	@Test
 	public void usageMetadata_missing() {
 		// GIVEN
-		SnfInvoiceItem item = newItem(randomUUID(), Recurring, ONE, ONE, now(),
+		SnfInvoiceItem item = newItem(randomUUID().getMostSignificantBits(), Recurring, ONE, ONE, now(),
 				singletonMap("foo", "bar"));
 
 		// WHEN

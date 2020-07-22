@@ -22,10 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import java.util.List;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
-import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link SnfInvoiceDao}.
@@ -33,14 +38,43 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
  * @author matt
  * @version 1.0
  */
-public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoice, UserUuidPK>
+public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoice, UserLongPK>
 		implements SnfInvoiceDao {
+
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		FindFiltered("find-SnfInvoice-for-filter");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
 
 	/**
 	 * Constructor.
 	 */
 	public MyBatisSnfInvoiceDao() {
-		super(SnfInvoice.class, UserUuidPK.class);
+		super(SnfInvoice.class, UserLongPK.class);
+	}
+
+	@Override
+	public FilterResults<SnfInvoice, UserLongPK> findFiltered(SnfInvoiceFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
+		List<SnfInvoice> results = selectList(QueryName.FindFiltered.getQueryName(), filter, offset,
+				max);
+		return new BasicFilterResults<>(results, null, offset, results.size());
 	}
 
 }

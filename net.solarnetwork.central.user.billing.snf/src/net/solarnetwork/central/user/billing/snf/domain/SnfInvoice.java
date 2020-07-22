@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
-import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -45,8 +45,8 @@ import net.solarnetwork.domain.Differentiable;
  * @author matt
  * @version 1.0
  */
-public class SnfInvoice extends BasicEntity<UserUuidPK>
-		implements UserRelatedEntity<UserUuidPK>, Differentiable<SnfInvoice> {
+public class SnfInvoice extends BasicEntity<UserLongPK>
+		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
 
 	private final Long accountId;
 	private Address address;
@@ -62,7 +62,7 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 	 *        the account ID
 	 */
 	public SnfInvoice(Long accountId) {
-		super(new UserUuidPK(), Instant.now());
+		super(new UserLongPK(), Instant.now());
 		this.accountId = accountId;
 	}
 
@@ -76,7 +76,7 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 	 * @param created
 	 *        the creation date
 	 */
-	public SnfInvoice(UserUuidPK id, Long accountId, Instant created) {
+	public SnfInvoice(UserLongPK id, Long accountId, Instant created) {
 		super(id, created);
 		this.accountId = accountId;
 	}
@@ -92,7 +92,7 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 	 *        the creation date
 	 */
 	public SnfInvoice(Long accountId, Long userId, Instant created) {
-		this(new UserUuidPK(userId, null), accountId, created);
+		this(new UserLongPK(userId, null), accountId, created);
 	}
 
 	/**
@@ -107,8 +107,8 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 	 * @param created
 	 *        the creation date
 	 */
-	public SnfInvoice(UUID id, Long userId, Long accountId, Instant created) {
-		this(new UserUuidPK(userId, id), accountId, created);
+	public SnfInvoice(Long id, Long userId, Long accountId, Instant created) {
+		this(new UserLongPK(userId, id), accountId, created);
 	}
 
 	/**
@@ -131,13 +131,13 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 
 	@Override
 	public boolean hasId() {
-		UserUuidPK id = getId();
+		UserLongPK id = getId();
 		return (id != null && id.getId() != null && id.getUserId() != null);
 	}
 
 	@Override
 	public Long getUserId() {
-		final UserUuidPK id = getId();
+		final UserLongPK id = getId();
 		return id != null ? id.getUserId() : null;
 	}
 
@@ -148,7 +148,7 @@ public class SnfInvoice extends BasicEntity<UserUuidPK>
 	 *        the user ID
 	 */
 	public void setUserId(Long userId) {
-		final UserUuidPK id = getId();
+		final UserLongPK id = getId();
 		if ( id != null ) {
 			id.setUserId(userId);
 		}
