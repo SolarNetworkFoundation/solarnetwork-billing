@@ -22,6 +22,7 @@
 
 	<!-- Service references -->
 	
+	<reference id="accountDao" interface="net.solarnetwork.central.user.billing.snf.dao.AccountDao"/>
 	<reference id="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 
 	<reference id="transactionManager" filter="(db=central)"
@@ -32,6 +33,7 @@
 
 	<!-- Support -->
 	<bean id="billingSystem" class="net.solarnetwork.central.user.billing.snf.SnfBillingSystem">
+		<argument ref="accountDao"/>
 		<argument ref="invoiceDao"/>
 		<argument>
 			<bean class="org.springframework.context.support.ResourceBundleMessageSource">

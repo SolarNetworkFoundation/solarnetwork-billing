@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -46,7 +47,9 @@ import org.junit.Test;
 import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
+import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
+import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -61,6 +64,7 @@ import net.solarnetwork.dao.BasicFilterResults;
  */
 public class SnfInvoicingSystemTests {
 
+	private AccountDao accountDao;
 	private SnfInvoiceDao invoiceDao;
 	private ResourceBundleMessageSource messageSource;
 	private SnfInvoicingSystem system;
@@ -71,11 +75,12 @@ public class SnfInvoicingSystemTests {
 
 	@Before
 	public void setup() {
+		accountDao = EasyMock.createMock(AccountDao.class);
 		invoiceDao = EasyMock.createMock(SnfInvoiceDao.class);
 		messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasename(SnfBillingSystem.class.getName());
 
-		system = new SnfBillingSystem(invoiceDao, messageSource);
+		system = new SnfBillingSystem(accountDao, invoiceDao, messageSource);
 
 		userId = UUID.randomUUID().getMostSignificantBits();
 		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)
@@ -131,6 +136,35 @@ public class SnfInvoicingSystemTests {
 		assertThat("Invoice returned from DAO.", invoice, sameInstance(inv));
 		SnfInvoiceFilter filter = filterCaptor.getValue();
 		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
+	}
+
+	@Test
+	public void accountForUser_none() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+		expect(accountDao.getForUser(userId)).andReturn(null);
+
+		// WHEN
+		replayAll();
+		Account result = system.accountForUser(userId);
+
+		// THEN
+		assertThat("Account not found.", result, nullValue());
+	}
+
+	@Test
+	public void accountForUser_found() {
+		// GIVEN
+		final Long userId = randomUUID().getMostSignificantBits();
+		final Account account = new Account(userId, Instant.now());
+		expect(accountDao.getForUser(userId)).andReturn(account);
+
+		// WHEN
+		replayAll();
+		Account result = system.accountForUser(userId);
+
+		// THEN
+		assertThat("DAO result returned.", account, sameInstance(account));
 	}
 
 	@Test

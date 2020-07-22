@@ -41,6 +41,7 @@ import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -59,12 +60,15 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
+	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
 	private final MessageSource messageSource;
 
 	/**
 	 * Constructor.
 	 * 
+	 * @param accountDao
+	 *        the account DAO
 	 * @param invoiceDao
 	 *        the invoice DAO
 	 * @param messageSource
@@ -72,8 +76,13 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public SnfBillingSystem(SnfInvoiceDao invoiceDao, MessageSource messageSource) {
+	public SnfBillingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
+			MessageSource messageSource) {
 		super();
+		if ( accountDao == null ) {
+			throw new IllegalArgumentException("The accountDao argument must be provided.");
+		}
+		this.accountDao = accountDao;
 		if ( invoiceDao == null ) {
 			throw new IllegalArgumentException("The invoiceDao argument must be provided.");
 		}
@@ -128,8 +137,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
 	public Account accountForUser(Long userId) {
-		// TODO Auto-generated method stub
-		return null;
+		return accountDao.getForUser(userId);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
