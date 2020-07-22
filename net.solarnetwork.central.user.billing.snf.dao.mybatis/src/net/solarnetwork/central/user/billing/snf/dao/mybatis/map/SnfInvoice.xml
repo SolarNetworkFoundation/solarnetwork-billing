@@ -111,9 +111,9 @@
 						<choose>
 							<when test="sorts != null and sorts.size &gt; 0">
 								 <foreach collection="sorts" item="item" separator=",">
-									<if test="item.sortKey == &quot;account&quot;">inv1.acct_id</if>
-									<if test="item.sortKey == &quot;date&quot;">inv1.date_start</if>
-									<if test="item.sortKey == &quot;id&quot;">inv1.id</if>
+									<if test="item.sortKey == &quot;ACCOUNT&quot;">inv1.acct_id</if>
+									<if test="item.sortKey == &quot;DATE&quot;">inv1.date_start</if>
+									<if test="item.sortKey == &quot;ID&quot;">inv1.id</if>
 									<if test="item.descending">DESC</if>
 								</foreach>
 							</when>
@@ -144,9 +144,9 @@
 		<choose>
 			<when test="sorts != null and sorts.size &gt; 0">
 				 <foreach collection="sorts" item="item" separator=",">
-					<if test="item.sortKey == &quot;account&quot;">bill_invoice_acct_id</if>
-					<if test="item.sortKey == &quot;date&quot;">bill_invoice_date_start</if>
-					<if test="item.sortKey == &quot;id&quot;">bill_invoice_id</if>
+					<if test="item.sortKey == &quot;ACCOUNT&quot;">bill_invoice_acct_id</if>
+					<if test="item.sortKey == &quot;DATE&quot;">bill_invoice_date_start</if>
+					<if test="item.sortKey == &quot;ID&quot;">bill_invoice_id</if>
 					<if test="item.descending">DESC</if>
 				</foreach>
 			</when>

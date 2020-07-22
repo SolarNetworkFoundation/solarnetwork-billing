@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
+import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceDao;
@@ -306,6 +307,36 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 						equalTo(true));
 			}
 		}
+	}
+
+	@Test
+	public void findLatestAccount() {
+		// GIVEN
+		insert();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		final List<SnfInvoice> expectedInvoices = Stream
+				.concat(Collections.singleton(last).stream(), others.stream())
+				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Returned result page count", result.getReturnedResultCount(), equalTo(1));
+		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+
+		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+		assertThat("Returned page results", invoices, hasSize(1));
+		SnfInvoice invoice = invoices.get(0);
+		SnfInvoice expected = expectedInvoices.get(0);
+		assertThat("Invoice returned in order", invoice, equalTo(expected));
+		assertThat("Invoice data preserved", invoice.isSameAs(expected), equalTo(true));
 	}
 
 }
