@@ -72,9 +72,20 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 	@Override
 	public FilterResults<SnfInvoice, UserLongPK> findFiltered(SnfInvoiceFilter filter,
 			List<SortDescriptor> sorts, Integer offset, Integer max) {
-		List<SnfInvoice> results = selectList(QueryName.FindFiltered.getQueryName(), filter, offset,
-				max);
-		return new BasicFilterResults<>(results, null, offset, results.size());
+		if ( offset != null || max != null || sorts != null ) {
+			filter = filter.clone();
+			filter.setSorts(sorts);
+			filter.setMax(max);
+			if ( offset == null ) {
+				// force offset to 0 if implied
+				filter.setOffset(0);
+			} else {
+				filter.setOffset(offset);
+			}
+		}
+		List<SnfInvoice> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null, null);
+		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
+				results.size());
 	}
 
 }

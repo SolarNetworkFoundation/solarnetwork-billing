@@ -25,19 +25,25 @@ package net.solarnetwork.central.user.billing.snf.domain.test;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.lessThan;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Test cases for the {@link SnfInvoice} class.
@@ -192,6 +198,58 @@ public class SnfInvoiceTests {
 		// THEN
 		assertThat("Entities have sameness", inv1.isSameAs(inv2), equalTo(true));
 		assertThat("Entities do not differ", inv1.differsFrom(inv2), equalTo(false));
+	}
+
+	@Test
+	public void sortByDate() {
+		// GIVEN
+		List<SnfInvoice> invoices = new ArrayList<>(5);
+		for ( int i = 0; i < 10; i++ ) {
+			SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(),
+					randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
+					Instant.now());
+			inv.setStartDate(LocalDate.of(2020 + ((int) (Math.random() * 10) - 5),
+					((int) (Math.random() * 11 + 1)), 1));
+			invoices.add(inv);
+		}
+
+		// WHEN
+		Collections.sort(invoices, SnfInvoice.SORT_BY_DATE);
+
+		// THEN
+		LocalDate prev = null;
+		for ( SnfInvoice inv : invoices ) {
+			if ( prev != null ) {
+				assertThat("Invoices sorted in asending order by date",
+						inv.getStartDate().isBefore(prev), equalTo(false));
+			}
+			prev = inv.getStartDate();
+		}
+	}
+
+	@Test
+	public void sortByDate_thenId() {
+		// GIVEN
+		List<SnfInvoice> invoices = new ArrayList<>(5);
+		for ( int i = 0; i < 10; i++ ) {
+			SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(), 1L, 2L,
+					Instant.now());
+			inv.setStartDate(LocalDate.of(2020, 1, 1)); // all on same user, account, and date
+			invoices.add(inv);
+		}
+
+		// WHEN
+		Collections.sort(invoices, SnfInvoice.SORT_BY_DATE);
+
+		// THEN
+		UserLongPK prev = null;
+		for ( SnfInvoice inv : invoices ) {
+			if ( prev != null ) {
+				assertThat("Invoices sorted in asending order by ID for equal dates",
+						inv.getId().compareTo(prev), not(lessThan(0)));
+			}
+			prev = inv.getId();
+		}
 	}
 
 }

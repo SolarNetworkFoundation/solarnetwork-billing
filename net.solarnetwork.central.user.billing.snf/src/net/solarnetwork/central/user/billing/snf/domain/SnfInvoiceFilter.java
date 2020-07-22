@@ -38,6 +38,24 @@ public class SnfInvoiceFilter extends SimplePagination {
 	private LocalDate endDate;
 
 	/**
+	 * Create a new filter with a user ID.
+	 * 
+	 * @param userId
+	 *        the user ID to set
+	 * @return the filter, never {@literal null}
+	 */
+	public static SnfInvoiceFilter forUser(Long userId) {
+		SnfInvoiceFilter f = new SnfInvoiceFilter();
+		f.setUserId(userId);
+		return f;
+	}
+
+	@Override
+	public SnfInvoiceFilter clone() {
+		return (SnfInvoiceFilter) super.clone();
+	}
+
+	/**
 	 * Get the user ID.
 	 * 
 	 * @return the user ID

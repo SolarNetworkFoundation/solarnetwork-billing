@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -48,12 +49,34 @@ import net.solarnetwork.domain.Differentiable;
 public class SnfInvoice extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
 
+	/**
+	 * Comparator that sorts {@link SnfInvoice} objects by {@code startDate} in
+	 * ascending order.
+	 */
+	public static final Comparator<SnfInvoice> SORT_BY_DATE = new SnfInvoiceStartDateComparator();
+
 	private final Long accountId;
 	private Address address;
 	private LocalDate startDate;
 	private LocalDate endDate;
 	private String currencyCode;
 	private Set<SnfInvoiceItem> items;
+
+	/**
+	 * Compare {@link SnfInvoice} instances by start date in ascending order.
+	 */
+	public static final class SnfInvoiceStartDateComparator implements Comparator<SnfInvoice> {
+
+		@Override
+		public int compare(SnfInvoice o1, SnfInvoice o2) {
+			int result = o1.startDate.compareTo(o2.startDate);
+			if ( result == 0 ) {
+				result = o1.getId().compareTo(o2.getId());
+			}
+			return result;
+		}
+
+	}
 
 	/**
 	 * Default constructor.
@@ -109,6 +132,22 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public SnfInvoice(Long id, Long userId, Long accountId, Instant created) {
 		this(new UserLongPK(userId, id), accountId, created);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("SnfInvoice{");
+		builder.append("id=");
+		builder.append(getId() != null ? getId().getId() : null);
+		builder.append(", accountId=");
+		builder.append(accountId);
+		builder.append(", startDate=");
+		builder.append(startDate);
+		builder.append(", itemCount=");
+		builder.append(getItemCount());
+		builder.append("}");
+		return builder.toString();
 	}
 
 	/**
@@ -198,7 +237,10 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		}
 		Map<UUID, SnfInvoiceItem> otherItems = other.itemMap();
 		for ( SnfInvoiceItem item : items ) {
-			otherItems.remove(item.getId());
+			SnfInvoiceItem otherItem = otherItems.remove(item.getId());
+			if ( item.differsFrom(otherItem) ) {
+				return false;
+			}
 		}
 		return otherItems.isEmpty();
 	}

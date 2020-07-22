@@ -22,20 +22,28 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
@@ -45,8 +53,10 @@ import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceIt
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisSnfInvoiceDao} class.
@@ -106,6 +116,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 	@Test
 	public void getByPK_withItems() {
+		// GIVEN
 		insert();
 		final SnfInvoice invoice = dao.get(last.getId());
 
@@ -118,7 +129,10 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			itemDao.save(item);
 		}
 
+		// WHEN
 		final SnfInvoice entity = dao.get(invoice.getId());
+
+		// THEN
 		assertThat("Items returned", entity.getItems(), hasSize(3));
 		assertThat("Items count matches returned size", entity.getItemCount(), equalTo(3));
 		Map<UUID, SnfInvoiceItem> itemMap = entity.itemMap();
@@ -127,5 +141,100 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat("Returned item same as saved", other.isSameAs(item), equalTo(true));
 		}
 		assertThat("Expected items returned", itemMap.keySet(), hasSize(0));
+	}
+
+	private List<SnfInvoice> createMonthlyInvoices(Account account, Address address, String currencyCode,
+			LocalDate start, int count) {
+		List<SnfInvoice> result = new ArrayList<>(count);
+		for ( int i = 0; i < count; i++ ) {
+			SnfInvoice invoice = new SnfInvoice(account.getId().getId(), account.getUserId(),
+					Instant.ofEpochMilli(System.currentTimeMillis()));
+			invoice.setAddress(address);
+			invoice.setCurrencyCode(currencyCode);
+			invoice.setStartDate(start.plusMonths(i));
+			invoice.setEndDate(start.plusMonths(i + 1));
+			UserLongPK invoiceId = dao.save(invoice);
+
+			SnfInvoiceItem item1 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("1.23"));
+			item1.setMetadata(Collections.singletonMap("just", "testing"));
+			SnfInvoiceItem item2 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("2.34"));
+			SnfInvoiceItem item3 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("3.45"));
+			for ( SnfInvoiceItem item : asList(item1, item2, item3) ) {
+				itemDao.save(item);
+			}
+
+			result.add(dao.get(invoiceId));
+		}
+		return result;
+	}
+
+	@Test
+	public void findLatest_sortDefault() {
+		// GIVEN
+		insert();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
+		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, null, null);
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(4));
+		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+
+		List<SnfInvoice> expectedInvoices = Stream
+				.concat(Collections.singleton(last).stream(), others.stream())
+				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
+
+		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+		assertThat("Returned results", invoices, hasSize(4));
+		for ( int i = 0; i < 4; i++ ) {
+			SnfInvoice invoice = invoices.get(i);
+			SnfInvoice expected = expectedInvoices.get(i);
+			assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
+			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+					equalTo(true));
+		}
+	}
+
+	@Test
+	public void findLatest_sortDefault_paged() {
+		// GIVEN
+		insert();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		final List<SnfInvoice> expectedInvoices = Stream
+				.concat(Collections.singleton(last).stream(), others.stream())
+				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forUser(last.getUserId());
+
+		for ( int offset = 0; offset < 6; offset += 2 ) {
+			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, offset,
+					2);
+
+			// THEN
+			final int expectedCount = (offset < 4 ? 2 : 0);
+			assertThat("Result returned", result, notNullValue());
+			assertThat("Returned result page count", result.getReturnedResultCount(),
+					equalTo(expectedCount));
+			assertThat("Total results unknown", result.getTotalResults(), nullValue());
+
+			List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+			assertThat("Returned page results", invoices, hasSize(expectedCount));
+			for ( int i = 0; i < expectedCount; i++ ) {
+				SnfInvoice invoice = invoices.get(i);
+				SnfInvoice expected = expectedInvoices.get(offset + i);
+				assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
+				assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+						equalTo(true));
+			}
+		}
 	}
 }

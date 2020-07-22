@@ -168,6 +168,25 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		this.invoiceId = invoiceId;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("SnfInvoiceItem{invoiceId=");
+		builder.append(invoiceId);
+		builder.append(", id=");
+		builder.append(getId());
+		builder.append(", itemType=");
+		builder.append(itemType);
+		builder.append(", amount=");
+		builder.append(amount);
+		builder.append(", quantity=");
+		builder.append(quantity);
+		builder.append(", metadata=");
+		builder.append(metadata);
+		builder.append("}");
+		return builder.toString();
+	}
+
 	/**
 	 * Get a billing {@link InvoiceItem} from this entity.
 	 * 
