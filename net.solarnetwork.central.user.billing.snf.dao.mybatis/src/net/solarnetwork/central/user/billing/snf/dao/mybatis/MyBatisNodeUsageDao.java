@@ -22,13 +22,18 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import static java.util.stream.Collectors.toList;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
+import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTier;
+import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTiers;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTier;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTiers;
 
 /**
  * MyBatis implementation of {@link NodeUsageDao}.
@@ -41,6 +46,8 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 
 	/** Query name enumeration. */
 	public enum QueryName {
+
+		FindEffectiveUsageTierForDate("find-EffectiveNodeUsageTier-for-date"),
 
 		/** Find all available usage for a given user and month. */
 		FindMonthlyUsageForUser("find-NodeUsage-for-user-month");
@@ -66,6 +73,20 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	 */
 	public MyBatisNodeUsageDao() {
 		super(NodeUsage.class, Long.class);
+	}
+
+	@Override
+	public EffectiveNodeUsageTiers effectiveNodeUsageTiers(LocalDate date) {
+		if ( date == null ) {
+			date = LocalDate.now();
+		}
+		List<EffectiveNodeUsageTier> results = selectList(
+				QueryName.FindEffectiveUsageTierForDate.getQueryName(), date, null, null);
+		if ( results == null ) {
+			return null;
+		}
+		List<NodeUsageTier> tierList = results.stream().map(e -> e.getTier()).collect(toList());
+		return new EffectiveNodeUsageTiers(results.get(0).getDate(), new NodeUsageTiers(tierList));
 	}
 
 	@Override

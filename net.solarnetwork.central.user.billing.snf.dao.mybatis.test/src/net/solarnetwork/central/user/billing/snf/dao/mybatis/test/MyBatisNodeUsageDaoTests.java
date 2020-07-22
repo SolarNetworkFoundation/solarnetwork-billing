@@ -22,6 +22,8 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import java.sql.Timestamp;
@@ -33,7 +35,11 @@ import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
+import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTiers;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsageCost;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTier;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTiers;
 
 /**
  * Test cases for the {@link MyBatisNodeUsageDao}.
@@ -70,6 +76,44 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		setupTestNode(nodeId, locId);
 		setupTestUserNode(userId, nodeId);
 		return nodeId;
+	}
+
+	@Test
+	public void tiersForDate_wayBack() {
+		// GIVEN
+		final LocalDate date = LocalDate.of(2010, 1, 1);
+
+		// WHEN
+		EffectiveNodeUsageTiers result = dao.effectiveNodeUsageTiers(date);
+
+		assertThat("Effective tiers returned", result, notNullValue());
+		assertThat("Effective date", result.getDate(), equalTo(LocalDate.of(2008, 1, 1)));
+		NodeUsageTiers tiers = result.getTiers();
+		assertThat("Single tier available", tiers.getTiers(), hasSize(1));
+		assertThat("Tier 1", tiers.getTiers().get(0),
+				equalTo(new NodeUsageTier(0, new NodeUsageCost("0.000009", "0.000002", "0.000000006"))));
+	}
+
+	@Test
+	public void tiersForDate_moreRecent() {
+		// GIVEN
+		final LocalDate date = LocalDate.of(2020, 7, 1);
+
+		// WHEN
+		EffectiveNodeUsageTiers result = dao.effectiveNodeUsageTiers(date);
+
+		assertThat("Effective tiers returned", result, notNullValue());
+		assertThat("Effective date", result.getDate(), equalTo(LocalDate.of(2020, 6, 1)));
+		NodeUsageTiers tiers = result.getTiers();
+		assertThat("4 tiers available", tiers.getTiers(), hasSize(4));
+		assertThat("Tier 1", tiers.getTiers().get(0),
+				equalTo(new NodeUsageTier(0, new NodeUsageCost("0.000009", "0.000002", "0.0000004"))));
+		assertThat("Tier 2", tiers.getTiers().get(1), equalTo(
+				new NodeUsageTier(50000, new NodeUsageCost("0.000006", "0.000001", "0.0000002"))));
+		assertThat("Tier 3", tiers.getTiers().get(2), equalTo(
+				new NodeUsageTier(400000, new NodeUsageCost("0.000004", "0.0000005", "0.00000005"))));
+		assertThat("Tier 4", tiers.getTiers().get(3), equalTo(
+				new NodeUsageTier(1000000, new NodeUsageCost("0.000002", "0.0000002", "0.000000006"))));
 	}
 
 	@Test

@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.BasicLongEntity;
 
 /**
@@ -43,11 +44,9 @@ import net.solarnetwork.dao.BasicLongEntity;
 public class NodeUsage extends BasicLongEntity {
 
 	private BigInteger datumPropertiesIn;
-	private BigDecimal datumPropertiesInCost;
 	private BigInteger datumDaysStored;
-	private BigDecimal datumDaysStoredCost;
 	private BigInteger datumOut;
-	private BigDecimal datumOutCost;
+	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
 
 	/**
@@ -70,6 +69,7 @@ public class NodeUsage extends BasicLongEntity {
 	 */
 	public NodeUsage(Long id, Instant created) {
 		super(id, created);
+		this.costs = new NodeUsageCost();
 	}
 
 	@Override
@@ -80,20 +80,30 @@ public class NodeUsage extends BasicLongEntity {
 		builder.append(getId());
 		builder.append(", datumPropertiesIn=");
 		builder.append(datumPropertiesIn);
-		builder.append(", datumPropertiesInCost=");
-		builder.append(datumPropertiesInCost);
 		builder.append(", datumDaysStored=");
 		builder.append(datumDaysStored);
-		builder.append(", datumDaysStoredCost=");
-		builder.append(datumDaysStoredCost);
 		builder.append(", datumOut=");
 		builder.append(datumOut);
+		builder.append(", datumPropertiesInCost=");
+		builder.append(costs.getDatumPropertiesInCost());
+		builder.append(", datumDaysStoredCost=");
+		builder.append(costs.getDatumDaysStoredCost());
 		builder.append(", datumOutCost=");
-		builder.append(datumOutCost);
+		builder.append(costs.getDatumOutCost());
 		builder.append(", totalCost=");
 		builder.append(totalCost);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get the node usage costs.
+	 * 
+	 * @return the costs, never {@literal null}
+	 */
+	@JsonIgnore
+	public NodeUsageCost getCosts() {
+		return costs;
 	}
 
 	/**
@@ -121,7 +131,7 @@ public class NodeUsage extends BasicLongEntity {
 	 * @return the cost
 	 */
 	public BigDecimal getDatumPropertiesInCost() {
-		return datumPropertiesInCost;
+		return costs.getDatumPropertiesInCost();
 	}
 
 	/**
@@ -131,7 +141,7 @@ public class NodeUsage extends BasicLongEntity {
 	 *        the cost to set
 	 */
 	public void setDatumPropertiesInCost(BigDecimal datumPropertiesInCost) {
-		this.datumPropertiesInCost = datumPropertiesInCost;
+		costs.setDatumPropertiesInCost(datumPropertiesInCost);
 	}
 
 	/**
@@ -159,7 +169,7 @@ public class NodeUsage extends BasicLongEntity {
 	 * @return the cost
 	 */
 	public BigDecimal getDatumDaysStoredCost() {
-		return datumDaysStoredCost;
+		return costs.getDatumDaysStoredCost();
 	}
 
 	/**
@@ -169,7 +179,7 @@ public class NodeUsage extends BasicLongEntity {
 	 *        the cost to set
 	 */
 	public void setDatumDaysStoredCost(BigDecimal datumDaysStoredCost) {
-		this.datumDaysStoredCost = datumDaysStoredCost;
+		costs.setDatumDaysStoredCost(datumDaysStoredCost);
 	}
 
 	/**
@@ -197,7 +207,7 @@ public class NodeUsage extends BasicLongEntity {
 	 * @return the cost
 	 */
 	public BigDecimal getDatumOutCost() {
-		return datumOutCost;
+		return costs.getDatumOutCost();
 	}
 
 	/**
@@ -207,7 +217,7 @@ public class NodeUsage extends BasicLongEntity {
 	 *        the cost to set
 	 */
 	public void setDatumOutCost(BigDecimal datumOutCost) {
-		this.datumOutCost = datumOutCost;
+		costs.setDatumOutCost(datumOutCost);
 	}
 
 	/**

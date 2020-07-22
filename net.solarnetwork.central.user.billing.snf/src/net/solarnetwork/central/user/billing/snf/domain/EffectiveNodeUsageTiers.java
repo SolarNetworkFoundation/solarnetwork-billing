@@ -1,5 +1,5 @@
 /* ==================================================================
- * NodeUsageDao.java - 22/07/2020 10:01:17 AM
+ * EffectiveNodeUsageTiers.java - 22/07/2020 3:18:30 PM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -20,39 +20,59 @@
  * ==================================================================
  */
 
-package net.solarnetwork.central.user.billing.snf.dao;
+package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.time.LocalDate;
-import java.util.List;
-import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTiers;
-import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 
 /**
- * DAO API for billing usage data.
+ * A set of tiers effective at a specific date.
  * 
  * @author matt
  * @version 1.0
  */
-public interface NodeUsageDao {
+public class EffectiveNodeUsageTiers {
+
+	private final LocalDate date;
+	private final NodeUsageTiers tiers;
 
 	/**
-	 * Get the node usage tiers effective at a specific date.
+	 * Constructor.
 	 * 
 	 * @param date
-	 *        the date to get the effective node usage tiers for
-	 * @return the tiers, or {@literal null} if no tiers are available
+	 *        the effective date
+	 * @param tiers
+	 *        the associated tiers
+	 * @throws IllegalArgumentException
+	 *         if any argument is {@literal null}
 	 */
-	EffectiveNodeUsageTiers effectiveNodeUsageTiers(LocalDate date);
+	public EffectiveNodeUsageTiers(LocalDate date, NodeUsageTiers tiers) {
+		super();
+		if ( date == null ) {
+			throw new IllegalArgumentException("The date argument must be provided.");
+		}
+		this.date = date;
+		if ( tiers == null ) {
+			throw new IllegalArgumentException("The tiers argument must be provided.");
+		}
+		this.tiers = tiers;
+	}
 
 	/**
-	 * Find all node usage for a given user and time range.
+	 * Get the effective date.
 	 * 
-	 * @param userId
-	 *        the user to get usage for
-	 * @param month
-	 *        the month to get usage for
-	 * @return the matching usage, never {@literal null}
+	 * @return the date
 	 */
-	List<NodeUsage> findMonthlyUsageForUser(Long userId, LocalDate month);
+	public LocalDate getDate() {
+		return date;
+	}
+
+	/**
+	 * Get the tiers.
+	 * 
+	 * @return the tiers
+	 */
+	public NodeUsageTiers getTiers() {
+		return tiers;
+	}
 
 }
