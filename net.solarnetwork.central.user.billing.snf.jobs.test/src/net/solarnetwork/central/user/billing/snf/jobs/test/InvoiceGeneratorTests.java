@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs.test;
 
+import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.UUID;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
@@ -74,14 +74,14 @@ public class InvoiceGeneratorTests {
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
 		addr.setCountry(country);
 		addr.setTimeZoneId(timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(UUID.randomUUID().getMostSignificantBits(), userId,
+		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
 		account.setLocale(locale);
 		account.setAddress(address);
@@ -99,8 +99,8 @@ public class InvoiceGeneratorTests {
 		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
 
 		// generate invoice for month ending on endDate
-		SnfInvoice generatedInvoice = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
-				account.getId().getId(), Instant.now());
+		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
+				account.getUserId(), account.getId().getId(), Instant.now());
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 
@@ -125,8 +125,8 @@ public class InvoiceGeneratorTests {
 		expect(accountDao.get(new UserLongPK(null, account.getId().getId()))).andReturn(account);
 
 		// generate invoice for month ending on endDate
-		SnfInvoice generatedInvoice = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
-				account.getId().getId(), Instant.now());
+		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
+				account.getUserId(), account.getId().getId(), Instant.now());
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 

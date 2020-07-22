@@ -169,7 +169,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
-	public void findLatest_sortDefault() {
+	public void filterForUser_sortDefault() {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
@@ -201,7 +201,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 	}
 
 	@Test
-	public void findLatest_sortDefault_paged() {
+	public void filterForUser_sortDefault_paged() {
 		// GIVEN
 		insert();
 		List<SnfInvoice> others = createMonthlyInvoices(
@@ -237,4 +237,75 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			}
 		}
 	}
+
+	@Test
+	public void filterForAccount_sortDefault() {
+		// GIVEN
+		insert();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, null, null);
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(4));
+		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+
+		List<SnfInvoice> expectedInvoices = Stream
+				.concat(Collections.singleton(last).stream(), others.stream())
+				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
+
+		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+		assertThat("Returned results", invoices, hasSize(4));
+		for ( int i = 0; i < 4; i++ ) {
+			SnfInvoice invoice = invoices.get(i);
+			SnfInvoice expected = expectedInvoices.get(i);
+			assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
+			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+					equalTo(true));
+		}
+	}
+
+	@Test
+	public void filterForAccount_sortDefault_paged() {
+		// GIVEN
+		insert();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		final List<SnfInvoice> expectedInvoices = Stream
+				.concat(Collections.singleton(last).stream(), others.stream())
+				.sorted(Collections.reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(Collectors.toList());
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+
+		for ( int offset = 0; offset < 6; offset += 2 ) {
+			final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter, null, offset,
+					2);
+
+			// THEN
+			final int expectedCount = (offset < 4 ? 2 : 0);
+			assertThat("Result returned", result, notNullValue());
+			assertThat("Returned result page count", result.getReturnedResultCount(),
+					equalTo(expectedCount));
+			assertThat("Total results unknown", result.getTotalResults(), nullValue());
+
+			List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+			assertThat("Returned page results", invoices, hasSize(expectedCount));
+			for ( int i = 0; i < expectedCount; i++ ) {
+				SnfInvoice invoice = invoices.get(i);
+				SnfInvoice expected = expectedInvoices.get(offset + i);
+				assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
+				assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+						equalTo(true));
+			}
+		}
+	}
+
 }

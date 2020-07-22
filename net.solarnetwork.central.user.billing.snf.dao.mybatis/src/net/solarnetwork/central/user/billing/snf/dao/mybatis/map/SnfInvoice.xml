@@ -90,10 +90,15 @@
 					AND inv.id = ANY(
 						SELECT inv1.id 
 						FROM solarbill.bill_invoice inv1
-						INNER JOIN solarbill.bill_account acct1 ON acct.id = inv1.acct_id
+						<if test="userId != null">
+							INNER JOIN solarbill.bill_account acct1 ON acct.id = inv1.acct_id
+						</if>
 						<where>
 							<if test="userId != null">
 								AND acct1.user_id = #{userId}
+							</if>
+							<if test="accountId != null">
+								AND inv1.acct_id = #{accountId}
 							</if>
 							<if test="startDate != null">
 								AND inv1.date_start &gt;= #{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}
@@ -106,6 +111,7 @@
 						<choose>
 							<when test="sorts != null and sorts.size &gt; 0">
 								 <foreach collection="sorts" item="item" separator=",">
+									<if test="item.sortKey == &quot;account&quot;">inv1.acct_id</if>
 									<if test="item.sortKey == &quot;date&quot;">inv1.date_start</if>
 									<if test="item.sortKey == &quot;id&quot;">inv1.id</if>
 									<if test="item.descending">DESC</if>
@@ -122,6 +128,9 @@
 					<if test="userId != null">
 						AND acct.user_id = #{userId}
 					</if>
+					<if test="accountId != null">
+						AND inv.acct_id = #{accountId}
+					</if>
 					<if test="startDate != null">
 						AND inv.date_start &gt;= #{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}
 					</if>
@@ -135,6 +144,7 @@
 		<choose>
 			<when test="sorts != null and sorts.size &gt; 0">
 				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;account&quot;">bill_invoice_acct_id</if>
 					<if test="item.sortKey == &quot;date&quot;">bill_invoice_date_start</if>
 					<if test="item.sortKey == &quot;id&quot;">bill_invoice_id</if>
 					<if test="item.descending">DESC</if>

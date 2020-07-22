@@ -34,6 +34,7 @@ import net.solarnetwork.domain.SimplePagination;
 public class SnfInvoiceFilter extends SimplePagination {
 
 	private Long userId;
+	private Long accountId;
 	private LocalDate startDate;
 	private LocalDate endDate;
 
@@ -47,6 +48,19 @@ public class SnfInvoiceFilter extends SimplePagination {
 	public static SnfInvoiceFilter forUser(Long userId) {
 		SnfInvoiceFilter f = new SnfInvoiceFilter();
 		f.setUserId(userId);
+		return f;
+	}
+
+	/**
+	 * Create a new filter with an account ID.
+	 * 
+	 * @param accountId
+	 *        the account ID to set
+	 * @return the filter, never {@literal null}
+	 */
+	public static SnfInvoiceFilter forAccount(Long accountId) {
+		SnfInvoiceFilter f = new SnfInvoiceFilter();
+		f.setAccountId(accountId);
 		return f;
 	}
 
@@ -72,6 +86,25 @@ public class SnfInvoiceFilter extends SimplePagination {
 	 */
 	public void setUserId(Long userId) {
 		this.userId = userId;
+	}
+
+	/**
+	 * Get the account ID.
+	 * 
+	 * @return the account ID
+	 */
+	public Long getAccountId() {
+		return accountId;
+	}
+
+	/**
+	 * Set the account ID.
+	 * 
+	 * @param accountId
+	 *        the account ID to set
+	 */
+	public void setAccountId(Long accountId) {
+		this.accountId = accountId;
 	}
 
 	/**

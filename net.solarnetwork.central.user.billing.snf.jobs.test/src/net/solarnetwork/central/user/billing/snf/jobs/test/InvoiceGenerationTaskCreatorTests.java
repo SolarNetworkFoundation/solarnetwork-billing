@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.jobs.test;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
@@ -37,7 +38,6 @@ import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.easymock.EasyMock;
@@ -96,14 +96,14 @@ public class InvoiceGenerationTaskCreatorTests {
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
-		final Address addr = new Address(UUID.randomUUID().getMostSignificantBits(), Instant.now());
+		final Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
 		addr.setCountry(country);
 		addr.setTimeZoneId(timeZoneId);
 		return addr;
 	}
 
 	private static Account createAccount(Long userId, String locale, Address address) {
-		final Account account = new Account(UUID.randomUUID().getMostSignificantBits(), userId,
+		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
 		account.setLocale(locale);
 		account.setAddress(address);
@@ -211,8 +211,9 @@ public class InvoiceGenerationTaskCreatorTests {
 		expect(invoicingSystem.accountForUser(TEST_USER_ID)).andReturn(account);
 
 		// get latest invoice for account, which is a few months behind
-		SnfInvoice lastInvoice = new SnfInvoice(UUID.randomUUID(), account.getUserId(),
-				account.getId().getId(), Instant.ofEpochMilli(System.currentTimeMillis()));
+		SnfInvoice lastInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
+				account.getUserId(), account.getId().getId(),
+				Instant.ofEpochMilli(System.currentTimeMillis()));
 		lastInvoice.setStartDate(LocalDate.of(2019, 9, 1));
 		lastInvoice.setEndDate(LocalDate.of(2019, 10, 1));
 		lastInvoice.setAddress(account.getAddress());
