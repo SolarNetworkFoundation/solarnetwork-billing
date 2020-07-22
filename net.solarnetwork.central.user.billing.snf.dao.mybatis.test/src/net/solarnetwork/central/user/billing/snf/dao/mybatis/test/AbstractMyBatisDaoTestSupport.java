@@ -22,8 +22,10 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.session.ExecutorType;
@@ -137,6 +139,54 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		account.setCurrencyCode("NZD");
 		account.setLocale("en_NZ");
 		return account;
+	}
+
+	protected void debugQuery(String query) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("Query ").append(query).append(":\n");
+		for ( Map<String, Object> row : jdbcTemplate.queryForList(query) ) {
+			buf.append(row).append("\n");
+		}
+		log.debug(buf.toString());
+	}
+
+	protected void debugRows(String table, String sort) {
+		StringBuilder buf = new StringBuilder();
+		buf.append("Table ").append(table).append(":\n");
+		for ( Map<String, Object> row : rows(table, sort) ) {
+			buf.append(row).append("\n");
+		}
+		log.debug(buf.toString());
+	}
+
+	protected List<Map<String, Object>> rows(String table) {
+		return rows(table, "id");
+	}
+
+	protected List<Map<String, Object>> rows(String table, String sort) {
+		StringBuilder buf = new StringBuilder("select * from ");
+		buf.append(table);
+		if ( sort != null ) {
+			buf.append(" order by ").append(sort);
+		}
+		return jdbcTemplate.queryForList(buf.toString());
+	}
+
+	protected void addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
+			long datumQueryCount, int datumCount, short datumHourlyCount, short datumDailyCount,
+			boolean monthPresent) {
+		jdbcTemplate.update("insert into solaragg.aud_datum_monthly "
+				+ "(ts_start,node_id,source_id,prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
+				+ "VALUES (?,?,?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
+				propCount, datumQueryCount, datumCount, datumHourlyCount, datumDailyCount, monthPresent);
+	}
+
+	protected void addAuditAccumulatingDatumDaily(Long nodeId, String sourceId, Instant date,
+			int datumCount, int datumHourlyCount, int datumDailyCount, int datumMonthlyCount) {
+		jdbcTemplate.update("insert into solaragg.aud_acc_datum_daily "
+				+ "(ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
+				+ "VALUES (?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
+				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
 	}
 
 }

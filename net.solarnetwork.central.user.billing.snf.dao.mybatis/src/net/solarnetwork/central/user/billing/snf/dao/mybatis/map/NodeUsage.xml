@@ -6,10 +6,10 @@
 		  nu.node_id 			AS node_usage_node_id
 		, nu.prop_in 			AS node_usage_prop_in
 		, nu.prop_in_cost 		AS node_usage_prop_in_cost
-		, nu.datum_stored 		AS node_usage_datum_stored
-		, nu.datum_stored_cost 	AS node_usage_datum_stored_cost
 		, nu.datum_out 			AS node_usage_datum_out
 		, nu.datum_out_cost 	AS node_usage_datum_out_cost
+		, nu.datum_stored 		AS node_usage_datum_stored
+		, nu.datum_stored_cost 	AS node_usage_datum_stored_cost
 		, nu.total_cost			AS node_usage_total_cost
 	</sql>
 
@@ -20,10 +20,10 @@
 		</constructor>
 		<result property="datumPropertiesIn" 		column="node_usage_prop_in"/>
 		<result property="datumPropertiesInCost"	column="node_usage_prop_in_cost"/>
-		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
-		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
 		<result property="datumOut"	 				column="node_usage_datum_out"/>
 		<result property="datumOutCost"				column="node_usage_datum_out_cost"/>
+		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
+		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
 		<result property="totalCost"				column="node_usage_total_cost"/>
 	</resultMap>
 
@@ -35,7 +35,8 @@
 			solarbill.billing_details(
 			      #{userId,jdbcType=BIGINT}
 				, #{startDate,jdbcType=TIMESTAMP}
-				, #{endDate,jdbcType=TIMESTAMP}) nu
+				, #{endDate,jdbcType=TIMESTAMP}
+				, #{startDate,jdbcType=TIMESTAMP}) nu
 		ORDER BY nu.node_id
 	</select>
 

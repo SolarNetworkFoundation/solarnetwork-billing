@@ -22,11 +22,13 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
-import java.sql.Timestamp;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -128,41 +130,121 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Results non-null but empty", results, hasSize(0));
 	}
 
-	private void addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
-			long datumQueryCount, long datumCount, long datumHourlyCount, long datumDailyCount,
-			boolean monthPresent) {
-		jdbcTemplate.update("insert into solaragg.aud_datum_monthly "
-				+ "(ts_start,node_id,source_id,prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
-				+ "VALUES (?,?,?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
-				propCount, datumQueryCount, datumCount, datumHourlyCount, datumDailyCount, monthPresent);
-	}
-
-	private void addAuditAccumulatingDatumDaily(Long nodeId, String sourceId, Instant date,
-			long datumCount, long datumHourlyCount, long datumDailyCount, long datumMonthlyCount) {
-		jdbcTemplate.update("insert into solaragg.aud_acc_datum_daily "
-				+ "(ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
-				+ "VALUES (?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
-				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
-	}
-
 	@Test
-	public void usageForUser_oneNodeOneSource() {
+	public void usageForUser_oneNodeOneSource_wayBack() {
 		// GIVEN
-		final LocalDate month = LocalDate.of(2020, 1, 1);
+		final LocalDate month = LocalDate.of(2010, 1, 1);
 		final String sourceId = "S1";
 
 		// add 10 days worth of audit data
-		for ( int dayOffset = 0; dayOffset < 10; dayOffset++ ) {
+		final int numDays = 10;
+		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
 			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
 			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000, 2000, 3000, 4000);
-			addAuditDatumMonthly(nodeId, sourceId, day, 100, 200, 300, 400, 500, true);
+			addAuditDatumMonthly(nodeId, sourceId, day, 100, 200, 300, (short) 400, (short) 500, true);
 		}
+
+		debugRows("solaragg.aud_acc_datum_daily", "ts_start");
+		debugQuery(format(
+				"select * from solarbill.billing_tier_details(%d, '2010-01-01'::timestamp, '2010-02-01'::timestamp, '2010-01-01'::date)",
+				userId));
 
 		// WHEN
 		List<NodeUsage> results = dao.findMonthlyUsageForUser(userId, month);
 
 		// THEN
 		assertThat("Results non-null with single result", results, hasSize(1));
+		NodeUsage usage = results.get(0);
+		assertThat("Properties in count aggregated", usage.getDatumPropertiesIn(),
+				equalTo(BigInteger.valueOf(100L * numDays)));
+		assertThat("Datum out count aggregated", usage.getDatumOut(),
+				equalTo(BigInteger.valueOf(200L * numDays)));
+		assertThat("Datum stored count aggregated", usage.getDatumDaysStored(),
+				equalTo(BigInteger.valueOf((1000L + 2000L + 3000L + 4000L) * numDays)));
+
+		// see {@link #tiersForDate_wayBack()}
+		EffectiveNodeUsageTiers tiers = dao.effectiveNodeUsageTiers(month);
+		NodeUsageCost cost = tiers.getTiers().getTiers().get(0).getCosts();
+
+		assertThat("Properties in cost", usage.getDatumPropertiesInCost(), equalTo(
+				new BigDecimal(usage.getDatumPropertiesIn()).multiply(cost.getDatumPropertiesInCost())));
+		assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
+				new BigDecimal(usage.getDatumOut()).multiply(cost.getDatumOutCost()).setScale(3)));
+		assertThat("Datum stored cost", usage.getDatumDaysStoredCost(), equalTo(
+				new BigDecimal(usage.getDatumDaysStored()).multiply(cost.getDatumDaysStoredCost())));
+	}
+
+	@Test
+	public void usageForUser_oneNodeOneSource_moreRecent() {
+		// GIVEN
+		final LocalDate month = LocalDate.of(2020, 7, 1);
+		final String sourceId = "S1";
+
+		// add 10 days worth of audit data
+		final int numDays = 10;
+		for ( int dayOffset = 0; dayOffset < numDays; dayOffset++ ) {
+			Instant day = month.plusDays(dayOffset).atStartOfDay(TEST_ZONE).toInstant();
+			addAuditAccumulatingDatumDaily(nodeId, sourceId, day, 1000000, 2000000, 3000000, 4000000);
+			addAuditDatumMonthly(nodeId, sourceId, day, 100000, 200000, 300000, (short) 400000,
+					(short) 500000, true);
+		}
+
+		debugRows("solaragg.aud_acc_datum_daily", "ts_start");
+		debugQuery(format(
+				"select * from solarbill.billing_tier_details(%d, '2020-07-01'::timestamp, '2020-08-01'::timestamp, '2020-07-01'::date)",
+				userId));
+
+		// WHEN
+		List<NodeUsage> results = dao.findMonthlyUsageForUser(userId, month);
+
+		// THEN
+		assertThat("Results non-null with single result", results, hasSize(1));
+		NodeUsage usage = results.get(0);
+		assertThat("Properties in count aggregated", usage.getDatumPropertiesIn(),
+				equalTo(BigInteger.valueOf(100000L * numDays)));
+		assertThat("Datum out count aggregated", usage.getDatumOut(),
+				equalTo(BigInteger.valueOf(200000L * numDays)));
+		assertThat("Datum stored count aggregated", usage.getDatumDaysStored(),
+				equalTo(BigInteger.valueOf((1000000L + 2000000L + 3000000L + 4000000L) * numDays)));
+
+		// see {@link #tiersForDate_wayBack()}
+		EffectiveNodeUsageTiers tiers = dao.effectiveNodeUsageTiers(month);
+		NodeUsageCost t1Costs = tiers.getTiers().getTiers().get(0).getCosts();
+		NodeUsageCost t2Costs = tiers.getTiers().getTiers().get(1).getCosts();
+		NodeUsageCost t3Costs = tiers.getTiers().getTiers().get(2).getCosts();
+		NodeUsageCost t4Costs = tiers.getTiers().getTiers().get(3).getCosts();
+
+		/*-
+		min=0		tier_prop_in=50000	cost_prop_in=0.000009	prop_in_cost=0.450000	tier_datum_stored=50000		cost_datum_stored=4E-7	datum_stored_cost=0.0200000		tier_datum_out=50000	cost_datum_out=0.000002	datum_out_cost=0.100000		total_cost=0.57}
+		min=50000	tier_prop_in=350000	cost_prop_in=0.000006	prop_in_cost=2.100000	tier_datum_stored=350000	cost_datum_stored=2E-7	datum_stored_cost=0.0700000		tier_datum_out=350000	cost_datum_out=0.000001	datum_out_cost=0.350000		total_cost=2.52}
+		min=400000	tier_prop_in=600000	cost_prop_in=0.000004	prop_in_cost=2.400000	tier_datum_stored=600000	cost_datum_stored=5E-8	datum_stored_cost=0.03000000	tier_datum_out=600000	cost_datum_out=5E-7		datum_out_cost=0.3000000	total_cost=2.73}
+		min=1000000	tier_prop_in=0		cost_prop_in=0.000002	prop_in_cost=0.000000	tier_datum_stored=99000000	cost_datum_stored=6E-9	datum_stored_cost=0.594000000	tier_datum_out=1000000	cost_datum_out=2E-7		datum_out_cost=0.2000000	total_cost=0.79}
+		*/
+
+		// @formatter:off
+		assertThat("Properties in cost", usage.getDatumPropertiesInCost().setScale(3), equalTo(
+						new BigDecimal("50000").multiply(		t1Costs.getDatumPropertiesInCost())
+				.add(	new BigDecimal("350000").multiply(		t2Costs.getDatumPropertiesInCost()))
+				.add(	new BigDecimal("600000").multiply(		t3Costs.getDatumPropertiesInCost()))
+				.setScale(3)
+				));
+		
+		assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
+						new BigDecimal("50000").multiply(		t1Costs.getDatumOutCost())
+				.add(	new BigDecimal("350000").multiply(		t2Costs.getDatumOutCost()))
+				.add(	new BigDecimal("600000").multiply(		t3Costs.getDatumOutCost()))
+				.add(	new BigDecimal("1000000").multiply(		t4Costs.getDatumOutCost()))
+				.setScale(3)
+				));
+		
+		assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
+						new BigDecimal("50000").multiply(		t1Costs.getDatumDaysStoredCost())
+				.add(	new BigDecimal("350000").multiply(		t2Costs.getDatumDaysStoredCost()))
+				.add(	new BigDecimal("600000").multiply(		t3Costs.getDatumDaysStoredCost()))
+				.add(	new BigDecimal("99000000").multiply(	t4Costs.getDatumDaysStoredCost()))
+				.setScale(3)
+				));
+		// @formatter:on
 	}
 
 }
