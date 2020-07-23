@@ -25,7 +25,7 @@
 		<beans:prop key="AccountTaskProcessor.maximumClaimCount">1000</beans:prop>
 		<beans:prop key="AccountTaskProcessor.taskCount">2</beans:prop>
 
-		<beans:prop key="InvoiceGenerationTaskCreator.jobCron">0 20 4,20 * * ?</beans:prop>
+		<beans:prop key="InvoiceGenerationTaskCreator.jobCron">0 20 4,20 5,10,15,20 * ?</beans:prop>
 		<beans:prop key="InvoiceGenerationTaskCreator.maximumWaitMs">240000</beans:prop>
 	</osgix:cm-properties>
 

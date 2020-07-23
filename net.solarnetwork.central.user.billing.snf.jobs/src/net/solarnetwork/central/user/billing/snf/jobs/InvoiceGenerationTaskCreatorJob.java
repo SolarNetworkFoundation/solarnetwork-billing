@@ -48,6 +48,7 @@ public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 	public InvoiceGenerationTaskCreatorJob(EventAdmin eventAdmin, InvoiceGenerationTaskCreator creator) {
 		super(eventAdmin);
 		this.creator = creator;
+		setJobGroup("Billing");
 	}
 
 	@Override
