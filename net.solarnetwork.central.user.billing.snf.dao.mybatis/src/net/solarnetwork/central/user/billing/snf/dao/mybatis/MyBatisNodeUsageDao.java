@@ -49,8 +49,8 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 
 		FindEffectiveUsageTierForDate("find-EffectiveNodeUsageTier-for-date"),
 
-		/** Find all available usage for a given user and month. */
-		FindMonthlyUsageForUser("find-NodeUsage-for-user-month");
+		/** Find all available usage for a given user and date range. */
+		FindMonthlyUsageForUser("find-NodeUsage-for-user");
 
 		private final String queryName;
 
@@ -90,17 +90,17 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	}
 
 	@Override
-	public List<NodeUsage> findMonthlyUsageForUser(Long userId, LocalDate month) {
+	public List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate) {
 		if ( userId == null ) {
 			throw new IllegalArgumentException("The userId argument must be provided.");
 		}
-		if ( month == null ) {
+		if ( startDate == null ) {
 			throw new IllegalArgumentException("The month argument must be provided.");
 		}
 		Map<String, Object> params = new LinkedHashMap<>(2);
 		params.put("userId", userId);
-		params.put("startDate", month);
-		params.put("endDate", month.plusMonths(1));
+		params.put("startDate", startDate);
+		params.put("endDate", startDate.plusMonths(1));
 		return selectList(QueryName.FindMonthlyUsageForUser.getQueryName(), params, null, null);
 	}
 

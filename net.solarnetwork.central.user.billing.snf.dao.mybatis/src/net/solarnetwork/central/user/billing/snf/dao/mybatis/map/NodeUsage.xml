@@ -43,7 +43,7 @@
 		<result property="totalCostTiers"					column="node_usage_total_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
-	<select id="find-NodeUsage-for-user-month" parameterType="map" resultMap="NodeUsage-FullResult">
+	<select id="find-NodeUsage-for-user" parameterType="map" resultMap="NodeUsage-FullResult">
 		SELECT
 			<include refid="fragment-NodeUsage-full-result"/>
 			, CURRENT_TIMESTAMP AS node_usage_created

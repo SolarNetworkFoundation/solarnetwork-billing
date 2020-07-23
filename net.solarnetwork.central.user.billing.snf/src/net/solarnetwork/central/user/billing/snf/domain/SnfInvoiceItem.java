@@ -40,7 +40,11 @@ import net.solarnetwork.domain.Differentiable;
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
 
+	/** A metadata key for a node ID. */
 	public static final String META_NODE_ID = "nodeId";
+
+	/** A metadata key for a usage tier breakdown. */
+	public static final String META_TIER_BREAKDOWN = "tiers";
 
 	/**
 	 * The metadata key for a {@code Map} of usage information.

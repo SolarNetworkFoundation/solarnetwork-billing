@@ -49,10 +49,12 @@ public interface NodeUsageDao {
 	 * 
 	 * @param userId
 	 *        the user to get usage for
-	 * @param month
-	 *        the month to get usage for
+	 * @param startDate
+	 *        the minimum date to get usage for (inclusive)
+	 * @param endDate
+	 *        the maximum date to get usage for (exclusive)
 	 * @return the matching usage, never {@literal null}
 	 */
-	List<NodeUsage> findMonthlyUsageForUser(Long userId, LocalDate month);
+	List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate);
 
 }

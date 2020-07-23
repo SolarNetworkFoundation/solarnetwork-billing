@@ -22,12 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -146,8 +149,24 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		builder.append(startDate);
 		builder.append(", itemCount=");
 		builder.append(getItemCount());
+		builder.append(", totalAmount=");
+		builder.append(getTotalAmount().setScale(2, RoundingMode.HALF_UP));
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Get the total amount of all invoice items.
+	 * 
+	 * @return the total cost, never {@literal null}
+	 */
+	public BigDecimal getTotalAmount() {
+		BigDecimal result = BigDecimal.ZERO;
+		Set<SnfInvoiceItem> items = getItems();
+		if ( items != null ) {
+			result = items.stream().map(SnfInvoiceItem::getAmount).reduce(result, BigDecimal::add);
+		}
+		return result;
 	}
 
 	/**
@@ -364,6 +383,26 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public int getItemCount() {
 		return (items != null ? items.size() : 0);
+	}
+
+	/**
+	 * Get all invoice items as a map using item key values as map keys.
+	 * 
+	 * @return the map, or {@literal null} if {@link #getItems()} returns
+	 *         {@literal null}
+	 */
+	public Map<String, SnfInvoiceItem> getItemsByKey() {
+		Map<String, SnfInvoiceItem> result = null;
+		Set<SnfInvoiceItem> items = getItems();
+		if ( items != null ) {
+			result = new LinkedHashMap<>(items.size());
+			for ( SnfInvoiceItem item : items ) {
+				if ( item.getKey() != null ) {
+					result.put(item.getKey(), item);
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

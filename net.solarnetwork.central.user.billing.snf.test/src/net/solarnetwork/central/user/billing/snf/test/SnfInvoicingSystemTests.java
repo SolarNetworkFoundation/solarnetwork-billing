@@ -24,20 +24,26 @@ package net.solarnetwork.central.user.billing.snf.test;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.same;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
 import org.easymock.Capture;
 import org.easymock.EasyMock;
@@ -52,8 +58,11 @@ import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicFilterResults;
 
@@ -161,7 +170,6 @@ public class SnfInvoicingSystemTests {
 	@Test
 	public void accountForUser_found() {
 		// GIVEN
-		final Long userId = randomUUID().getMostSignificantBits();
 		final Account account = new Account(userId, Instant.now());
 		expect(accountDao.getForUser(userId)).andReturn(account);
 
@@ -173,9 +181,34 @@ public class SnfInvoicingSystemTests {
 		assertThat("DAO result returned.", result, sameInstance(account));
 	}
 
+	private static void assertUsageItem(SnfInvoice invoice, SnfInvoiceItem item, BigInteger quantity,
+			BigDecimal amount) {
+		assertThat(item.getKey() + "Item ID generated", item.getId(), notNullValue());
+		assertThat(item.getKey() + "Item invoice ID", item.getInvoiceId(),
+				equalTo(invoice.getId().getId()));
+		assertThat(item.getKey() + "Item type", item.getItemType(), equalTo(InvoiceItemType.Usage));
+		assertThat(item.getKey() + "Item quantity", item.getQuantity(),
+				equalTo(new BigDecimal(quantity)));
+		assertThat(item.getKey() + "Item amount", item.getAmount(), equalTo(amount));
+	}
+
 	@Test
 	public void generateInvoice_basic_dryRun() {
 		// GIVEN
+		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
+				Instant.now());
+		expect(accountDao.getForUser(userId)).andReturn(account);
+
+		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumPropertiesInCost(new BigDecimal("1.23"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumOutCost(new BigDecimal("2.34"));
+		usage.setDatumDaysStored(new BigInteger("345"));
+		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
+		usage.setTotalCost(new BigDecimal("7.02"));
+
+		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
 
 		// WHEN
 		replayAll();
@@ -183,6 +216,19 @@ public class SnfInvoicingSystemTests {
 
 		// THEN
 		assertThat("Invoice created", invoice, notNullValue());
+		assertThat("Invoice items created for all usage", invoice.getItems(), hasSize(3));
+
+		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
+		assertThat("Invoice item mapping contains all items", itemMap.keySet(), contains(
+				NodeUsage.DATUM_PROPS_IN_KEY, NodeUsage.DATUM_OUT_KEY, NodeUsage.DATUM_DAYS_STORED_KEY));
+
+		SnfInvoiceItem item;
+		item = itemMap.get(NodeUsage.DATUM_PROPS_IN_KEY);
+		assertUsageItem(invoice, item, usage.getDatumPropertiesIn(), usage.getDatumPropertiesInCost());
+		item = itemMap.get(NodeUsage.DATUM_OUT_KEY);
+		assertUsageItem(invoice, item, usage.getDatumOut(), usage.getDatumOutCost());
+		item = itemMap.get(NodeUsage.DATUM_DAYS_STORED_KEY);
+		assertUsageItem(invoice, item, usage.getDatumDaysStored(), usage.getDatumDaysStoredCost());
 	}
 
 }

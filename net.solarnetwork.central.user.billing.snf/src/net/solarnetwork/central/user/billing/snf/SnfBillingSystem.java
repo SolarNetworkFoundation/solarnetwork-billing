@@ -31,9 +31,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,6 +58,7 @@ import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
@@ -183,6 +186,16 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 		return (itr != null && itr.hasNext() ? itr.next() : null);
 	}
 
+	public Map<String, Object> usageMetadata(Long nodeId, Map<String, List<NamedCost>> data,
+			String tierKey) {
+		Map<String, Object> result = new LinkedHashMap<>(2);
+		result.put(SnfInvoiceItem.META_NODE_ID, nodeId);
+		if ( data.containsKey(tierKey) ) {
+			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, data.get(tierKey));
+		}
+		return result;
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
@@ -194,7 +207,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 		}
 
 		// query for usage
-		List<NodeUsage> usages = usageDao.findMonthlyUsageForUser(userId, startDate);
+		List<NodeUsage> usages = usageDao.findUsageForUser(userId, startDate, endDate);
 		if ( usages == null || usages.isEmpty() ) {
 			// no invoice necessary
 			return null;
@@ -206,7 +219,11 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 		invoice.setCurrencyCode(account.getCurrencyCode());
 		invoice.setStartDate(startDate);
 		invoice.setEndDate(endDate);
-		final UserLongPK invoiceId = invoiceDao.save(invoice);
+
+		// for dryRun support, we generate a negative invoice ID based on current time
+		final UserLongPK invoiceId = (dryRun ? new UserLongPK(userId, -System.currentTimeMillis())
+				: invoiceDao.save(invoice));
+		invoice.getId().setId(invoiceId.getId()); // for return
 
 		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
 
@@ -217,27 +234,40 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 				log.debug("No usage cost for node {} invoice date {}", usage.getId(), startDate);
 				continue;
 			}
+			final Map<String, List<NamedCost>> tiersBreakdown = usage.getTiersCostBreakdown();
 			if ( usage.getDatumPropertiesIn().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumPropertiesInKey,
 						new BigDecimal(usage.getDatumPropertiesIn()), usage.getDatumPropertiesInCost());
-				invoiceItemDao.save(item);
+				item.setMetadata(
+						usageMetadata(usage.getId(), tiersBreakdown, NodeUsage.DATUM_PROPS_IN_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
 				items.add(item);
 			}
 			if ( usage.getDatumOut().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumOutKey,
 						new BigDecimal(usage.getDatumOut()), usage.getDatumOutCost());
-				invoiceItemDao.save(item);
+				item.setMetadata(usageMetadata(usage.getId(), tiersBreakdown, NodeUsage.DATUM_OUT_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
 				items.add(item);
 			}
 			if ( usage.getDatumDaysStored().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumDaysStoredKey,
 						new BigDecimal(usage.getDatumDaysStored()), usage.getDatumDaysStoredCost());
-				invoiceItemDao.save(item);
+				item.setMetadata(
+						usageMetadata(usage.getId(), tiersBreakdown, NodeUsage.DATUM_DAYS_STORED_KEY));
+				if ( !dryRun ) {
+					invoiceItemDao.save(item);
+				}
 				items.add(item);
 			}
 		}
 
 		invoice.setItems(new LinkedHashSet<>(items));
+		log.info("Generated invoice for user {} for date {}: {}", userId, startDate, invoice);
 		return invoice;
 	}
 

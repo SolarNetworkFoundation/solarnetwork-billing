@@ -204,6 +204,39 @@ public class SnfInvoiceTests {
 	}
 
 	@Test
+	public void totalCost_noItems() {
+		// GIVEN
+		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
+				Instant.now());
+
+		// WHEN
+		BigDecimal totalCost = inv1.getTotalAmount();
+
+		// THEN
+		assertThat("Total amount of no items is 0", totalCost, equalTo(BigDecimal.ZERO));
+	}
+
+	@Test
+	public void totalCost_withItems() {
+		// GIVEN
+		SnfInvoice inv1 = new SnfInvoice(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
+				Instant.now());
+		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
+				new BigDecimal("12345"), new BigDecimal("1.23"), inv1.getCreated());
+		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
+				new BigDecimal("23456"), new BigDecimal("2.34"), inv1.getCreated());
+		inv1.setItems(new HashSet<>(Arrays.asList(item1, item2)));
+
+		// WHEN
+		BigDecimal totalCost = inv1.getTotalAmount();
+
+		// THEN
+		assertThat("Total amount is sum of item amounts", totalCost, equalTo(new BigDecimal("3.57")));
+	}
+
+	@Test
 	public void sortByDate() {
 		// GIVEN
 		List<SnfInvoice> invoices = new ArrayList<>(5);

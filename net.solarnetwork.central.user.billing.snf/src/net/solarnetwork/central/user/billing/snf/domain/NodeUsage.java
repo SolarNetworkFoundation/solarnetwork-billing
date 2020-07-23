@@ -118,6 +118,7 @@ public class NodeUsage extends BasicLongEntity {
 		setDatumPropertiesIn(BigInteger.ZERO);
 		setDatumOut(BigInteger.ZERO);
 		setDatumDaysStored(BigInteger.ZERO);
+		setTotalCost(BigDecimal.ZERO);
 		this.costs = new NodeUsageCost();
 	}
 
@@ -282,7 +283,7 @@ public class NodeUsage extends BasicLongEntity {
 	/**
 	 * Get the overall cost.
 	 * 
-	 * @return the cost
+	 * @return the cost, never {@literal null}
 	 */
 	public BigDecimal getTotalCost() {
 		return totalCost;
@@ -292,10 +293,11 @@ public class NodeUsage extends BasicLongEntity {
 	 * Set the overall cost.
 	 * 
 	 * @param totalCost
-	 *        the cost to set
+	 *        the cost to set; if {@literal null} then {@literal 0} will be
+	 *        stored
 	 */
 	public void setTotalCost(BigDecimal totalCost) {
-		this.totalCost = totalCost;
+		this.totalCost = totalCost != null ? totalCost : BigDecimal.ZERO;
 	}
 
 	private void prepCostsTiers(Object[] array) {

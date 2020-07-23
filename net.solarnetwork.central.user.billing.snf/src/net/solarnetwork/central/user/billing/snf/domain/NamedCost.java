@@ -187,11 +187,15 @@ public class NamedCost implements Differentiable<NamedCost> {
 	/**
 	 * Get the effective rate, derived from the quantity and cost.
 	 * 
+	 * <p>
+	 * If {@code quantity} is {@literal 0} then {@code cost} is returned.
+	 * </p>
+	 * 
 	 * @return the effective rate
 	 */
 	public BigDecimal getEffectiveRate() {
 		if ( BigInteger.ZERO.compareTo(quantity) == 0 ) {
-			return BigDecimal.ZERO;
+			return cost;
 		}
 		return cost.divide(new BigDecimal(quantity));
 	}

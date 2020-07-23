@@ -127,7 +127,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		final LocalDate month = LocalDate.of(2020, 1, 1);
 
 		// WHEN
-		List<NodeUsage> results = dao.findMonthlyUsageForUser(userId, month);
+		List<NodeUsage> results = dao.findUsageForUser(userId, month, null);
 
 		// THEN
 		assertThat("Results non-null but empty", results, hasSize(0));
@@ -153,7 +153,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				userId));
 
 		// WHEN
-		List<NodeUsage> results = dao.findMonthlyUsageForUser(userId, month);
+		List<NodeUsage> results = dao.findUsageForUser(userId, month, month.plusMonths(1));
 
 		// THEN
 		assertThat("Results non-null with single result", results, hasSize(1));
@@ -198,7 +198,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				userId));
 
 		// WHEN
-		List<NodeUsage> results = dao.findMonthlyUsageForUser(userId, month);
+		List<NodeUsage> results = dao.findUsageForUser(userId, month, month.plusMonths(1));
 
 		// THEN
 		assertThat("Results non-null with single result", results, hasSize(1));
