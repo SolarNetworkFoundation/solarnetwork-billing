@@ -26,6 +26,7 @@
 	<reference id="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 	<reference id="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
 	<reference id="nodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao"/>
+	<reference id="taxCodeDao" interface="net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao"/>
 
 	<reference id="transactionManager" filter="(db=central)"
 		interface="org.springframework.transaction.PlatformTransactionManager"/>
@@ -39,11 +40,18 @@
 		<argument ref="invoiceDao"/>
 		<argument ref="invoiceItemDao"/>
 		<argument ref="nodeUsageDao"/>
+		<argument ref="taxCodeDao"/>
 		<argument>
 			<bean class="org.springframework.context.support.ResourceBundleMessageSource">
 				<property name="basename" value="net.solarnetwork.central.user.billing.snf.SnfBillingSystem"/>
 			</bean>
 		</argument>
+		<property name="taxCodeResolver">
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver"/>
+			</bean>
+		</property>
 	</bean>
 	
 	<!-- Published Services -->

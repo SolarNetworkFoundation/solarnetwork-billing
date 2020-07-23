@@ -24,7 +24,6 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -172,19 +171,16 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	/**
 	 * Get the invoice time zone.
 	 * 
+	 * <p>
+	 * This returns the time zone of the configured address.
+	 * </p>
+	 * 
 	 * @return the time zone, or {@literal null} if not available
 	 */
 	@JsonIgnore
 	public ZoneId getTimeZone() {
 		Address addr = getAddress();
-		if ( addr != null && addr.getTimeZoneId() != null ) {
-			try {
-				return ZoneId.of(addr.getTimeZoneId());
-			} catch ( DateTimeException e ) {
-				// ignore
-			}
-		}
-		return null;
+		return (addr != null ? addr.getTimeZone() : null);
 	}
 
 	@Override

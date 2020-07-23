@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -57,14 +58,18 @@ import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
+import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.util.OptionalService;
 
 /**
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
@@ -72,7 +77,7 @@ import net.solarnetwork.central.user.domain.UserLongPK;
  * @author matt
  * @version 1.0
  */
-public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
+public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfTaxCodeResolver {
 
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
@@ -82,6 +87,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	private final SnfInvoiceItemDao invoiceItemDao;
 	private final NodeUsageDao usageDao;
 	private final MessageSource messageSource;
+	private final TaxCodeDao taxCodeDao;
+	private OptionalService<SnfTaxCodeResolver> taxCodeResolver;
 	private String datumPropertiesInKey = NodeUsage.DATUM_PROPS_IN_KEY;
 	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
 	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
@@ -99,13 +106,16 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	 *        the invoice item DAO
 	 * @param usageDao
 	 *        the usage DAO
+	 * @param taxCodeDAO
+	 *        the tax code DAO
 	 * @param messageSource
 	 *        the message source
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public SnfBillingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
-			SnfInvoiceItemDao invoiceItemDao, NodeUsageDao usageDao, MessageSource messageSource) {
+			SnfInvoiceItemDao invoiceItemDao, NodeUsageDao usageDao, TaxCodeDao taxCodeDao,
+			MessageSource messageSource) {
 		super();
 		if ( accountDao == null ) {
 			throw new IllegalArgumentException("The accountDao argument must be provided.");
@@ -126,6 +136,10 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 		if ( messageSource == null ) {
 			throw new IllegalArgumentException("The messageSource argument must be provided.");
 		}
+		if ( taxCodeDao == null ) {
+			throw new IllegalArgumentException("The taxCodeDao argument must be provided.");
+		}
+		this.taxCodeDao = taxCodeDao;
 		this.messageSource = messageSource;
 	}
 
@@ -184,6 +198,65 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
 		Iterator<SnfInvoice> itr = (results != null ? results.iterator() : null);
 		return (itr != null && itr.hasNext() ? itr.next() : null);
+	}
+
+	/**
+	 * Resolve tax codes for a given invoice.
+	 * 
+	 * <p>
+	 * This implementation creates tax zone names out of the invoice's address,
+	 * with the following patterns:
+	 * </p>
+	 * 
+	 * <ol>
+	 * <li><code>country</code> via {@link Address#getCountry()} (required)</li>
+	 * <li><code>country.state</code> via {@link Address#getCountry()} and
+	 * {@link Address#getStateOrProvince()} (only if state available)</li>
+	 * </ol>
+	 * 
+	 * <p>
+	 * The tax date is resolved as the invoice's start date, or the current date
+	 * if that is not available.
+	 * </p>
+	 * 
+	 * {@inheritDoc}
+	 */
+	@Override
+	public TaxCodeFilter taxCodeFilterForInvoice(SnfInvoice invoice) {
+		SnfTaxCodeResolver service = OptionalService.service(taxCodeResolver);
+		if ( service != null ) {
+			return service.taxCodeFilterForInvoice(invoice);
+		}
+		if ( invoice == null ) {
+			throw new IllegalArgumentException("The invoice argument must be provided.");
+		}
+		Address addr = invoice.getAddress();
+		if ( addr == null ) {
+			throw new IllegalArgumentException("The invoice must provide an address.");
+		}
+		if ( addr.getCountry() == null || addr.getCountry().trim().isEmpty() ) {
+			throw new IllegalArgumentException("The address must provide a country.");
+		}
+		List<String> zones = new ArrayList<>(2);
+		zones.add(addr.getCountry());
+		if ( addr.getStateOrProvince() != null && !addr.getStateOrProvince().trim().isEmpty() ) {
+			zones.add(String.format("%s.%s", addr.getCountry(), addr.getStateOrProvince()));
+		}
+
+		ZoneId tz = invoice.getTimeZone();
+		if ( tz == null ) {
+			throw new IllegalArgumentException("The invoice must provide a time zone.");
+		}
+
+		TaxCodeFilter filter = new TaxCodeFilter();
+		filter.setZones(zones.toArray(new String[zones.size()]));
+
+		LocalDate date = invoice.getStartDate();
+		if ( date == null ) {
+			date = LocalDate.now();
+		}
+		filter.setDate(date.atStartOfDay(tz).toInstant());
+		return filter;
 	}
 
 	public Map<String, Object> usageMetadata(Long nodeId, Map<String, List<NamedCost>> data,
@@ -348,6 +421,30 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 			throw new IllegalArgumentException("The datumDaysStoredKey argumust must not be null.");
 		}
 		this.datumDaysStoredKey = datumDaysStoredKey;
+	}
+
+	/**
+	 * Get the optional tax code resolver service to use.
+	 * 
+	 * <p>
+	 * If this property is not configured or the service is not available at
+	 * runtime, this class will act as its own resolver.
+	 * </p>
+	 * 
+	 * @return the service
+	 */
+	public OptionalService<SnfTaxCodeResolver> getTaxCodeResolver() {
+		return taxCodeResolver;
+	}
+
+	/**
+	 * Set the optional tax code resolver service to use.
+	 * 
+	 * @param taxCodeResolver
+	 *        the service to set
+	 */
+	public void setTaxCodeResolver(OptionalService<SnfTaxCodeResolver> taxCodeResolver) {
+		this.taxCodeResolver = taxCodeResolver;
 	}
 
 }

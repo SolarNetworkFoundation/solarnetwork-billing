@@ -22,9 +22,12 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.BasicLongEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -197,6 +200,24 @@ public class Address extends BasicLongEntity implements Differentiable<Address> 
 	 */
 	public void setTimeZoneId(String timeZoneId) {
 		this.timeZoneId = timeZoneId;
+	}
+
+	/**
+	 * Get the address time zone.
+	 * 
+	 * @return the time zone, or {@literal null} if not available
+	 */
+	@JsonIgnore
+	public ZoneId getTimeZone() {
+		String tz = getTimeZoneId();
+		if ( tz != null ) {
+			try {
+				return ZoneId.of(tz);
+			} catch ( DateTimeException e ) {
+				// ignore
+			}
+		}
+		return null;
 	}
 
 	/**

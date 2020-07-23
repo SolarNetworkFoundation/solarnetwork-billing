@@ -23,6 +23,9 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Objects;
+import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.domain.SimplePagination;
 
 /**
@@ -31,12 +34,85 @@ import net.solarnetwork.domain.SimplePagination;
  * @author matt
  * @version 1.0
  */
-public class TaxCodeFilter extends SimplePagination {
+public class TaxCodeFilter extends SimplePagination implements Differentiable<TaxCodeFilter> {
 
 	private String[] zones;
 	private String itemKey;
 	private String code;
 	private Instant date;
+
+	/**
+	 * Create a filter for a given date and list of zones.
+	 * 
+	 * @param date
+	 *        the date
+	 * @param zones
+	 *        the zones
+	 * @return the filter, never {@literal null}
+	 */
+	public static TaxCodeFilter filterFor(Instant date, String... zones) {
+		TaxCodeFilter f = new TaxCodeFilter();
+		f.setDate(date);
+		f.setZones(zones);
+		return f;
+	}
+
+	/**
+	 * Test if the properties of another instance are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@link SimplePagination} properties are not compared by this method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other instance to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(TaxCodeFilter other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(code, other.code)
+				&& Objects.equals(date, other.date)
+				&& Objects.equals(itemKey, other.itemKey)
+				&& Arrays.equals(zones, other.zones);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(TaxCodeFilter other) {
+		return !isSameAs(other);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("TaxCodeFilter{");
+		if ( date != null ) {
+			builder.append("date=");
+			builder.append(date);
+			builder.append(", ");
+		}
+		if ( zones != null ) {
+			builder.append("zones=");
+			builder.append(Arrays.toString(zones));
+			builder.append(", ");
+		}
+		if ( itemKey != null ) {
+			builder.append("itemKey=");
+			builder.append(itemKey);
+			builder.append(", ");
+		}
+		if ( code != null ) {
+			builder.append("code=");
+			builder.append(code);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
 
 	/**
 	 * Get the tax zones.

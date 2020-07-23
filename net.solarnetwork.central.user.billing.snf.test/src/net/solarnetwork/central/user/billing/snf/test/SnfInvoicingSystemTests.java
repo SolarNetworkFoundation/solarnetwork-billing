@@ -40,23 +40,12 @@ import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.UUID;
 import org.easymock.Capture;
-import org.easymock.EasyMock;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
-import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
-import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
-import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
-import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
@@ -73,44 +62,7 @@ import net.solarnetwork.dao.BasicFilterResults;
  * @author matt
  * @version 1.0
  */
-public class SnfInvoicingSystemTests {
-
-	private AccountDao accountDao;
-	private SnfInvoiceDao invoiceDao;
-	private SnfInvoiceItemDao invoiceItemDao;
-	private NodeUsageDao usageDao;
-	private ResourceBundleMessageSource messageSource;
-	private SnfInvoicingSystem system;
-
-	private Long userId;
-	private LocalDate startDate;
-	private LocalDate endDate;
-
-	@Before
-	public void setup() {
-		accountDao = EasyMock.createMock(AccountDao.class);
-		invoiceDao = EasyMock.createMock(SnfInvoiceDao.class);
-		invoiceItemDao = EasyMock.createMock(SnfInvoiceItemDao.class);
-		usageDao = EasyMock.createMock(NodeUsageDao.class);
-		messageSource = new ResourceBundleMessageSource();
-		messageSource.setBasename(SnfBillingSystem.class.getName());
-
-		system = new SnfBillingSystem(accountDao, invoiceDao, invoiceItemDao, usageDao, messageSource);
-
-		userId = UUID.randomUUID().getMostSignificantBits();
-		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)
-				.toLocalDate();
-		endDate = startDate.plusMonths(1);
-	}
-
-	private void replayAll() {
-		EasyMock.replay(accountDao, invoiceDao, usageDao);
-	}
-
-	@After
-	public void teardown() {
-		EasyMock.verify(accountDao, invoiceDao, usageDao);
-	}
+public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 	@Test
 	public void findLatestInvoice_none() {
