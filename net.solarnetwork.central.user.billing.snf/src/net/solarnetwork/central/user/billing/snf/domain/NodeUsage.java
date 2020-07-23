@@ -22,12 +22,20 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static java.util.Arrays.stream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.BasicLongEntity;
+import net.solarnetwork.util.ArrayUtils;
 
 /**
  * Usage details for a single node.
@@ -48,6 +56,15 @@ import net.solarnetwork.dao.BasicLongEntity;
  */
 public class NodeUsage extends BasicLongEntity {
 
+	/** A key to use for datum properties added usage. */
+	public static final String DATUM_PROPS_IN_KEY = "datum-props-in";
+
+	/** A key to use for datum queried usage. */
+	public static final String DATUM_OUT_KEY = "datum-out";
+
+	/** A key to use for datum days stored usage. */
+	public static final String DATUM_DAYS_STORED_KEY = "datum-days-stored";
+
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
 	 * ascending order.
@@ -59,6 +76,12 @@ public class NodeUsage extends BasicLongEntity {
 	private BigInteger datumDaysStored;
 	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
+
+	private BigInteger[] datumPropertiesInTiers;
+	private BigInteger[] datumOutTiers;
+	private BigInteger[] datumDaysStoredTiers;
+	private NodeUsageCost[] costsTiers;
+	private BigDecimal[] totalCostTiers;
 
 	/**
 	 * Compare {@link NodeUsageTier} instances by quantity in ascending order.
@@ -273,6 +296,305 @@ public class NodeUsage extends BasicLongEntity {
 	 */
 	public void setTotalCost(BigDecimal totalCost) {
 		this.totalCost = totalCost;
+	}
+
+	private void prepCostsTiers(Object[] array) {
+		final int len = Math.max(costsTiers != null ? costsTiers.length : 0,
+				array != null ? array.length : 0);
+		costsTiers = ArrayUtils.arrayWithLength(costsTiers, len, NodeUsageCost.class, null);
+	}
+
+	private static BigDecimal[] getTierCostValues(NodeUsageCost[] costsTiers,
+			Function<NodeUsageCost, BigDecimal> f) {
+		BigDecimal[] result = null;
+		if ( costsTiers != null ) {
+			result = stream(costsTiers).map(e -> e.getDatumDaysStoredCost()).toArray(BigDecimal[]::new);
+		}
+		return result;
+	}
+
+	private static BigInteger[] decimalsToIntegers(BigDecimal[] decimals) {
+		BigInteger[] ints = null;
+		if ( decimals != null ) {
+			ints = new BigInteger[decimals.length];
+			for ( int i = 0, len = decimals.length; i < len; i++ ) {
+				ints[i] = decimals[i].toBigInteger();
+			}
+		}
+		return ints;
+	}
+
+	private static List<NamedCost> tiersCostBreakdown(BigInteger[] counts, NodeUsageCost[] costsTiers,
+			Function<NodeUsageCost, BigDecimal> f) {
+		if ( counts == null || counts.length < 1 ) {
+			return Collections.emptyList();
+		}
+		List<NamedCost> result = new ArrayList<>(counts != null ? counts.length : 4);
+		for ( int i = 0; i < counts.length; i++ ) {
+			BigInteger q = counts[i];
+			if ( BigInteger.ZERO.compareTo(q) == 0 ) {
+				break;
+			}
+			BigDecimal c = (costsTiers != null && i < costsTiers.length ? f.apply(costsTiers[i]) : null);
+			result.add(NamedCost.forTier((i + 1), q, c));
+		}
+		return result;
+	}
+
+	/**
+	 * Get the overall tiers breakdown.
+	 * 
+	 * <p>
+	 * The resulting map contains the following keys:
+	 * </p>
+	 * <ol>
+	 * <li>{@link #DATUM_PROPS_IN_KEY}</li>
+	 * <li>{@link #DATUM_OUT_KEY}</li>
+	 * <li>{@link #DATUM_DAYS_STORED_KEY}
+	 * <li>
+	 * </ol>
+	 * 
+	 * @return the map, never {@literal null}
+	 */
+	public Map<String, List<NamedCost>> getTiersCostBreakdown() {
+		Map<String, List<NamedCost>> result = new LinkedHashMap<>(4);
+		result.put(DATUM_PROPS_IN_KEY, getDatumPropertiesInTiersCostBreakdown());
+		result.put(DATUM_OUT_KEY, getDatumOutTiersCostBreakdown());
+		result.put(DATUM_DAYS_STORED_KEY, getDatumDaysStoredTiersCostBreakdown());
+		return result;
+	}
+
+	/**
+	 * Get the node usage costs, per tier.
+	 * 
+	 * @return the costs per tier
+	 */
+	@JsonIgnore
+	public NodeUsageCost[] getCostsTiers() {
+		return costsTiers;
+	}
+
+	/**
+	 * Get the node usage costs.
+	 * 
+	 * @return the costs, never {@literal null}
+	 */
+	public void getCostsTiers(NodeUsageCost[] costTiers) {
+		this.costsTiers = costTiers;
+	}
+
+	/**
+	 * Get the node datum properties tier cost breakdown.
+	 * 
+	 * @return the costs, never {@literal null}
+	 */
+	@JsonIgnore
+	public List<NamedCost> getDatumPropertiesInTiersCostBreakdown() {
+		return tiersCostBreakdown(datumPropertiesInTiers, costsTiers,
+				NodeUsageCost::getDatumPropertiesInCost);
+	}
+
+	/**
+	 * Get the count of datum properties added, per tier.
+	 * 
+	 * @return the counts
+	 */
+	public BigInteger[] getDatumPropertiesInTiers() {
+		return datumPropertiesInTiers;
+	}
+
+	/**
+	 * Set the count of datum properties added, per tier.
+	 * 
+	 * @param datumPropertiesInTiers
+	 *        the counts to set
+	 */
+	public void setDatumPropertiesInTiers(BigInteger[] datumPropertiesInTiers) {
+		this.datumPropertiesInTiers = datumPropertiesInTiers;
+	}
+
+	/**
+	 * Set the count of datum properties added, per tier, as decimal values.
+	 * 
+	 * @param datumPropertiesInTiers
+	 *        the counts to set
+	 */
+	public void setDatumPropertiesInTiersNumeric(BigDecimal[] datumPropertiesInTiers) {
+		this.datumPropertiesInTiers = decimalsToIntegers(datumPropertiesInTiers);
+	}
+
+	/**
+	 * Get the cost of datum properties added, per tier.
+	 * 
+	 * @return the costs
+	 */
+	public BigDecimal[] getDatumPropertiesInCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getDatumPropertiesInCost);
+	}
+
+	/**
+	 * Set the cost of datum properties added.
+	 * 
+	 * @param datumPropertiesInCost
+	 *        the cost to set
+	 */
+	public void setDatumPropertiesInCostTiers(BigDecimal[] datumPropertiesInCost) {
+		prepCostsTiers(datumPropertiesInCost);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (datumPropertiesInCost != null && i < datumPropertiesInCost.length
+					? datumPropertiesInCost[i]
+					: null);
+			costsTiers[i].setDatumPropertiesInCost(val);
+		}
+	}
+
+	/**
+	 * Get the node datum properties tier cost breakdown.
+	 * 
+	 * @return the costs, never {@literal null}
+	 */
+	@JsonIgnore
+	public List<NamedCost> getDatumDaysStoredTiersCostBreakdown() {
+		return tiersCostBreakdown(datumDaysStoredTiers, costsTiers,
+				NodeUsageCost::getDatumDaysStoredCost);
+	}
+
+	/**
+	 * Get the count of datum stored per day (accumulating), per tier.
+	 * 
+	 * @return the counts
+	 */
+	public BigInteger[] getDatumDaysStoredTiers() {
+		return datumDaysStoredTiers;
+	}
+
+	/**
+	 * Set the count of datum stored per day (accumulating), per tier.
+	 * 
+	 * @param datumDaysStoredTiers
+	 *        the counts to set
+	 */
+	public void setDatumDaysStoredTiers(BigInteger[] datumDaysStoredTiers) {
+		this.datumDaysStoredTiers = datumDaysStoredTiers;
+	}
+
+	/**
+	 * Set the count of datum stored per day (accumulating), per tier, as
+	 * decimals.
+	 * 
+	 * @param datumDaysStoredTiers
+	 *        the counts to set
+	 */
+	public void setDatumDaysStoredTiersNumeric(BigDecimal[] datumDaysStoredTiers) {
+		this.datumDaysStoredTiers = decimalsToIntegers(datumDaysStoredTiers);
+	}
+
+	/**
+	 * Get the cost of datum stored per day (accumulating).
+	 * 
+	 * @return the cost
+	 */
+	public BigDecimal[] getDatumDaysStoredCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getDatumDaysStoredCost);
+	}
+
+	/**
+	 * Set the cost of datum stored per day (accumulating).
+	 * 
+	 * @param datumDaysStoredCostTiers
+	 *        the costs to set
+	 */
+	public void setDatumDaysStoredCostTiers(BigDecimal[] datumDaysStoredCostTiers) {
+		prepCostsTiers(datumDaysStoredCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (datumDaysStoredCostTiers != null && i < datumDaysStoredCostTiers.length
+					? datumDaysStoredCostTiers[i]
+					: null);
+			costsTiers[i].setDatumDaysStoredCost(val);
+		}
+	}
+
+	/**
+	 * Get the node datum properties tier cost breakdown.
+	 * 
+	 * @return the costs, never {@literal null}
+	 */
+	@JsonIgnore
+	public List<NamedCost> getDatumOutTiersCostBreakdown() {
+		return tiersCostBreakdown(datumOutTiers, costsTiers, NodeUsageCost::getDatumOutCost);
+	}
+
+	/**
+	 * Get the count of datum queried.
+	 * 
+	 * @return the count
+	 */
+	public BigInteger[] getDatumOutTiers() {
+		return datumOutTiers;
+	}
+
+	/**
+	 * Set the count of datum queried, per tier.
+	 * 
+	 * @param datumOutTiers
+	 *        the counts to set
+	 */
+	public void setDatumOutTiers(BigInteger[] datumOutTiers) {
+		this.datumOutTiers = datumOutTiers;
+	}
+
+	/**
+	 * Set the count of datum queried, per tier, as decimals.
+	 * 
+	 * @param datumOutTiers
+	 *        the counts to set
+	 */
+	public void setDatumOutTiersNumeric(BigDecimal[] datumOutTiers) {
+		this.datumOutTiers = decimalsToIntegers(datumOutTiers);
+	}
+
+	/**
+	 * Get the cost of datum queried, per tier.
+	 * 
+	 * @return the costs
+	 */
+	public BigDecimal[] getDatumOutCostTiers() {
+		return getTierCostValues(costsTiers, NodeUsageCost::getDatumOutCost);
+	}
+
+	/**
+	 * Set the cost of datum queried, per tier.
+	 * 
+	 * @param datumOutCostTiers
+	 *        the costs to set
+	 */
+	public void setDatumOutCostTiers(BigDecimal[] datumOutCostTiers) {
+		prepCostsTiers(datumOutCostTiers);
+		for ( int i = 0; i < costsTiers.length; i++ ) {
+			BigDecimal val = (datumOutCostTiers != null && i < datumOutCostTiers.length
+					? datumOutCostTiers[i]
+					: null);
+			costsTiers[i].setDatumOutCost(val);
+		}
+	}
+
+	/**
+	 * Get the overall cost, per tier.
+	 * 
+	 * @return the costs
+	 */
+	public BigDecimal[] getTotalCostTiers() {
+		return totalCostTiers;
+	}
+
+	/**
+	 * Set the overall cost, per tier.
+	 * 
+	 * @param totalCostTiers
+	 *        the costs to set
+	 */
+	public void setTotalCostTiers(BigDecimal[] totalCostTiers) {
+		this.totalCostTiers = totalCostTiers;
 	}
 
 }

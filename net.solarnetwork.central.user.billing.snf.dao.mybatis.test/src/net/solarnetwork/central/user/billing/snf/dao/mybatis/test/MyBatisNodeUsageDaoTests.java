@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
@@ -33,11 +34,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTiers;
+import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsageCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTier;
@@ -214,6 +217,14 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		NodeUsageCost t3Costs = tiers.getTiers().getTiers().get(2).getCosts();
 		NodeUsageCost t4Costs = tiers.getTiers().getTiers().get(3).getCosts();
 
+		Map<String, List<NamedCost>> tiersBreakdown = usage.getTiersCostBreakdown();
+		List<NamedCost> propsInTiersCost = tiersBreakdown.get(NodeUsage.DATUM_PROPS_IN_KEY);
+		assertThat("Properties in cost tier count", propsInTiersCost, hasSize(3));
+		List<NamedCost> datumOutTiersCost = tiersBreakdown.get(NodeUsage.DATUM_OUT_KEY);
+		assertThat("Datum out cost tier count", datumOutTiersCost, hasSize(4));
+		List<NamedCost> datumStoredTiersCost = tiersBreakdown.get(NodeUsage.DATUM_DAYS_STORED_KEY);
+		assertThat("Datum stored cost tier count", datumStoredTiersCost, hasSize(4));
+
 		/*-
 		min=0		tier_prop_in=50000	cost_prop_in=0.000009	prop_in_cost=0.450000	tier_datum_stored=50000		cost_datum_stored=4E-7	datum_stored_cost=0.0200000		tier_datum_out=50000	cost_datum_out=0.000002	datum_out_cost=0.100000		total_cost=0.57}
 		min=50000	tier_prop_in=350000	cost_prop_in=0.000006	prop_in_cost=2.100000	tier_datum_stored=350000	cost_datum_stored=2E-7	datum_stored_cost=0.0700000		tier_datum_out=350000	cost_datum_out=0.000001	datum_out_cost=0.350000		total_cost=2.52}
@@ -228,6 +239,10 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				.add(	new BigDecimal("600000").multiply(		t3Costs.getDatumPropertiesInCost()))
 				.setScale(3)
 				));
+		assertThat("Properties in cost tiers", propsInTiersCost, contains(
+				NamedCost.forTier(1, "50000", 		new BigDecimal("50000").multiply(t1Costs.getDatumPropertiesInCost()).toString()),
+				NamedCost.forTier(2, "350000", 		new BigDecimal("350000").multiply(t2Costs.getDatumPropertiesInCost()).toString()),
+				NamedCost.forTier(3, "600000", 		new BigDecimal("600000").multiply(t3Costs.getDatumPropertiesInCost()).toString())));
 		
 		assertThat("Datum out cost", usage.getDatumOutCost().setScale(3), equalTo(
 						new BigDecimal("50000").multiply(		t1Costs.getDatumOutCost())
@@ -236,6 +251,11 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				.add(	new BigDecimal("1000000").multiply(		t4Costs.getDatumOutCost()))
 				.setScale(3)
 				));
+		assertThat("Datum out cost tiers", datumOutTiersCost, contains(
+				NamedCost.forTier(1, "50000", 		new BigDecimal("50000").multiply(t1Costs.getDatumOutCost()).toString()),
+				NamedCost.forTier(2, "350000", 		new BigDecimal("350000").multiply(t2Costs.getDatumOutCost()).toString()),
+				NamedCost.forTier(3, "600000", 		new BigDecimal("600000").multiply(t3Costs.getDatumOutCost()).toString()),
+				NamedCost.forTier(4, "1000000", 	new BigDecimal("1000000").multiply(t4Costs.getDatumOutCost()).toString())));
 		
 		assertThat("Datum stored cost", usage.getDatumDaysStoredCost().setScale(3), equalTo(
 						new BigDecimal("50000").multiply(		t1Costs.getDatumDaysStoredCost())
@@ -244,6 +264,11 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 				.add(	new BigDecimal("99000000").multiply(	t4Costs.getDatumDaysStoredCost()))
 				.setScale(3)
 				));
+		assertThat("Datum stored cost tiers", datumStoredTiersCost, contains(
+				NamedCost.forTier(1, "50000", 		new BigDecimal("50000").multiply(t1Costs.getDatumDaysStoredCost()).toString()),
+				NamedCost.forTier(2, "350000", 		new BigDecimal("350000").multiply(t2Costs.getDatumDaysStoredCost()).toString()),
+				NamedCost.forTier(3, "600000", 		new BigDecimal("600000").multiply(t3Costs.getDatumDaysStoredCost()).toString()),
+				NamedCost.forTier(4, "99000000",	new BigDecimal("99000000").multiply(t4Costs.getDatumDaysStoredCost()).toString())));
 		// @formatter:on
 	}
 

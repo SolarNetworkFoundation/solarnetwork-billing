@@ -11,6 +11,14 @@
 		, nu.datum_stored 		AS node_usage_datum_stored
 		, nu.datum_stored_cost 	AS node_usage_datum_stored_cost
 		, nu.total_cost			AS node_usage_total_cost
+		
+		, nu.prop_in_tiers 				AS node_usage_prop_in_tiers
+		, nu.prop_in_tiers_cost 		AS node_usage_prop_in_tiers_cost
+		, nu.datum_out_tiers 			AS node_usage_datum_out_tiers
+		, nu.datum_out_tiers_cost 		AS node_usage_datum_out_tiers_cost
+		, nu.datum_stored_tiers 		AS node_usage_datum_stored_tiers
+		, nu.datum_stored_tiers_cost 	AS node_usage_datum_stored_tiers_cost
+		, nu.total_tiers_cost			AS node_usage_total_tiers_cost
 	</sql>
 
 	<resultMap id="NodeUsage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
@@ -25,6 +33,14 @@
 		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
 		<result property="datumDaysStoredCost"		column="node_usage_datum_stored_cost"/>
 		<result property="totalCost"				column="node_usage_total_cost"/>
+
+		<result property="datumPropertiesInTiersNumeric"	column="node_usage_prop_in_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumPropertiesInCostTiers"		column="node_usage_prop_in_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumOutTiersNumeric"	 			column="node_usage_datum_out_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumOutCostTiers"				column="node_usage_datum_out_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumDaysStoredTiersNumeric" 		column="node_usage_datum_stored_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="datumDaysStoredCostTiers"			column="node_usage_datum_stored_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
+		<result property="totalCostTiers"					column="node_usage_total_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
 	<select id="find-NodeUsage-for-user-month" parameterType="map" resultMap="NodeUsage-FullResult">

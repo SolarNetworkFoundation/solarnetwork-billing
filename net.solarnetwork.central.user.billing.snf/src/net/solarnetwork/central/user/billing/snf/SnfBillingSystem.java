@@ -74,19 +74,14 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
-	/** The default {@code nodeUsagePropertiesInKey} property value. */
-	public static final String DEFAULT_NODE_USAGE_PROPS_IN_KEY = "datum-props-in";
-	public static final String DEFAULT_NODE_USAGE_DATUM_OUT_KEY = "datum-out";
-	public static final String DEFAULT_NODE_USAGE_DATUM_DAYS_STORED_KEY = "datum-days-stored";
-
 	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
 	private final SnfInvoiceItemDao invoiceItemDao;
 	private final NodeUsageDao usageDao;
 	private final MessageSource messageSource;
-	private String datumPropertiesInKey = DEFAULT_NODE_USAGE_PROPS_IN_KEY;
-	private String datumOutKey = DEFAULT_NODE_USAGE_DATUM_OUT_KEY;
-	private String datumDaysStoredKey = DEFAULT_NODE_USAGE_DATUM_DAYS_STORED_KEY;
+	private String datumPropertiesInKey = NodeUsage.DATUM_PROPS_IN_KEY;
+	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
+	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -256,7 +251,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	/**
 	 * Get the item key for datum properties input usage.
 	 * 
-	 * @return the key; defaults to {@link #DEFAULT_NODE_USAGE_PROPS_IN_KEY}
+	 * @return the key; defaults to {@link NodeUsage#DATUM_PROPS_IN_KEY}
 	 */
 	public String getDatumPropertiesInKey() {
 		return datumPropertiesInKey;
@@ -280,7 +275,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	/**
 	 * Get the item key for datum output usage.
 	 * 
-	 * @return the key; defaults to {@link #DEFAULT_NODE_USAGE_DATUM_OUT_KEY}
+	 * @return the key; defaults to {@link NodeUsage#DATUM_OUT_KEY}
 	 */
 	public String getDatumOutKey() {
 		return datumOutKey;
@@ -304,8 +299,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	/**
 	 * Get the item key for datum days stored usage.
 	 * 
-	 * @return the key; defaults to
-	 *         {@link #DEFAULT_NODE_USAGE_DATUM_DAYS_STORED_KEY}
+	 * @return the key; defaults to {@link NodeUsage#DATUM_DAYS_STORED_KEY}
 	 */
 	public String getDatumDaysStoredKey() {
 		return datumDaysStoredKey;
