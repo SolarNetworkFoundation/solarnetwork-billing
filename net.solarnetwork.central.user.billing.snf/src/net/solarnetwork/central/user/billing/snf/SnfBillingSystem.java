@@ -26,6 +26,7 @@ import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.U
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -61,11 +62,13 @@ import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -340,8 +343,70 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		}
 
 		invoice.setItems(new LinkedHashSet<>(items));
+
+		List<SnfInvoiceItem> taxItems = computeInvoiceTaxItems(invoice);
+		for ( SnfInvoiceItem taxItem : taxItems ) {
+			if ( !dryRun ) {
+				invoiceItemDao.save(taxItem);
+			}
+			invoice.getItems().add(taxItem);
+		}
+
 		log.info("Generated invoice for user {} for date {}: {}", userId, startDate, invoice);
 		return invoice;
+	}
+
+	/**
+	 * Compute the set of tax items for a given invoice.
+	 * 
+	 * <p>
+	 * Existing tax items are ignored in the given invoice. The invoice is not
+	 * mutated in any way.
+	 * </p>
+	 * 
+	 * @param invoice
+	 *        the invoice to compute tax items for
+	 * @return the list of tax items, never {@literal null}
+	 */
+	public List<SnfInvoiceItem> computeInvoiceTaxItems(SnfInvoice invoice) {
+		SnfTaxCodeResolver taxResolver = OptionalService.service(taxCodeResolver, this);
+		TaxCodeFilter taxFilter = taxResolver.taxCodeFilterForInvoice(invoice);
+		List<SnfInvoiceItem> taxItems = new ArrayList<>(8);
+		if ( taxFilter != null ) {
+			net.solarnetwork.dao.FilterResults<TaxCode, Long> taxes = taxCodeDao.findFiltered(taxFilter,
+					null, null, null);
+			if ( taxes != null && taxes.getReturnedResultCount() > 0 ) {
+				Map<String, BigDecimal> taxAmounts = new LinkedHashMap<>(taxes.getReturnedResultCount());
+				for ( SnfInvoiceItem item : invoice.getItems() ) {
+					final InvoiceItemType itemType = item.getItemType();
+					if ( itemType == InvoiceItemType.Tax ) {
+						continue;
+					}
+					final String itemKey = item.getKey();
+					final BigDecimal itemAmount = item.getAmount();
+					if ( itemKey == null || itemAmount == null ) {
+						continue;
+					}
+					for ( TaxCode tax : taxes ) {
+						final String taxCode = tax.getCode();
+						final BigDecimal taxRate = tax.getRate();
+						if ( taxCode == null || taxRate == null ) {
+							continue;
+						}
+						if ( itemKey.equalsIgnoreCase(tax.getItemKey()) ) {
+							taxAmounts.merge(taxCode, taxRate.multiply(itemAmount), BigDecimal::add);
+						}
+					}
+				}
+				for ( Map.Entry<String, BigDecimal> me : taxAmounts.entrySet() ) {
+
+					SnfInvoiceItem taxItem = newItem(invoice, InvoiceItemType.Tax, me.getKey(),
+							BigDecimal.ONE, me.getValue().setScale(2, RoundingMode.HALF_UP));
+					taxItems.add(taxItem);
+				}
+			}
+		}
+		return taxItems;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)

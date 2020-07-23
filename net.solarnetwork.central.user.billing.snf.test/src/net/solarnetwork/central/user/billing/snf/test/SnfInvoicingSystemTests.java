@@ -22,13 +22,16 @@
 
 package net.solarnetwork.central.user.billing.snf.test;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matchesFilter;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isNull;
 import static org.easymock.EasyMock.same;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
@@ -39,19 +42,25 @@ import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Map;
 import org.easymock.Capture;
+import org.easymock.EasyMock;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
+import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicFilterResults;
 
@@ -135,20 +144,33 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 	private static void assertUsageItem(SnfInvoice invoice, SnfInvoiceItem item, BigInteger quantity,
 			BigDecimal amount) {
-		assertThat(item.getKey() + "Item ID generated", item.getId(), notNullValue());
-		assertThat(item.getKey() + "Item invoice ID", item.getInvoiceId(),
+		assertThat(item.getKey() + " Item ID generated", item.getId(), notNullValue());
+		assertThat(item.getKey() + " Item invoice ID", item.getInvoiceId(),
 				equalTo(invoice.getId().getId()));
-		assertThat(item.getKey() + "Item type", item.getItemType(), equalTo(InvoiceItemType.Usage));
-		assertThat(item.getKey() + "Item quantity", item.getQuantity(),
+		assertThat(item.getKey() + " Item type", item.getItemType(), equalTo(InvoiceItemType.Usage));
+		assertThat(item.getKey() + " Item quantity", item.getQuantity(),
 				equalTo(new BigDecimal(quantity)));
-		assertThat(item.getKey() + "Item amount", item.getAmount(), equalTo(amount));
+		assertThat(item.getKey() + " Item amount", item.getAmount(), equalTo(amount));
+	}
+
+	private static void assertTaxItem(SnfInvoice invoice, SnfInvoiceItem item, BigDecimal amount) {
+		assertThat(item.getKey() + " Item ID generated", item.getId(), notNullValue());
+		assertThat(item.getKey() + " Item invoice ID", item.getInvoiceId(),
+				equalTo(invoice.getId().getId()));
+		assertThat(item.getKey() + " Item type", item.getItemType(), equalTo(InvoiceItemType.Tax));
+		assertThat(item.getKey() + " Item quantity", item.getQuantity(), equalTo(BigDecimal.ONE));
+		assertThat(item.getKey() + " Item amount", item.getAmount(), equalTo(amount));
 	}
 
 	@Test
 	public void generateInvoice_basic_dryRun() {
 		// GIVEN
+		final Address addr = new Address();
+		addr.setCountry("NZ");
+		addr.setTimeZoneId("Pacific/Auckland");
 		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
 				Instant.now());
+		account.setAddress(addr);
 		expect(accountDao.getForUser(userId)).andReturn(account);
 
 		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
@@ -161,6 +183,11 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setTotalCost(new BigDecimal("7.02"));
 
 		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
+
+		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
+		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(emptyList());
+		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
+				isNull())).andReturn(taxCodeResults);
 
 		// WHEN
 		replayAll();
@@ -181,6 +208,75 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		assertUsageItem(invoice, item, usage.getDatumOut(), usage.getDatumOutCost());
 		item = itemMap.get(NodeUsage.DATUM_DAYS_STORED_KEY);
 		assertUsageItem(invoice, item, usage.getDatumDaysStored(), usage.getDatumDaysStoredCost());
+
+		assertThat("Filtered for appropriate tax codes", taxCodeFilterCaptor.getValue(), matchesFilter(
+				invoice.getStartDate().atStartOfDay(addr.getTimeZone()).toInstant(), "NZ"));
 	}
 
+	@Test
+	public void generateInvoice_withTax_dryRun() {
+		// GIVEN
+		final Address addr = new Address();
+		addr.setCountry("NZ");
+		addr.setTimeZoneId("Pacific/Auckland");
+		final Account account = new Account(randomUUID().getMostSignificantBits(), userId,
+				Instant.now());
+		account.setAddress(addr);
+		expect(accountDao.getForUser(userId)).andReturn(account);
+
+		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumPropertiesInCost(new BigDecimal("1.23"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumOutCost(new BigDecimal("2.34"));
+		usage.setDatumDaysStored(new BigInteger("345"));
+		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
+		usage.setTotalCost(new BigDecimal("7.02"));
+
+		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
+
+		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
+		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",
+				new BigDecimal("0.10"),
+				LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant(), null);
+		TaxCode datumOutTax = new TaxCode("NZ", NodeUsage.DATUM_OUT_KEY, "GST", new BigDecimal("0.20"),
+				LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant(), null);
+		TaxCode datumStoredTax = new TaxCode("NZ", NodeUsage.DATUM_DAYS_STORED_KEY, "GST",
+				new BigDecimal("0.30"),
+				LocalDate.of(2020, 1, 1).atStartOfDay(addr.getTimeZone()).toInstant(), null);
+		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(
+				asList(datumPropsTax, datumOutTax, datumStoredTax));
+		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
+				isNull())).andReturn(taxCodeResults);
+
+		// WHEN
+		replayAll();
+		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
+
+		// THEN
+		assertThat("Invoice created", invoice, notNullValue());
+		assertThat("Invoice items created for all usage and GST tax", invoice.getItems(), hasSize(4));
+
+		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
+		assertThat("Invoice item mapping contains all items", itemMap.keySet(),
+				contains(NodeUsage.DATUM_PROPS_IN_KEY, NodeUsage.DATUM_OUT_KEY,
+						NodeUsage.DATUM_DAYS_STORED_KEY, "GST"));
+
+		SnfInvoiceItem item;
+		item = itemMap.get(NodeUsage.DATUM_PROPS_IN_KEY);
+		assertUsageItem(invoice, item, usage.getDatumPropertiesIn(), usage.getDatumPropertiesInCost());
+		item = itemMap.get(NodeUsage.DATUM_OUT_KEY);
+		assertUsageItem(invoice, item, usage.getDatumOut(), usage.getDatumOutCost());
+		item = itemMap.get(NodeUsage.DATUM_DAYS_STORED_KEY);
+		assertUsageItem(invoice, item, usage.getDatumDaysStored(), usage.getDatumDaysStoredCost());
+		item = itemMap.get("GST");
+		assertTaxItem(invoice, item,
+				usage.getDatumPropertiesInCost().multiply(datumPropsTax.getRate())
+						.add(usage.getDatumOutCost().multiply(datumOutTax.getRate()))
+						.add(usage.getDatumDaysStoredCost().multiply(datumStoredTax.getRate()))
+						.setScale(2, RoundingMode.HALF_UP));
+
+		assertThat("Filtered for appropriate tax codes", taxCodeFilterCaptor.getValue(), matchesFilter(
+				invoice.getStartDate().atStartOfDay(addr.getTimeZone()).toInstant(), "NZ"));
+	}
 }

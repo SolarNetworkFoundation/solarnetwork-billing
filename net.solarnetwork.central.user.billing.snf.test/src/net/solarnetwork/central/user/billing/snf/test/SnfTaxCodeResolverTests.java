@@ -25,13 +25,10 @@ package net.solarnetwork.central.user.billing.snf.test;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter.filterFor;
+import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matchesFilter;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
-import java.time.Instant;
 import java.time.LocalDate;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeMatcher;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver;
@@ -48,32 +45,6 @@ import net.solarnetwork.util.StaticOptionalService;
  * @version 1.0
  */
 public class SnfTaxCodeResolverTests extends AbstractSnfBililngSystemTest {
-
-	private static class TaxCodeFilterMatcher extends TypeSafeMatcher<TaxCodeFilter> {
-
-		private final TaxCodeFilter expected;
-
-		public TaxCodeFilterMatcher(TaxCodeFilter expected) {
-			this.expected = expected;
-		}
-
-		@Override
-		public void describeTo(Description desc) {
-			desc.appendText("matches filter");
-			desc.appendValue(expected);
-
-		}
-
-		@Override
-		protected boolean matchesSafely(TaxCodeFilter other) {
-			return expected.isSameAs(other);
-		}
-
-	}
-
-	private static Matcher<TaxCodeFilter> matchesFilter(Instant date, String... zones) {
-		return new TaxCodeFilterMatcher(filterFor(date, zones));
-	}
 
 	@Test
 	public void resolveTaxCodeFilter_countryOnly() {
