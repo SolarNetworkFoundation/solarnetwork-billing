@@ -16,7 +16,6 @@
 	<resultMap id="TaxCode-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.TaxCode">
 		<constructor>
 			<idArg column="bill_tax_code_id" javaType="Long"/>
-			<arg column="bill_tax_code_inv_id" javaType="Long"/>
 			<arg column="bill_tax_code_created" javaType="java.time.Instant"/>
 			<arg column="bill_tax_code_tax_zone" javaType="String"/>
 			<arg column="bill_tax_code_item_key" javaType="String"/>
