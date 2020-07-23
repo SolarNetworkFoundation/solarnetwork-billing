@@ -33,28 +33,58 @@ import net.solarnetwork.domain.SimplePagination;
  */
 public class TaxCodeFilter extends SimplePagination {
 
-	private String zone;
+	private String[] zones;
 	private String itemKey;
 	private String code;
 	private Instant date;
 
 	/**
+	 * Get the tax zones.
+	 * 
+	 * @return the zones
+	 */
+	public String[] getZones() {
+		return zones;
+	}
+
+	/**
+	 * Set the tax zones.
+	 * 
+	 * @param zones
+	 *        the zones to set
+	 */
+	public void setZones(String[] zones) {
+		this.zones = zones;
+	}
+
+	/**
 	 * Get the tax zone.
+	 * 
+	 * <p>
+	 * This returns the first-available value from the {@code zones} array.
+	 * </p>
 	 * 
 	 * @return the zone
 	 */
 	public String getZone() {
-		return zone;
+		String[] zones = getZones();
+		return zones != null && zones.length > 0 ? zones[0] : null;
 	}
 
 	/**
 	 * Set the tax zone.
 	 * 
+	 * <p>
+	 * This replaces the configured {@code zones} array with a single-element
+	 * array if {@code zone} is not {@literal null}, otherwise sets
+	 * {@code zones} to {@literal null}.
+	 * </p>
+	 * 
 	 * @param zone
 	 *        the zone to set
 	 */
 	public void setZone(String zone) {
-		this.zone = zone;
+		setZones(zone != null ? new String[] { zone } : null);
 	}
 
 	/**

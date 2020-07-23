@@ -24,7 +24,9 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Objects;
 import net.solarnetwork.dao.BasicLongEntity;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * Tax code entity, which defines a tax rate to apply to a given item key.
@@ -32,7 +34,7 @@ import net.solarnetwork.dao.BasicLongEntity;
  * @author matt
  * @version 1.0
  */
-public class TaxCode extends BasicLongEntity {
+public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> {
 
 	private final String zone;
 	private final String itemKey;
@@ -113,6 +115,57 @@ public class TaxCode extends BasicLongEntity {
 		}
 		this.validFrom = validFrom;
 		this.validTo = validTo;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("TaxCode{zone=");
+		builder.append(zone);
+		builder.append(", itemKey=");
+		builder.append(itemKey);
+		builder.append(", code=");
+		builder.append(code);
+		builder.append(", rate=");
+		builder.append(rate);
+		builder.append(", validFrom=");
+		builder.append(validFrom);
+		builder.append(", validTo=");
+		builder.append(validTo);
+		builder.append("}");
+		return builder.toString();
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code id} and {@code created} properties are not compared by this
+	 * method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(TaxCode other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(code, other.code)
+				&& Objects.equals(itemKey, other.itemKey)
+				&& (rate == other.rate) || (rate != null && rate.compareTo(other.rate) == 0)
+				&& Objects.equals(validFrom, other.validFrom)
+				&& Objects.equals(validTo, other.validTo);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(TaxCode other) {
+		return !isSameAs(other);
 	}
 
 	/**

@@ -33,8 +33,8 @@
 		FROM
 			solarbill.bill_tax_code tax
 		<where>
-			<if test="zone != null">
-				AND tax.tax_zone = #{zone}
+			<if test="zones != null and zones.length > 0">
+				AND tax.tax_zone = ANY(#{zones,jdbcType=ARRAY,typeHandler=net.solarnetwork.central.dao.mybatis.type.TextArrayTypeHandler})
 			</if>
 			<if test="itemKey != null">
 				AND tax.item_key = #{itemKey}

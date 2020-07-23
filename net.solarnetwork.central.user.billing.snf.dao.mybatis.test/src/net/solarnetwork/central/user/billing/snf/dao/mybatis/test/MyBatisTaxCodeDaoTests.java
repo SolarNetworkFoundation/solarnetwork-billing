@@ -264,7 +264,7 @@ public class MyBatisTaxCodeDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// THEN
 		List<TaxCode> codes = assertFilterResults("CA and SF taxes apply", results, 2);
-		assertThat("Multi tax codes at date, sorted by item", codes,
+		assertThat("Multi tax codes at date, sorted by code", codes,
 				contains(allCodes.get(3), allCodes.get(5)));
 	}
 
@@ -282,6 +282,23 @@ public class MyBatisTaxCodeDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		// THEN
 		List<TaxCode> codes = assertFilterResults("CA tax only because SF tax ended", results, 1);
-		assertThat("Multi tax codes at date, sorted by item", codes, contains(allCodes.get(4)));
+		assertThat("Multi tax codes at date, sorted by code", codes, contains(allCodes.get(4)));
+	}
+
+	@Test
+	public void filter_zoneAndDate_multiZones() {
+		// GIVEN
+		List<TaxCode> allCodes = populateTestTaxData();
+
+		// WHEN
+		TaxCodeFilter f = new TaxCodeFilter();
+		f.setZones(new String[] { NZ_ZONE, SF_ZONE });
+		f.setDate(LocalDate.of(2013, 1, 1).atStartOfDay(SF_TZ).toInstant());
+		FilterResults<TaxCode, Long> results = dao.findFiltered(f, null, null, null);
+
+		// THEN
+		List<TaxCode> codes = assertFilterResults("CA, GST, SF zones apply", results, 3);
+		assertThat("Multi tax codes at date, sorted by code", codes,
+				contains(allCodes.get(3), allCodes.get(2), allCodes.get(6)));
 	}
 }
