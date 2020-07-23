@@ -1,5 +1,5 @@
 /* ==================================================================
- * SnfInvoiceDao.java - 20/07/2020 9:34:56 AM
+ * TaxCodeDao.java - 24/07/2020 6:27:38 AM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -25,41 +25,37 @@ package net.solarnetwork.central.user.billing.snf.dao;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import java.util.List;
-import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
-import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
-import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
+import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.dao.FilterableDao;
 import net.solarnetwork.dao.GenericDao;
 import net.solarnetwork.domain.SimpleSortDescriptor;
 import net.solarnetwork.domain.SortDescriptor;
 
 /**
- * DAO API for {@link SnfInvoice} entities.
+ * DAO API for {@link TaxCode} entities.
  * 
  * @author matt
  * @version 1.0
  */
-public interface SnfInvoiceDao extends GenericDao<SnfInvoice, UserLongPK>,
-		FilterableDao<SnfInvoice, UserLongPK, SnfInvoiceFilter> {
+public interface TaxCodeDao extends FilterableDao<TaxCode, Long, TaxCodeFilter> {
 
 	/**
-	 * Sort descriptors to sort by date in descending order, followed by ID in
-	 * ascending.
+	 * Sort descriptors to sort by tax code in ascending order, followed by ID
+	 * in ascending order.
 	 */
 	// @formatter:off
-	List<SortDescriptor> SORT_BY_INVOICE_DATE_DESCENDING = unmodifiableList(asList(
-					new SimpleSortDescriptor(InvoiceSortKey.DATE.toString(), true),
-					new SimpleSortDescriptor(StandardSortKey.ID.toString(), false)));
+	List<SortDescriptor> SORT_BY_ITEM_KEY = unmodifiableList(asList(
+					new SimpleSortDescriptor(TaxCodeSortKey.CODE.toString()),
+					new SimpleSortDescriptor(GenericDao.StandardSortKey.ID.toString())));
 	// @formatter:on
 
 	/**
-	 * A sort key enumeration for {@link SnfInvoice} queries.
+	 * A sort key enumeration for {@link TaxCode} queries.
 	 */
-	enum InvoiceSortKey {
+	enum TaxCodeSortKey {
 
-		ACCOUNT,
-
-		DATE;
+		CODE,
 
 	}
 
