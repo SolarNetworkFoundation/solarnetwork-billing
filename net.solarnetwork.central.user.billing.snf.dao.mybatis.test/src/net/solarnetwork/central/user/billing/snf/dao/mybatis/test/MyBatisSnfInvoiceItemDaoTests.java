@@ -48,6 +48,8 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
  */
 public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport {
 
+	private static final String TEST_PROD_KEY = UUID.randomUUID().toString();
+
 	private MyBatisAddressDao addressDao;
 	private MyBatisAccountDao accountDao;
 	private MyBatisSnfInvoiceDao invoiceDao;
@@ -89,7 +91,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 		SnfInvoice invoice = createTestInvoice();
 
 		SnfInvoiceItem entity = SnfInvoiceItem.newItem(invoice.getId().getId(), InvoiceItemType.Fixed,
-				BigDecimal.ONE, new BigDecimal("3.45"));
+				TEST_PROD_KEY, BigDecimal.ONE, new BigDecimal("3.45"));
 		UUID pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
 		last = entity;

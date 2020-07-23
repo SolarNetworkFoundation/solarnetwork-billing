@@ -36,6 +36,7 @@ import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
@@ -48,6 +49,8 @@ import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
  */
 public class SnfInvoiceItemTests {
 
+	private static final String TEST_PROD_KEY = UUID.randomUUID().toString();
+
 	@Test
 	public void usageMetadata_basic() {
 		// GIVEN
@@ -55,8 +58,8 @@ public class SnfInvoiceItemTests {
 		usage.put("unitType", "foo");
 		usage.put("amount", "12345");
 		usage.put("cost", "123.45");
-		SnfInvoiceItem item = newItem(randomUUID().getMostSignificantBits(), Recurring, ONE, ONE, now(),
-				singletonMap(META_USAGE, usage));
+		SnfInvoiceItem item = newItem(randomUUID().getMostSignificantBits(), Recurring, TEST_PROD_KEY,
+				ONE, ONE, now(), singletonMap(META_USAGE, usage));
 
 		// WHEN
 		UsageInfo info = item.getUsageInfo();
@@ -71,8 +74,8 @@ public class SnfInvoiceItemTests {
 	@Test
 	public void usageMetadata_missing() {
 		// GIVEN
-		SnfInvoiceItem item = newItem(randomUUID().getMostSignificantBits(), Recurring, ONE, ONE, now(),
-				singletonMap("foo", "bar"));
+		SnfInvoiceItem item = newItem(randomUUID().getMostSignificantBits(), Recurring, TEST_PROD_KEY,
+				ONE, ONE, now(), singletonMap("foo", "bar"));
 
 		// WHEN
 		UsageInfo info = item.getUsageInfo();

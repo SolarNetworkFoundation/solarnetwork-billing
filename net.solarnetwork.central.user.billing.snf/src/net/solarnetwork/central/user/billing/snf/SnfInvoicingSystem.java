@@ -71,14 +71,17 @@ public interface SnfInvoicingSystem {
 	 *        persisted nor delivered to the account holder, {@literal false} to
 	 *        generate a persistent invoice that is also delivered to the
 	 *        account holder if appropriate
-	 * @return the generated invoice
+	 * @return the generated invoice, or {@literal null} if no invoice is
+	 *         necessary (i.e. no charges)
 	 */
 	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate, boolean dryRun);
-	
+
 	/**
-	 * Deliver an invoice via an account-specific delivery mechanism (such as email).
+	 * Deliver an invoice via an account-specific delivery mechanism (such as
+	 * email).
 	 * 
-	 * @param invoiceId the ID of the invoice to deliver
+	 * @param invoiceId
+	 *        the ID of the invoice to deliver
 	 * @return {@literal true} if the invoice was delivered successfully
 	 */
 	boolean deliverInvoice(UUID invoiceId);

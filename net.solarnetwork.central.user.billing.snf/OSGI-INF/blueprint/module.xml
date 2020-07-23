@@ -24,6 +24,8 @@
 	
 	<reference id="accountDao" interface="net.solarnetwork.central.user.billing.snf.dao.AccountDao"/>
 	<reference id="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
+	<reference id="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
+	<reference id="nodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao"/>
 
 	<reference id="transactionManager" filter="(db=central)"
 		interface="org.springframework.transaction.PlatformTransactionManager"/>
@@ -35,6 +37,8 @@
 	<bean id="billingSystem" class="net.solarnetwork.central.user.billing.snf.SnfBillingSystem">
 		<argument ref="accountDao"/>
 		<argument ref="invoiceDao"/>
+		<argument ref="invoiceItemDao"/>
+		<argument ref="nodeUsageDao"/>
 		<argument>
 			<bean class="org.springframework.context.support.ResourceBundleMessageSource">
 				<property name="basename" value="net.solarnetwork.central.user.billing.snf.SnfBillingSystem"/>

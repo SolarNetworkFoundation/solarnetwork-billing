@@ -67,6 +67,8 @@ import net.solarnetwork.dao.FilterResults;
  */
 public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
+	private static final String TEST_PROD_KEY = UUID.randomUUID().toString();
+
 	private MyBatisAddressDao addressDao;
 	private MyBatisAccountDao accountDao;
 	private MyBatisSnfInvoiceItemDao itemDao;
@@ -121,10 +123,13 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		insert();
 		final SnfInvoice invoice = dao.get(last.getId());
 
-		SnfInvoiceItem item1 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("1.23"));
+		SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
+				new BigDecimal("1.23"));
 		item1.setMetadata(Collections.singletonMap("just", "testing"));
-		SnfInvoiceItem item2 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("2.34"));
-		SnfInvoiceItem item3 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("3.45"));
+		SnfInvoiceItem item2 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
+				new BigDecimal("2.34"));
+		SnfInvoiceItem item3 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
+				new BigDecimal("3.45"));
 		final List<SnfInvoiceItem> items = Arrays.asList(item1, item2, item3);
 		for ( SnfInvoiceItem item : items ) {
 			itemDao.save(item);
@@ -156,10 +161,13 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			invoice.setEndDate(start.plusMonths(i + 1));
 			UserLongPK invoiceId = dao.save(invoice);
 
-			SnfInvoiceItem item1 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("1.23"));
+			SnfInvoiceItem item1 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
+					new BigDecimal("1.23"));
 			item1.setMetadata(Collections.singletonMap("just", "testing"));
-			SnfInvoiceItem item2 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("2.34"));
-			SnfInvoiceItem item3 = newItem(invoice, Fixed, BigDecimal.ONE, new BigDecimal("3.45"));
+			SnfInvoiceItem item2 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
+					new BigDecimal("2.34"));
+			SnfInvoiceItem item3 = newItem(invoice, Fixed, TEST_PROD_KEY, BigDecimal.ONE,
+					new BigDecimal("3.45"));
 			for ( SnfInvoiceItem item : asList(item1, item2, item3) ) {
 				itemDao.save(item);
 			}

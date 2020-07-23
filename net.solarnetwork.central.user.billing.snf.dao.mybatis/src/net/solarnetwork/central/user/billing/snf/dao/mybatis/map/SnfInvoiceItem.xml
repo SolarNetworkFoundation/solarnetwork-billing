@@ -8,6 +8,7 @@
 			<if test="created != null">,created</if>
 			, inv_id
 			, item_type
+			, item_key
 			, amount
 			, quantity
 			, jmeta
@@ -16,6 +17,7 @@
 			<if test="created != null">,#{created}</if>
 			, #{invoiceId}
 			, #{itemType,typeHandler=net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler}
+			, #{key}
 			, #{amount}
 			, #{quantity}
 			, #{metadata,typeHandler=net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler}::jsonb
@@ -28,6 +30,7 @@
 		, invi.created 		AS bill_invoice_item_created
 		, invi.inv_id 		AS bill_invoice_item_inv_id
 		, invi.item_type 	AS bill_invoice_item_item_type
+		, invi.item_key 	AS bill_invoice_item_item_key
 		, invi.amount 		AS bill_invoice_item_amount
 		, invi.quantity 	AS bill_invoice_item_quantity
 		, invi.jmeta 		AS bill_invoice_item_jmeta
@@ -40,6 +43,7 @@
 			<arg column="bill_invoice_item_created" javaType="java.time.Instant"/>
 		</constructor>
 		<result property="itemType" column="bill_invoice_item_item_type" javaType="net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType" typeHandler="net.solarnetwork.central.dao.mybatis.type.CodedValueTypeHandler"/>
+		<result property="key" column="bill_invoice_item_item_key"/>
 		<result property="amount" column="bill_invoice_item_amount"/>
 		<result property="quantity" column="bill_invoice_item_quantity"/>
 		<result property="metadata" column="bill_invoice_item_jmeta" javaType="java.util.Map" jdbcType="VARCHAR" typeHandler="net.solarnetwork.central.dao.mybatis.type.JsonMapTypeHandler"/>

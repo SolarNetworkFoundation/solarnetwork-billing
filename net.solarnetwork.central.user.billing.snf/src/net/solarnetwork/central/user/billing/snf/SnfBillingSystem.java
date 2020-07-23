@@ -22,11 +22,21 @@
 
 package net.solarnetwork.central.user.billing.snf;
 
+import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
@@ -42,10 +52,14 @@ import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
 
@@ -60,9 +74,21 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
+	/** The default {@code nodeUsagePropertiesInKey} property value. */
+	public static final String DEFAULT_NODE_USAGE_PROPS_IN_KEY = "datum-props-in";
+	public static final String DEFAULT_NODE_USAGE_DATUM_OUT_KEY = "datum-out";
+	public static final String DEFAULT_NODE_USAGE_DATUM_DAYS_STORED_KEY = "datum-days-stored";
+
 	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
+	private final SnfInvoiceItemDao invoiceItemDao;
+	private final NodeUsageDao usageDao;
 	private final MessageSource messageSource;
+	private String datumPropertiesInKey = DEFAULT_NODE_USAGE_PROPS_IN_KEY;
+	private String datumOutKey = DEFAULT_NODE_USAGE_DATUM_OUT_KEY;
+	private String datumDaysStoredKey = DEFAULT_NODE_USAGE_DATUM_DAYS_STORED_KEY;
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	/**
 	 * Constructor.
@@ -71,13 +97,17 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	 *        the account DAO
 	 * @param invoiceDao
 	 *        the invoice DAO
+	 * @param invoiceItemDao
+	 *        the invoice item DAO
+	 * @param usageDao
+	 *        the usage DAO
 	 * @param messageSource
 	 *        the message source
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public SnfBillingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
-			MessageSource messageSource) {
+			SnfInvoiceItemDao invoiceItemDao, NodeUsageDao usageDao, MessageSource messageSource) {
 		super();
 		if ( accountDao == null ) {
 			throw new IllegalArgumentException("The accountDao argument must be provided.");
@@ -87,6 +117,14 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 			throw new IllegalArgumentException("The invoiceDao argument must be provided.");
 		}
 		this.invoiceDao = invoiceDao;
+		if ( invoiceItemDao == null ) {
+			throw new IllegalArgumentException("The invoiceItemDao argument must be provided.");
+		}
+		this.invoiceItemDao = invoiceItemDao;
+		if ( usageDao == null ) {
+			throw new IllegalArgumentException("The usageDao argument must be provided.");
+		}
+		this.usageDao = usageDao;
 		if ( messageSource == null ) {
 			throw new IllegalArgumentException("The messageSource argument must be provided.");
 		}
@@ -154,8 +192,58 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	@Override
 	public SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
 			boolean dryRun) {
-		// TODO Auto-generated method stub
-		return null;
+		// get account
+		Account account = accountDao.getForUser(userId);
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
+		}
+
+		// query for usage
+		List<NodeUsage> usages = usageDao.findMonthlyUsageForUser(userId, startDate);
+		if ( usages == null || usages.isEmpty() ) {
+			// no invoice necessary
+			return null;
+		}
+
+		// turn usage into invoice items
+		SnfInvoice invoice = new SnfInvoice(account.getId().getId(), userId, Instant.now());
+		invoice.setAddress(account.getAddress());
+		invoice.setCurrencyCode(account.getCurrencyCode());
+		invoice.setStartDate(startDate);
+		invoice.setEndDate(endDate);
+		final UserLongPK invoiceId = invoiceDao.save(invoice);
+
+		List<SnfInvoiceItem> items = new ArrayList<>(usages.size());
+
+		Collections.sort(usages, NodeUsage.SORT_BY_NODE_ID);
+		for ( NodeUsage usage : usages ) {
+			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) < 1 ) {
+				// no cost for this node
+				log.debug("No usage cost for node {} invoice date {}", usage.getId(), startDate);
+				continue;
+			}
+			if ( usage.getDatumPropertiesIn().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumPropertiesInKey,
+						new BigDecimal(usage.getDatumPropertiesIn()), usage.getDatumPropertiesInCost());
+				invoiceItemDao.save(item);
+				items.add(item);
+			}
+			if ( usage.getDatumOut().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumOutKey,
+						new BigDecimal(usage.getDatumOut()), usage.getDatumOutCost());
+				invoiceItemDao.save(item);
+				items.add(item);
+			}
+			if ( usage.getDatumDaysStored().compareTo(BigInteger.ZERO) > 0 ) {
+				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumDaysStoredKey,
+						new BigDecimal(usage.getDatumDaysStored()), usage.getDatumDaysStoredCost());
+				invoiceItemDao.save(item);
+				items.add(item);
+			}
+		}
+
+		invoice.setItems(new LinkedHashSet<>(items));
+		return invoice;
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
@@ -163,6 +251,79 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem {
 	public boolean deliverInvoice(UUID invoiceId) {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	/**
+	 * Get the item key for datum properties input usage.
+	 * 
+	 * @return the key; defaults to {@link #DEFAULT_NODE_USAGE_PROPS_IN_KEY}
+	 */
+	public String getDatumPropertiesInKey() {
+		return datumPropertiesInKey;
+	}
+
+	/**
+	 * Set the item key for datum properties input usage.
+	 * 
+	 * @param datumPropertiesInKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 */
+	public void setDatumPropertiesInKey(String datumPropertiesInKey) {
+		if ( datumPropertiesInKey == null ) {
+			throw new IllegalArgumentException("The datumPropertiesInKey argumust must not be null.");
+		}
+		this.datumPropertiesInKey = datumPropertiesInKey;
+	}
+
+	/**
+	 * Get the item key for datum output usage.
+	 * 
+	 * @return the key; defaults to {@link #DEFAULT_NODE_USAGE_DATUM_OUT_KEY}
+	 */
+	public String getDatumOutKey() {
+		return datumOutKey;
+	}
+
+	/**
+	 * Set the item key for datum output usage.
+	 * 
+	 * @param datumOutKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 */
+	public void setDatumOutKey(String datumOutKey) {
+		if ( datumOutKey == null ) {
+			throw new IllegalArgumentException("The datumOutKey argumust must not be null.");
+		}
+		this.datumOutKey = datumOutKey;
+	}
+
+	/**
+	 * Get the item key for datum days stored usage.
+	 * 
+	 * @return the key; defaults to
+	 *         {@link #DEFAULT_NODE_USAGE_DATUM_DAYS_STORED_KEY}
+	 */
+	public String getDatumDaysStoredKey() {
+		return datumDaysStoredKey;
+	}
+
+	/**
+	 * Set the item key for datum days stored usage.
+	 * 
+	 * @param datumDaysStoredKey
+	 *        the key to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 */
+	public void setDatumDaysStoredKey(String datumDaysStoredKey) {
+		if ( datumDaysStoredKey == null ) {
+			throw new IllegalArgumentException("The datumDaysStoredKey argumust must not be null.");
+		}
+		this.datumDaysStoredKey = datumDaysStoredKey;
 	}
 
 }

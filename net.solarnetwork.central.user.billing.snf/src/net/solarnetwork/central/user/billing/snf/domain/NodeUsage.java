@@ -25,11 +25,16 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
+import java.util.Comparator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.dao.BasicLongEntity;
 
 /**
  * Usage details for a single node.
+ * 
+ * <p>
+ * The {@link #getId()} represents the node ID this usage relates to.
+ * </p>
  * 
  * <p>
  * The usage date range is defined in whatever associated entity refers to this
@@ -43,11 +48,29 @@ import net.solarnetwork.dao.BasicLongEntity;
  */
 public class NodeUsage extends BasicLongEntity {
 
+	/**
+	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
+	 * ascending order.
+	 */
+	public static final Comparator<NodeUsage> SORT_BY_NODE_ID = new NodeUsageNodeIdComparator();
+
 	private BigInteger datumPropertiesIn;
-	private BigInteger datumDaysStored;
 	private BigInteger datumOut;
+	private BigInteger datumDaysStored;
 	private final NodeUsageCost costs;
 	private BigDecimal totalCost;
+
+	/**
+	 * Compare {@link NodeUsageTier} instances by quantity in ascending order.
+	 */
+	public static final class NodeUsageNodeIdComparator implements Comparator<NodeUsage> {
+
+		@Override
+		public int compare(NodeUsage o1, NodeUsage o2) {
+			return o1.compareTo(o2.getId());
+		}
+
+	}
 
 	/**
 	 * Constructor.
@@ -69,6 +92,9 @@ public class NodeUsage extends BasicLongEntity {
 	 */
 	public NodeUsage(Long id, Instant created) {
 		super(id, created);
+		setDatumPropertiesIn(BigInteger.ZERO);
+		setDatumOut(BigInteger.ZERO);
+		setDatumDaysStored(BigInteger.ZERO);
 		this.costs = new NodeUsageCost();
 	}
 
@@ -107,7 +133,7 @@ public class NodeUsage extends BasicLongEntity {
 	/**
 	 * Get the count of datum properties added.
 	 * 
-	 * @return the count
+	 * @return the count, never {@literal null}
 	 */
 	public BigInteger getDatumPropertiesIn() {
 		return datumPropertiesIn;
@@ -117,9 +143,13 @@ public class NodeUsage extends BasicLongEntity {
 	 * Set the count of datum properties added.
 	 * 
 	 * @param datumPropertiesIn
-	 *        the count to set
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
 	 */
 	public void setDatumPropertiesIn(BigInteger datumPropertiesIn) {
+		if ( datumPropertiesIn == null ) {
+			datumPropertiesIn = BigInteger.ZERO;
+		}
 		this.datumPropertiesIn = datumPropertiesIn;
 	}
 
@@ -155,9 +185,13 @@ public class NodeUsage extends BasicLongEntity {
 	 * Set the count of datum stored per day (accumulating).
 	 * 
 	 * @param datumDaysStored
-	 *        the count to set
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
 	 */
 	public void setDatumDaysStored(BigInteger datumDaysStored) {
+		if ( datumDaysStored == null ) {
+			datumDaysStored = BigInteger.ZERO;
+		}
 		this.datumDaysStored = datumDaysStored;
 	}
 
@@ -193,9 +227,13 @@ public class NodeUsage extends BasicLongEntity {
 	 * Set the count of datum queried.
 	 * 
 	 * @param datumOut
-	 *        the count to set
+	 *        the count to set; if {@literal null} then {@literal 0} will be
+	 *        stored
 	 */
 	public void setDatumOut(BigInteger datumOut) {
+		if ( datumOut == null ) {
+			datumOut = BigInteger.ZERO;
+		}
 		this.datumOut = datumOut;
 	}
 

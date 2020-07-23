@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
@@ -52,6 +53,8 @@ import net.solarnetwork.central.user.domain.UserLongPK;
  * @version 1.0
  */
 public class SnfInvoiceTests {
+
+	private static final String TEST_PROD_KEY = UUID.randomUUID().toString();
 
 	@Test
 	public void zone_notPresent() {
@@ -180,9 +183,9 @@ public class SnfInvoiceTests {
 		Address addr = new Address(randomUUID().getMostSignificantBits(), Instant.now());
 		inv1.setAddress(addr);
 
-		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed,
+		SnfInvoiceItem item1 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("1.23"), new BigDecimal("12345"), inv1.getCreated());
-		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed,
+		SnfInvoiceItem item2 = newItem(inv1.getId().getId(), InvoiceItemType.Fixed, TEST_PROD_KEY,
 				new BigDecimal("2.34"), new BigDecimal("23456"), inv1.getCreated());
 		inv1.setItems(new HashSet<>(Arrays.asList(item1, item2)));
 

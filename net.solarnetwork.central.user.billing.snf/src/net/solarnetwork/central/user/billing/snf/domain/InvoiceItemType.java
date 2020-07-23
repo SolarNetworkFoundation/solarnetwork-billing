@@ -40,15 +40,18 @@ public enum InvoiceItemType implements CodedValue {
 	/** A oen-off fixed charge. */
 	Fixed(2),
 
+	/** A chage based on usage. */
+	Usage(3),
+
 	/**
 	 * A credit adjustment.
 	 */
-	Credit(3),
+	Credit(4),
 
 	/**
 	 * A tax item.
 	 */
-	Tax(4);
+	Tax(5);
 
 	private final byte code;
 

@@ -48,7 +48,9 @@ import org.springframework.context.support.ResourceBundleMessageSource;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
@@ -66,6 +68,8 @@ public class SnfInvoicingSystemTests {
 
 	private AccountDao accountDao;
 	private SnfInvoiceDao invoiceDao;
+	private SnfInvoiceItemDao invoiceItemDao;
+	private NodeUsageDao usageDao;
 	private ResourceBundleMessageSource messageSource;
 	private SnfInvoicingSystem system;
 
@@ -77,10 +81,12 @@ public class SnfInvoicingSystemTests {
 	public void setup() {
 		accountDao = EasyMock.createMock(AccountDao.class);
 		invoiceDao = EasyMock.createMock(SnfInvoiceDao.class);
+		invoiceItemDao = EasyMock.createMock(SnfInvoiceItemDao.class);
+		usageDao = EasyMock.createMock(NodeUsageDao.class);
 		messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasename(SnfBillingSystem.class.getName());
 
-		system = new SnfBillingSystem(accountDao, invoiceDao, messageSource);
+		system = new SnfBillingSystem(accountDao, invoiceDao, invoiceItemDao, usageDao, messageSource);
 
 		userId = UUID.randomUUID().getMostSignificantBits();
 		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)
@@ -89,12 +95,12 @@ public class SnfInvoicingSystemTests {
 	}
 
 	private void replayAll() {
-		EasyMock.replay(invoiceDao);
+		EasyMock.replay(accountDao, invoiceDao, usageDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(invoiceDao);
+		EasyMock.verify(accountDao, invoiceDao, usageDao);
 	}
 
 	@Test

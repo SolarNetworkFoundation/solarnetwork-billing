@@ -54,6 +54,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 
 	private final Long invoiceId;
 	private InvoiceItemType itemType;
+	private String key;
 	private BigDecimal amount;
 	private BigDecimal quantity;
 	private Map<String, Object> metadata;
@@ -66,15 +67,17 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        valid ID defined
 	 * @param type
 	 *        the type
+	 * @param key
+	 *        the key
 	 * @param quantity
 	 *        the quantity
 	 * @param amount
 	 *        the amount
 	 * @return the new item, never {@literal null}
 	 */
-	public static SnfInvoiceItem newItem(SnfInvoice invoice, InvoiceItemType type, BigDecimal quantity,
-			BigDecimal amount) {
-		return newItem(invoice.getId().getId(), type, quantity, amount);
+	public static SnfInvoiceItem newItem(SnfInvoice invoice, InvoiceItemType type, String key,
+			BigDecimal quantity, BigDecimal amount) {
+		return newItem(invoice.getId().getId(), type, key, quantity, amount);
 	}
 
 	/**
@@ -84,15 +87,17 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the invoice ID
 	 * @param type
 	 *        the type
+	 * @param key
+	 *        the key
 	 * @param quantity
 	 *        the quantity
 	 * @param amount
 	 *        the amount
 	 * @return the new item, never {@literal null}
 	 */
-	public static SnfInvoiceItem newItem(Long invoiceId, InvoiceItemType type, BigDecimal quantity,
-			BigDecimal amount) {
-		return newItem(invoiceId, type, quantity, amount, Instant.now(), null);
+	public static SnfInvoiceItem newItem(Long invoiceId, InvoiceItemType type, String key,
+			BigDecimal quantity, BigDecimal amount) {
+		return newItem(invoiceId, type, key, quantity, amount, Instant.now(), null);
 	}
 
 	/**
@@ -102,6 +107,8 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the invoice ID
 	 * @param type
 	 *        the type
+	 * @param key
+	 *        the key
 	 * @param quantity
 	 *        the quantity
 	 * @param amount
@@ -110,9 +117,9 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the date
 	 * @return the new item, never {@literal null}
 	 */
-	public static SnfInvoiceItem newItem(Long invoiceId, InvoiceItemType type, BigDecimal quantity,
-			BigDecimal amount, Instant date) {
-		return newItem(invoiceId, type, quantity, amount, date, null);
+	public static SnfInvoiceItem newItem(Long invoiceId, InvoiceItemType type, String key,
+			BigDecimal quantity, BigDecimal amount, Instant date) {
+		return newItem(invoiceId, type, key, quantity, amount, date, null);
 	}
 
 	/**
@@ -122,6 +129,8 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the invoice ID
 	 * @param type
 	 *        the type
+	 * @param key
+	 *        the key
 	 * @param quantity
 	 *        the quantity
 	 * @param amount
@@ -132,10 +141,11 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 *        the metadata
 	 * @return the new item, never {@literal null}
 	 */
-	public static SnfInvoiceItem newItem(Long invoiceId, InvoiceItemType type, BigDecimal quantity,
-			BigDecimal amount, Instant date, Map<String, Object> metadata) {
+	public static SnfInvoiceItem newItem(Long invoiceId, InvoiceItemType type, String key,
+			BigDecimal quantity, BigDecimal amount, Instant date, Map<String, Object> metadata) {
 		SnfInvoiceItem item = new SnfInvoiceItem(UUID.randomUUID(), invoiceId, date);
 		item.setItemType(type);
+		item.setKey(key);
 		item.setAmount(amount);
 		item.setQuantity(quantity);
 		item.setMetadata(metadata);
@@ -175,6 +185,8 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		builder.append(invoiceId);
 		builder.append(", id=");
 		builder.append(getId());
+		builder.append(", key=");
+		builder.append(key);
 		builder.append(", itemType=");
 		builder.append(itemType);
 		builder.append(", amount=");
@@ -217,6 +229,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		}
 		// @formatter:off
 		return Objects.equals(invoiceId, other.invoiceId)
+				&& Objects.equals(key, other.key)
 				&& Objects.equals(itemType, other.itemType)
 				&& Objects.equals(quantity, other.quantity)
 				&& Objects.equals(metadata, other.metadata);
@@ -247,6 +260,29 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 */
 	public Long getInvoiceId() {
 		return invoiceId;
+	}
+
+	/**
+	 * Get the item key.
+	 * 
+	 * <p>
+	 * This is a unique identifier defined externally, such as a product key.
+	 * </p>
+	 * 
+	 * @return the key
+	 */
+	public String getKey() {
+		return key;
+	}
+
+	/**
+	 * Set the item key.
+	 * 
+	 * @param key
+	 *        the key to set
+	 */
+	public void setKey(String key) {
+		this.key = key;
 	}
 
 	/**
