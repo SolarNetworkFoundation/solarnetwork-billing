@@ -344,7 +344,7 @@ public class NodeUsage extends BasicLongEntity {
 	}
 
 	/**
-	 * Get the overall tiers breakdown.
+	 * Get the overall usage tiers breakdown.
 	 * 
 	 * <p>
 	 * The resulting map contains the following keys:
@@ -363,6 +363,32 @@ public class NodeUsage extends BasicLongEntity {
 		result.put(DATUM_PROPS_IN_KEY, getDatumPropertiesInTiersCostBreakdown());
 		result.put(DATUM_OUT_KEY, getDatumOutTiersCostBreakdown());
 		result.put(DATUM_DAYS_STORED_KEY, getDatumDaysStoredTiersCostBreakdown());
+		return result;
+	}
+
+	/**
+	 * Get the overall usage information.
+	 * 
+	 * <p>
+	 * The resulting map contains the following keys:
+	 * </p>
+	 * <ol>
+	 * <li>{@link #DATUM_PROPS_IN_KEY}</li>
+	 * <li>{@link #DATUM_OUT_KEY}</li>
+	 * <li>{@link #DATUM_DAYS_STORED_KEY}
+	 * <li>
+	 * </ol>
+	 * 
+	 * @return the map, never {@literal null}
+	 */
+	public Map<String, UsageInfo> getUsageInfo() {
+		Map<String, UsageInfo> result = new LinkedHashMap<>(4);
+		result.put(DATUM_PROPS_IN_KEY, new UsageInfo(DATUM_PROPS_IN_KEY,
+				new BigDecimal(datumPropertiesIn), costs.getDatumPropertiesInCost()));
+		result.put(DATUM_OUT_KEY,
+				new UsageInfo(DATUM_OUT_KEY, new BigDecimal(datumOut), costs.getDatumOutCost()));
+		result.put(DATUM_DAYS_STORED_KEY, new UsageInfo(DATUM_DAYS_STORED_KEY,
+				new BigDecimal(datumDaysStored), costs.getDatumDaysStoredCost()));
 		return result;
 	}
 

@@ -70,6 +70,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
+import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.util.OptionalService;
@@ -262,12 +263,15 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		return filter;
 	}
 
-	public Map<String, Object> usageMetadata(Long nodeId, Map<String, List<NamedCost>> data,
-			String tierKey) {
+	public static Map<String, Object> usageMetadata(Long nodeId, Map<String, UsageInfo> usageData,
+			Map<String, List<NamedCost>> tierData, String tierKey) {
 		Map<String, Object> result = new LinkedHashMap<>(2);
 		result.put(SnfInvoiceItem.META_NODE_ID, nodeId);
-		if ( data.containsKey(tierKey) ) {
-			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, data.get(tierKey));
+		if ( usageData.containsKey(tierKey) ) {
+			result.put(SnfInvoiceItem.META_USAGE, usageData.get(tierKey).toMetadata());
+		}
+		if ( tierData.containsKey(tierKey) ) {
+			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, tierData.get(tierKey));
 		}
 		return result;
 	}
@@ -311,11 +315,12 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				continue;
 			}
 			final Map<String, List<NamedCost>> tiersBreakdown = usage.getTiersCostBreakdown();
+			final Map<String, UsageInfo> usageInfo = usage.getUsageInfo();
 			if ( usage.getDatumPropertiesIn().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumPropertiesInKey,
 						new BigDecimal(usage.getDatumPropertiesIn()), usage.getDatumPropertiesInCost());
-				item.setMetadata(
-						usageMetadata(usage.getId(), tiersBreakdown, NodeUsage.DATUM_PROPS_IN_KEY));
+				item.setMetadata(usageMetadata(usage.getId(), usageInfo, tiersBreakdown,
+						NodeUsage.DATUM_PROPS_IN_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -324,7 +329,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			if ( usage.getDatumOut().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumOutKey,
 						new BigDecimal(usage.getDatumOut()), usage.getDatumOutCost());
-				item.setMetadata(usageMetadata(usage.getId(), tiersBreakdown, NodeUsage.DATUM_OUT_KEY));
+				item.setMetadata(usageMetadata(usage.getId(), usageInfo, tiersBreakdown,
+						NodeUsage.DATUM_OUT_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -333,8 +339,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			if ( usage.getDatumDaysStored().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumDaysStoredKey,
 						new BigDecimal(usage.getDatumDaysStored()), usage.getDatumDaysStoredCost());
-				item.setMetadata(
-						usageMetadata(usage.getId(), tiersBreakdown, NodeUsage.DATUM_DAYS_STORED_KEY));
+				item.setMetadata(usageMetadata(usage.getId(), usageInfo, tiersBreakdown,
+						NodeUsage.DATUM_DAYS_STORED_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}

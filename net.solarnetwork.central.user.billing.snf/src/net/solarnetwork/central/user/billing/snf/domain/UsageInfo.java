@@ -23,8 +23,11 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
+import net.solarnetwork.domain.Differentiable;
 
 /**
  * Information about resource usage.
@@ -32,7 +35,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
  * @author matt
  * @version 1.0
  */
-public class UsageInfo implements InvoiceItemUsageRecord {
+public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageInfo> {
 
 	private final String unitType;
 	private final BigDecimal cost;
@@ -90,6 +93,83 @@ public class UsageInfo implements InvoiceItemUsageRecord {
 		this.cost = cost != null ? cost : BigDecimal.ZERO;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("UsageInfo{");
+		if ( unitType != null ) {
+			builder.append("unitType=");
+			builder.append(unitType);
+			builder.append(", ");
+		}
+		if ( amount != null ) {
+			builder.append("amount=");
+			builder.append(amount);
+			builder.append(", ");
+		}
+		if ( cost != null ) {
+			builder.append("cost=");
+			builder.append(cost);
+		}
+		builder.append("}");
+		return builder.toString();
+	}
+
+	/**
+	 * Get a map of metadata from this instance.
+	 * 
+	 * @return the usage Map, whose keys match the properties of this class,
+	 *         never {@literal null}
+	 */
+	public Map<String, Object> toMetadata() {
+		Map<String, Object> result = new LinkedHashMap<>(4);
+		result.put("unitType", unitType);
+		result.put("amount", amount.toString());
+		result.put("cost", cost.toString());
+		return result;
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code id} and {@code created} properties are not compared by this
+	 * method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(UsageInfo other) {
+		return equals(other);
+	}
+
+	@Override
+	public boolean differsFrom(UsageInfo other) {
+		return !isSameAs(other);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(amount, cost, unitType);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if ( this == obj ) {
+			return true;
+		}
+		if ( !(obj instanceof UsageInfo) ) {
+			return false;
+		}
+		UsageInfo other = (UsageInfo) obj;
+		return Objects.equals(amount, other.amount) && Objects.equals(cost, other.cost)
+				&& Objects.equals(unitType, other.unitType);
+	}
+
 	/**
 	 * Get the unit type.
 	 * 
@@ -101,7 +181,7 @@ public class UsageInfo implements InvoiceItemUsageRecord {
 	}
 
 	/**
-	 * Get the amount.
+	 * Get the usage amount (quantity of usage).
 	 * 
 	 * @return the amount, never {@literal null}
 	 */

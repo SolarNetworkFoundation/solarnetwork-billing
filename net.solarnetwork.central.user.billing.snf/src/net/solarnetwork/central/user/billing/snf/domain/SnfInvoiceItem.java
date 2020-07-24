@@ -50,7 +50,7 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 * The metadata key for a {@code Map} of usage information.
 	 * 
 	 * <p>
-	 * The usage is stored with mep keys that match the properties of the
+	 * The usage is stored with map keys that match the properties of the
 	 * {@link UsageInfo} class.
 	 * </p>
 	 */
