@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf;
 
+import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import java.math.BigDecimal;
@@ -271,7 +272,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			result.put(SnfInvoiceItem.META_USAGE, usageData.get(tierKey).toMetadata());
 		}
 		if ( tierData.containsKey(tierKey) ) {
-			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, tierData.get(tierKey));
+			List<Map<String, Object>> tierMeta = tierData.get(tierKey).stream().map(e -> e.toMetadata())
+					.collect(toList());
+			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, tierMeta);
 		}
 		return result;
 	}
@@ -359,6 +362,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		}
 
 		log.info("Generated invoice for user {} for date {}: {}", userId, startDate, invoice);
+
+		// TODO: add task for delivery
+
 		return invoice;
 	}
 

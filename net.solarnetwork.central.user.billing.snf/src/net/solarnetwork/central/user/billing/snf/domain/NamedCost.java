@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import net.solarnetwork.domain.Differentiable;
 
@@ -87,6 +89,33 @@ public class NamedCost implements Differentiable<NamedCost> {
 	}
 
 	/**
+	 * Get an instance out of a usage Map.
+	 * 
+	 * @param usage
+	 *        the usage Map, whose keys match the properties of this class
+	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
+	 *         or does not contain valid property values
+	 */
+	public static UsageInfo of(Map<String, ?> usage) {
+		if ( usage == null ) {
+			return null;
+		}
+		Object name = usage.get("name");
+		Object quantity = usage.get("quantity");
+		Object cost = usage.get("cost");
+		if ( name != null ) {
+			try {
+				return new UsageInfo(name.toString(),
+						quantity != null ? new BigDecimal(quantity.toString()) : null,
+						cost != null ? new BigDecimal(cost.toString()) : null);
+			} catch ( IllegalArgumentException e ) {
+				// ignore
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Constructor.
 	 * 
 	 * @param name
@@ -124,6 +153,20 @@ public class NamedCost implements Differentiable<NamedCost> {
 	@Override
 	public boolean differsFrom(NamedCost other) {
 		return !isSameAs(other);
+	}
+
+	/**
+	 * Get a map of metadata from this instance.
+	 * 
+	 * @return the usage Map, whose keys match the properties of this class,
+	 *         never {@literal null}
+	 */
+	public Map<String, Object> toMetadata() {
+		Map<String, Object> result = new LinkedHashMap<>(4);
+		result.put("name", name);
+		result.put("quantity", quantity.toString());
+		result.put("cost", cost.toPlainString());
+		return result;
 	}
 
 	@Override
