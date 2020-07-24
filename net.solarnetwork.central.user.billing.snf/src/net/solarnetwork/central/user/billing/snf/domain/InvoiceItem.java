@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,17 +41,11 @@ public class InvoiceItem extends BaseStringEntity
 		implements net.solarnetwork.central.user.billing.domain.InvoiceItem {
 
 	private static final long serialVersionUID = 4459693712467984755L;
+
 	private final SnfInvoice invoice;
 	private final SnfInvoiceItem item;
 	private final org.joda.time.LocalDate startDate;
 	private final org.joda.time.LocalDate endDate;
-
-	private static org.joda.time.LocalDate jodaLocalDate(LocalDate date) {
-		if ( date == null ) {
-			return null;
-		}
-		return new org.joda.time.LocalDate(date.getYear(), date.getMonthValue(), date.getDayOfMonth());
-	}
 
 	/**
 	 * Constructor.
@@ -74,8 +67,8 @@ public class InvoiceItem extends BaseStringEntity
 			throw new IllegalArgumentException("The item argument must not be null.");
 		}
 		this.item = item;
-		this.startDate = (invoice.getStartDate() != null ? jodaLocalDate(invoice.getStartDate()) : null);
-		this.endDate = (invoice.getEndDate() != null ? jodaLocalDate(invoice.getEndDate()) : null);
+		this.startDate = (invoice.getStartDate() != null ? Invoice.jodaLocalDate(invoice.getStartDate()) : null);
+		this.endDate = (invoice.getEndDate() != null ? Invoice.jodaLocalDate(invoice.getEndDate()) : null);
 		if ( item.getId() != null ) {
 			setId(item.getId().toString());
 		}

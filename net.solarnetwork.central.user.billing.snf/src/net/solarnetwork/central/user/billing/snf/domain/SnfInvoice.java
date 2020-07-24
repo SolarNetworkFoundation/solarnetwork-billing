@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.BasicEntity;
@@ -263,16 +262,6 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	@Override
 	public boolean differsFrom(SnfInvoice other) {
 		return !isSameAs(other);
-	}
-
-	/**
-	 * Get a billing {@link Invoice} from this entity.
-	 * 
-	 * @return the invoice, never {@literal null}
-	 */
-	public Invoice toInvoice() {
-		// TODO
-		return null;
 	}
 
 	/**

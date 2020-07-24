@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
@@ -201,16 +200,6 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 		builder.append(metadata);
 		builder.append("}");
 		return builder.toString();
-	}
-
-	/**
-	 * Get a billing {@link InvoiceItem} from this entity.
-	 * 
-	 * @return the invoice item, never {@literal null}
-	 */
-	public InvoiceItem toInvoiceItem() {
-		// TODO
-		return null;
 	}
 
 	/**
