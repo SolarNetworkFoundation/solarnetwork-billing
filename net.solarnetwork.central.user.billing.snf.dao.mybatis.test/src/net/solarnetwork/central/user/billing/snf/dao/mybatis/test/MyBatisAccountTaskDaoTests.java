@@ -132,4 +132,13 @@ public class MyBatisAccountTaskDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Entity unchanged", entity.isSameAs(last), equalTo(true));
 	}
 
+	@Test
+	public void claim_handle() {
+		insert();
+		AccountTask entity = dao.claimAccountTask();
+		assertThat("Entity returned", entity.isSameAs(last), equalTo(true));
+		dao.delete(entity);
+		assertThat("No longer found", dao.get(last.getId()), nullValue());
+	}
+
 }
