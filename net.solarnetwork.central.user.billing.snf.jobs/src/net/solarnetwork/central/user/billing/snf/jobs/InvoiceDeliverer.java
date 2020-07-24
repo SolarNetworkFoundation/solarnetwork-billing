@@ -22,12 +22,12 @@
 
 package net.solarnetwork.central.user.billing.snf.jobs;
 
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
+import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
  * Deliver invoices to the account holder.
@@ -60,22 +60,42 @@ public class InvoiceDeliverer implements AccountTaskHandler {
 	public boolean handleTask(AccountTask task) {
 		assert task.getTaskType() == AccountTaskType.DeliverInvoice;
 		final Object invoiceIdVal = task.getTaskData() != null
-				? task.getTaskData().get(AccountTask.INVOICE_ID_PARAM)
+				? task.getTaskData().get(AccountTask.ID_PARAM)
+				: null;
+		final Object userIdVal = task.getTaskData() != null
+				? task.getTaskData().get(AccountTask.USER_ID_PARAM)
 				: null;
 		if ( invoiceIdVal == null ) {
-			log.error("Account task {} cannot be handled because no invoiceId parameter is available.");
+			log.error("Account task {} cannot be handled because no '{}' parameter is available.", task,
+					AccountTask.ID_PARAM);
 			return true;
 		}
-		final UUID invoiceId;
+		if ( userIdVal == null ) {
+			log.error("Account task {} cannot be handled because no '{}' parameter is available.", task,
+					AccountTask.USER_ID_PARAM);
+			return true;
+		}
+		final Long invoiceId;
 		try {
-			invoiceId = UUID.fromString(invoiceIdVal.toString());
+			invoiceId = (invoiceIdVal instanceof Number ? ((Number) invoiceIdVal).longValue()
+					: Long.valueOf(invoiceIdVal.toString()));
 		} catch ( IllegalArgumentException e ) {
 			log.error(
-					"Account task {} cannot be handled because invoiceId parameter is not a valid UUID: {}",
-					task, invoiceIdVal);
+					"Account task {} cannot be handled because '{}' parameter is not a valid number: {}",
+					task, AccountTask.ID_PARAM, invoiceIdVal);
 			return true;
 		}
-		return invoicingSystem.deliverInvoice(invoiceId);
+		final Long userId;
+		try {
+			userId = (userIdVal instanceof Number ? ((Number) userIdVal).longValue()
+					: Long.valueOf(userIdVal.toString()));
+		} catch ( IllegalArgumentException e ) {
+			log.error(
+					"Account task {} cannot be handled because '{}' parameter is not a valid number: {}",
+					task, AccountTask.USER_ID_PARAM, userIdVal);
+			return true;
+		}
+		return invoicingSystem.deliverInvoice(new UserLongPK(userId, invoiceId));
 	}
 
 }

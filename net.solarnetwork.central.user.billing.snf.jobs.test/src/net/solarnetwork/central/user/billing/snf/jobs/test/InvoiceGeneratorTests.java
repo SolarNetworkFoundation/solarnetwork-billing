@@ -23,17 +23,24 @@
 package net.solarnetwork.central.user.billing.snf.jobs.test;
 
 import static java.util.UUID.randomUUID;
+import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
@@ -53,24 +60,26 @@ public class InvoiceGeneratorTests {
 	private static final Long TEST_USER_ID = 1L;
 
 	private AccountDao accountDao;
+	private AccountTaskDao taskDao;
 	private SnfInvoicingSystem invoicingSystem;
 	private InvoiceGenerator generator;
 
 	@Before
 	public void setup() {
 		accountDao = EasyMock.createMock(AccountDao.class);
+		taskDao = EasyMock.createMock(AccountTaskDao.class);
 		invoicingSystem = EasyMock.createMock(SnfInvoicingSystem.class);
 
-		generator = new InvoiceGenerator(accountDao, invoicingSystem);
+		generator = new InvoiceGenerator(accountDao, taskDao, invoicingSystem);
 	}
 
 	private void replayAll() {
-		EasyMock.replay(accountDao, invoicingSystem);
+		EasyMock.replay(accountDao, taskDao, invoicingSystem);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(accountDao, invoicingSystem);
+		EasyMock.verify(accountDao, taskDao, invoicingSystem);
 	}
 
 	private static Address createAddress(String country, String timeZoneId) {
@@ -104,6 +113,10 @@ public class InvoiceGeneratorTests {
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 
+		// create "deliver invoice" task
+		Capture<AccountTask> deliverTaskCaptor = new Capture<>();
+		expect(taskDao.save(capture(deliverTaskCaptor))).andReturn(UUID.randomUUID());
+
 		// WHEN
 		replayAll();
 		boolean result = generator
@@ -112,6 +125,16 @@ public class InvoiceGeneratorTests {
 
 		// THEN
 		assertThat("Task handled", result, equalTo(true));
+		AccountTask deliverTask = deliverTaskCaptor.getValue();
+		assertThat("Deliver task created", deliverTask, notNullValue());
+		assertThat("Deliver task ID assigned", deliverTask.getId(), notNullValue());
+		assertThat("Deliver task account same as generated invoice", deliverTask.getAccountId(),
+				equalTo(account.getId().getId()));
+		assertThat("Deliver task type is deliver", deliverTask.getTaskType(),
+				equalTo(AccountTaskType.DeliverInvoice));
+		assertThat("Deliver task ", deliverTask.getTaskData(),
+				allOf(hasEntry("id", generatedInvoice.getId().getId()),
+						hasEntry("userId", account.getUserId())));
 	}
 
 	@Test
@@ -130,6 +153,10 @@ public class InvoiceGeneratorTests {
 		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
 				.andReturn(generatedInvoice);
 
+		// create "deliver invoice" task
+		Capture<AccountTask> deliverTaskCaptor = new Capture<>();
+		expect(taskDao.save(capture(deliverTaskCaptor))).andReturn(UUID.randomUUID());
+
 		// WHEN
 		replayAll();
 		boolean result = generator
@@ -138,6 +165,16 @@ public class InvoiceGeneratorTests {
 
 		// THEN
 		assertThat("Task handled", result, equalTo(true));
+		AccountTask deliverTask = deliverTaskCaptor.getValue();
+		assertThat("Deliver task created", deliverTask, notNullValue());
+		assertThat("Deliver task ID assigned", deliverTask.getId(), notNullValue());
+		assertThat("Deliver task account same as generated invoice", deliverTask.getAccountId(),
+				equalTo(account.getId().getId()));
+		assertThat("Deliver task type is deliver", deliverTask.getTaskType(),
+				equalTo(AccountTaskType.DeliverInvoice));
+		assertThat("Deliver task ", deliverTask.getTaskData(),
+				allOf(hasEntry("id", generatedInvoice.getId().getId()),
+						hasEntry("userId", account.getUserId())));
 	}
 
 }

@@ -39,7 +39,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -363,8 +362,6 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 
 		log.info("Generated invoice for user {} for date {}: {}", userId, startDate, invoice);
 
-		// TODO: add task for delivery
-
 		return invoice;
 	}
 
@@ -423,9 +420,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
-	public boolean deliverInvoice(UUID invoiceId) {
+	public boolean deliverInvoice(final UserLongPK invoiceId) {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	/**

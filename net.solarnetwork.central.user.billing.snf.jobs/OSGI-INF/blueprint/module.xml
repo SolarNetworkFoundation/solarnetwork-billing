@@ -62,6 +62,7 @@
 	
 	<bean id="invoiceGenerator" class="net.solarnetwork.central.user.billing.snf.jobs.InvoiceGenerator">
 		<argument ref="accountDao"/>
+		<argument ref="taskDao"/>
 		<argument ref="invoicingSystem"/>
 	</bean>
 	

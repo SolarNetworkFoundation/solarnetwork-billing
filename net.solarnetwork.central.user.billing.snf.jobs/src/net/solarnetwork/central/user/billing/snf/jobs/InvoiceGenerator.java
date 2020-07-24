@@ -23,12 +23,18 @@
 package net.solarnetwork.central.user.billing.snf.jobs;
 
 import static java.lang.String.format;
+import static net.solarnetwork.central.user.billing.snf.domain.AccountTask.newTask;
+import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.DeliverInvoice;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
+import net.solarnetwork.central.user.billing.snf.dao.AccountTaskDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTask;
 import net.solarnetwork.central.user.billing.snf.domain.AccountTaskType;
@@ -46,6 +52,7 @@ public class InvoiceGenerator implements AccountTaskHandler {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	private final AccountDao accountDao;
+	private final AccountTaskDao taskDao;
 	private final SnfInvoicingSystem invoicingSystem;
 
 	/**
@@ -53,17 +60,24 @@ public class InvoiceGenerator implements AccountTaskHandler {
 	 * 
 	 * @param accountDao
 	 *        the account DAO
+	 * @param taskDao
+	 *        the account task DAO
 	 * @param invoicingSystem
 	 *        the invoicing system
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
-	public InvoiceGenerator(AccountDao accountDao, SnfInvoicingSystem invoicingSystem) {
+	public InvoiceGenerator(AccountDao accountDao, AccountTaskDao taskDao,
+			SnfInvoicingSystem invoicingSystem) {
 		super();
 		if ( accountDao == null ) {
 			throw new IllegalArgumentException("The accountDao argument must not be null.");
 		}
 		this.accountDao = accountDao;
+		if ( taskDao == null ) {
+			throw new IllegalArgumentException("The taskDao argument must not be null.");
+		}
+		this.taskDao = taskDao;
 		if ( invoicingSystem == null ) {
 			throw new IllegalArgumentException("The invoicingSystem argument must not be null.");
 		}
@@ -103,6 +117,10 @@ public class InvoiceGenerator implements AccountTaskHandler {
 		if ( invoice != null ) {
 			log.info("Invoice for user {} for month {} total = {} {}", account.getUserId(),
 					invoiceStartDate, invoice.getTotalAmount(), invoice.getCurrencyCode());
+			Map<String, Object> taskData = new LinkedHashMap<>(2);
+			taskData.put("userId", invoice.getUserId());
+			taskData.put("id", invoice.getId().getId());
+			taskDao.save(newTask(Instant.now(), DeliverInvoice, task.getAccountId(), taskData));
 		}
 
 		return true;

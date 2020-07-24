@@ -23,7 +23,6 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import java.time.LocalDate;
-import java.util.UUID;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -84,6 +83,6 @@ public interface SnfInvoicingSystem {
 	 *        the ID of the invoice to deliver
 	 * @return {@literal true} if the invoice was delivered successfully
 	 */
-	boolean deliverInvoice(UUID invoiceId);
+	boolean deliverInvoice(UserLongPK invoiceId);
 
 }

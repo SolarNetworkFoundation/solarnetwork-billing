@@ -38,10 +38,14 @@ import net.solarnetwork.domain.Differentiable;
 public class AccountTask extends BasicUuidEntity implements Differentiable<AccountTask> {
 
 	/**
-	 * The task data property name for a String {@code java.util.UUID} value of
-	 * a related {@code SnfInvoice} ID value.
+	 * The task data property name for an entity ID value.
 	 */
-	public static final String INVOICE_ID_PARAM = "invoiceId";
+	public static final String ID_PARAM = "id";
+
+	/**
+	 * The task data property name for a user ID value.
+	 */
+	public static final String USER_ID_PARAM = "userId";
 
 	private final AccountTaskType taskType;
 	private final Long accountId;
