@@ -88,7 +88,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		SnfInvoice invoice = system.findLatestInvoiceForAccount(pk);
 
 		// THEN
-		assertThat("Invoice not found.", invoice, nullValue());
+		assertThat("InvoiceImpl not found.", invoice, nullValue());
 		SnfInvoiceFilter filter = filterCaptor.getValue();
 		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
 	}
@@ -109,7 +109,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		SnfInvoice invoice = system.findLatestInvoiceForAccount(pk);
 
 		// THEN
-		assertThat("Invoice returned from DAO.", invoice, sameInstance(inv));
+		assertThat("InvoiceImpl returned from DAO.", invoice, sameInstance(inv));
 		SnfInvoiceFilter filter = filterCaptor.getValue();
 		assertThat("Query filter was by account ID", filter.getAccountId(), equalTo(pk.getId()));
 	}
@@ -194,11 +194,11 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
 
 		// THEN
-		assertThat("Invoice created", invoice, notNullValue());
-		assertThat("Invoice items created for all usage", invoice.getItems(), hasSize(3));
+		assertThat("InvoiceImpl created", invoice, notNullValue());
+		assertThat("InvoiceImpl items created for all usage", invoice.getItems(), hasSize(3));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
-		assertThat("Invoice item mapping contains all items", itemMap.keySet(), contains(
+		assertThat("InvoiceImpl item mapping contains all items", itemMap.keySet(), contains(
 				NodeUsage.DATUM_PROPS_IN_KEY, NodeUsage.DATUM_OUT_KEY, NodeUsage.DATUM_DAYS_STORED_KEY));
 
 		SnfInvoiceItem item;
@@ -254,11 +254,11 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
 
 		// THEN
-		assertThat("Invoice created", invoice, notNullValue());
-		assertThat("Invoice items created for all usage and GST tax", invoice.getItems(), hasSize(4));
+		assertThat("InvoiceImpl created", invoice, notNullValue());
+		assertThat("InvoiceImpl items created for all usage and GST tax", invoice.getItems(), hasSize(4));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
-		assertThat("Invoice item mapping contains all items", itemMap.keySet(),
+		assertThat("InvoiceImpl item mapping contains all items", itemMap.keySet(),
 				contains(NodeUsage.DATUM_PROPS_IN_KEY, NodeUsage.DATUM_OUT_KEY,
 						NodeUsage.DATUM_DAYS_STORED_KEY, "GST"));
 

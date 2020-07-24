@@ -104,7 +104,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
-		assertThat("Invoice sameness", entity.isSameAs(last), equalTo(true));
+		assertThat("InvoiceImpl sameness", entity.isSameAs(last), equalTo(true));
 	}
 
 }

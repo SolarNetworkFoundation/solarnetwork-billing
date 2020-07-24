@@ -164,7 +164,7 @@ public class InvoiceGenerationTaskCreator {
 			AccountTask task = AccountTask.newTask(currInvoiceDate.toInstant(),
 					AccountTaskType.GenerateInvoice, account.getId().getId());
 			accountTaskDao.save(task);
-			log.info("Invoice generation task created for user {} for month {} total = {} {}",
+			log.info("InvoiceImpl generation task created for user {} for month {} total = {} {}",
 					user.getEmail(), currInvoiceDate);
 			currInvoiceDate = currInvoiceDate.plusMonths(1);
 		} while ( currInvoiceDate.isBefore(invoiceEndDate) );
@@ -182,7 +182,7 @@ public class InvoiceGenerationTaskCreator {
 		ZoneId zone = invoice.getTimeZone();
 		if ( zone == null ) {
 			throw new RuntimeException(
-					String.format("Invoice %s has no time zone available.", invoice.getId()));
+					String.format("InvoiceImpl %s has no time zone available.", invoice.getId()));
 		}
 		return invoice.getEndDate().atStartOfDay(zone);
 	}

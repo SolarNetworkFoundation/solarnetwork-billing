@@ -115,7 +115,7 @@ public class InvoiceGenerator implements AccountTaskHandler {
 		SnfInvoice invoice = invoicingSystem.generateInvoice(account.getUserId(),
 				invoiceStartDate.toLocalDate(), invoiceStartDate.plusMonths(1).toLocalDate(), false);
 		if ( invoice != null ) {
-			log.info("Invoice for user {} for month {} total = {} {}", account.getUserId(),
+			log.info("InvoiceImpl for user {} for month {} total = {} {}", account.getUserId(),
 					invoiceStartDate, invoice.getTotalAmount(), invoice.getCurrencyCode());
 			Map<String, Object> taskData = new LinkedHashMap<>(2);
 			taskData.put("userId", invoice.getUserId());

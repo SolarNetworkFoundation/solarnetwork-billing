@@ -1,5 +1,5 @@
 /* ==================================================================
- * InvoiceItem.java - 24/07/2020 2:08:15 PM
+ * InvoiceItemImpl.java - 24/07/2020 2:08:15 PM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.BaseStringEntity;
+import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
 
 /**
@@ -37,13 +38,13 @@ import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
  * @author matt
  * @version 1.0
  */
-public class InvoiceItem extends BaseStringEntity
-		implements net.solarnetwork.central.user.billing.domain.InvoiceItem {
+public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 
 	private static final long serialVersionUID = 4459693712467984755L;
 
 	private final SnfInvoice invoice;
 	private final SnfInvoiceItem item;
+	private final List<InvoiceItemUsageRecord> itemUsageRecords;
 	private final org.joda.time.LocalDate startDate;
 	private final org.joda.time.LocalDate endDate;
 
@@ -57,7 +58,24 @@ public class InvoiceItem extends BaseStringEntity
 	 * @throws IllegalArgumentException
 	 *         if {@code invoice} or {@code item} are {@literal null}
 	 */
-	public InvoiceItem(SnfInvoice invoice, SnfInvoiceItem item) {
+	public InvoiceItemImpl(SnfInvoice invoice, SnfInvoiceItem item) {
+		this(invoice, item, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param invoice
+	 *        the invoice to wrap
+	 * @param item
+	 *        the item to wrap
+	 * @param the
+	 *        explicit usage records to use
+	 * @throws IllegalArgumentException
+	 *         if {@code invoice} or {@code item} are {@literal null}
+	 */
+	public InvoiceItemImpl(SnfInvoice invoice, SnfInvoiceItem item,
+			List<InvoiceItemUsageRecord> itemUsageRecords) {
 		super();
 		if ( invoice == null ) {
 			throw new IllegalArgumentException("The invoice argument must not be null.");
@@ -67,8 +85,12 @@ public class InvoiceItem extends BaseStringEntity
 			throw new IllegalArgumentException("The item argument must not be null.");
 		}
 		this.item = item;
-		this.startDate = (invoice.getStartDate() != null ? Invoice.jodaLocalDate(invoice.getStartDate()) : null);
-		this.endDate = (invoice.getEndDate() != null ? Invoice.jodaLocalDate(invoice.getEndDate()) : null);
+		this.itemUsageRecords = itemUsageRecords;
+		this.startDate = (invoice.getStartDate() != null
+				? InvoiceImpl.jodaLocalDate(invoice.getStartDate())
+				: null);
+		this.endDate = (invoice.getEndDate() != null ? InvoiceImpl.jodaLocalDate(invoice.getEndDate())
+				: null);
 		if ( item.getId() != null ) {
 			setId(item.getId().toString());
 		}
@@ -132,6 +154,9 @@ public class InvoiceItem extends BaseStringEntity
 
 	@Override
 	public List<InvoiceItemUsageRecord> getItemUsageRecords() {
+		if ( itemUsageRecords != null ) {
+			return itemUsageRecords;
+		}
 		Map<String, Object> metadata = item.getMetadata();
 		if ( metadata != null && (metadata.get(SnfInvoiceItem.META_USAGE) instanceof Map) ) {
 			@SuppressWarnings("unchecked")

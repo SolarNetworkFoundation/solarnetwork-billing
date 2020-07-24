@@ -35,7 +35,7 @@ import java.util.Map;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
-import net.solarnetwork.central.user.billing.snf.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -43,7 +43,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 
 /**
- * Test cases for the {@link InvoiceItem} class.
+ * Test cases for the {@link InvoiceItemImpl} class.
  * 
  * @author matt
  * @version 1.0
@@ -73,7 +73,7 @@ public class InvoiceItemTests {
 		itm.setMetadata(itmMeta);
 
 		// WHEN
-		InvoiceItem item = new InvoiceItem(inv, itm);
+		InvoiceItemImpl item = new InvoiceItemImpl(inv, itm);
 
 		// THEN
 		assertThat("ID is UUID string", item.getId(), equalTo(itm.getId().toString()));

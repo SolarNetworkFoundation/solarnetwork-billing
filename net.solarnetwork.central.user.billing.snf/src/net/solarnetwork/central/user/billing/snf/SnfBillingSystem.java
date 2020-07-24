@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
@@ -54,6 +55,7 @@ import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceFilter;
+import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
@@ -62,6 +64,8 @@ import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NamedCost;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
@@ -72,6 +76,7 @@ import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
+import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.util.OptionalService;
 
@@ -177,8 +182,30 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		if ( invoice == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
+
+		List<InvoiceItem> invoiceItems = null;
+		if ( locale != null ) {
+			invoiceItems = invoice.getItems().stream().map(e -> {
+				String desc = messageSource.getMessage(e.getKey(), null, null, locale);
+				UsageInfo usageInfo = e.getUsageInfo();
+				String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType(), null, null,
+						locale);
+				LocalizedInvoiceItemUsageRecord locInfo = new LocalizedInvoiceItemUsageRecord(usageInfo,
+						locale, unitTypeDesc);
+				return new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(
+						new InvoiceItemImpl(invoice, e, singletonList(locInfo)), locale, desc);
+
+			}).collect(toList());
+		} else {
+			invoiceItems = invoice.getItems().stream().map(e -> {
+				return new InvoiceItemImpl(invoice, e);
+			}).collect(toList());
+		}
+
+		InvoiceImpl result = new InvoiceImpl(invoice, invoiceItems);
+
 		// TODO Auto-generated method stub
-		return null;
+		return result;
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

@@ -1,5 +1,5 @@
 /* ==================================================================
- * Invoice.java - 24/07/2020 3:14:15 PM
+ * InvoiceImpl.java - 24/07/2020 3:14:15 PM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -30,6 +30,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.BaseStringEntity;
+import net.solarnetwork.central.user.billing.domain.Invoice;
+import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 
 /**
  * Wrap a {@link SnfInvoiceItem} as an
@@ -38,12 +40,12 @@ import net.solarnetwork.central.domain.BaseStringEntity;
  * @author matt
  * @version 1.0
  */
-public class Invoice extends BaseStringEntity
-		implements net.solarnetwork.central.user.billing.domain.Invoice {
+public class InvoiceImpl extends BaseStringEntity implements Invoice {
 
 	private static final long serialVersionUID = -8004601006737637111L;
 
 	private final SnfInvoice invoice;
+	private final List<InvoiceItem> items;
 
 	/**
 	 * Convert a Java {@link LocalDate} into a Joda instance.
@@ -67,12 +69,27 @@ public class Invoice extends BaseStringEntity
 	 * @throws IllegalArgumentException
 	 *         if {@code invoice} is {@literal null}
 	 */
-	public Invoice(SnfInvoice invoice) {
+	public InvoiceImpl(SnfInvoice invoice) {
+		this(invoice, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param invoice
+	 *        the invoice to wrap
+	 * @param items
+	 *        the items to use directly
+	 * @throws IllegalArgumentException
+	 *         if {@code invoice} is {@literal null}
+	 */
+	public InvoiceImpl(SnfInvoice invoice, List<InvoiceItem> items) {
 		super();
 		if ( invoice == null ) {
 			throw new IllegalArgumentException("The invoice argument must not be null.");
 		}
 		this.invoice = invoice;
+		this.items = items;
 		setId(invoice.getId().getId().toString());
 		setCreated(new DateTime(invoice.getCreated().toEpochMilli()));
 	}
@@ -114,11 +131,14 @@ public class Invoice extends BaseStringEntity
 	}
 
 	@Override
-	public List<net.solarnetwork.central.user.billing.domain.InvoiceItem> getInvoiceItems() {
+	public List<InvoiceItem> getInvoiceItems() {
+		if ( items != null ) {
+			return items;
+		}
 		Set<SnfInvoiceItem> items = invoice.getItems();
 		if ( items == null ) {
 			return Collections.emptyList();
 		}
-		return items.stream().map(e -> new InvoiceItem(invoice, e)).collect(Collectors.toList());
+		return items.stream().map(e -> new InvoiceItemImpl(invoice, e)).collect(Collectors.toList());
 	}
 }

@@ -36,14 +36,14 @@ import org.joda.time.DateTime;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
-import net.solarnetwork.central.user.billing.snf.domain.Invoice;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 
 /**
- * Test cases for the {@link Invoice} class.
+ * Test cases for the {@link InvoiceImpl} class.
  * 
  * @author matt
  * @version 1.0
@@ -81,7 +81,7 @@ public class InvoiceTests {
 		inv.setItems(new LinkedHashSet<>(asList(itm1, itm2, tax1, tax2)));
 
 		// WHEN
-		Invoice invoice = new Invoice(inv);
+		InvoiceImpl invoice = new InvoiceImpl(inv);
 
 		// THEN
 		assertThat("ID is Long string", invoice.getId(), equalTo(inv.getId().getId().toString()));
@@ -90,7 +90,7 @@ public class InvoiceTests {
 		assertThat("Amount same as total amount", invoice.getAmount(), equalTo(inv.getTotalAmount()));
 		assertThat("Balance same as total amount", invoice.getBalance(), equalTo(inv.getTotalAmount()));
 		assertThat("Currency same", invoice.getCurrencyCode(), equalTo(inv.getCurrencyCode()));
-		assertThat("Invoice number is upper-case base-16 string of ID", invoice.getInvoiceNumber(),
+		assertThat("InvoiceImpl number is upper-case base-16 string of ID", invoice.getInvoiceNumber(),
 				equalTo(Long.toHexString(inv.getId().getId()).toUpperCase()));
 		assertThat("Tax is added up", invoice.getTaxAmount(),
 				equalTo(tax1.getAmount().add(tax2.getAmount())));

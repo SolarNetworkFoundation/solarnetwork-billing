@@ -114,7 +114,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
-		assertThat("Invoice sameness", entity.isSameAs(last), equalTo(true));
+		assertThat("InvoiceImpl sameness", entity.isSameAs(last), equalTo(true));
 	}
 
 	@Test
@@ -203,8 +203,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int i = 0; i < 4; i++ ) {
 			SnfInvoice invoice = invoices.get(i);
 			SnfInvoice expected = expectedInvoices.get(i);
-			assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
-			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+			assertThat(format("InvoiceImpl %d returned in order", i), invoice, equalTo(expected));
+			assertThat(format("InvoiceImpl %d data preserved", i), invoice.isSameAs(expected),
 					equalTo(true));
 		}
 	}
@@ -240,8 +240,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			for ( int i = 0; i < expectedCount; i++ ) {
 				SnfInvoice invoice = invoices.get(i);
 				SnfInvoice expected = expectedInvoices.get(offset + i);
-				assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
-				assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+				assertThat(format("InvoiceImpl %d returned in order", i), invoice, equalTo(expected));
+				assertThat(format("InvoiceImpl %d data preserved", i), invoice.isSameAs(expected),
 						equalTo(true));
 			}
 		}
@@ -273,8 +273,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		for ( int i = 0; i < 4; i++ ) {
 			SnfInvoice invoice = invoices.get(i);
 			SnfInvoice expected = expectedInvoices.get(i);
-			assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
-			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+			assertThat(format("InvoiceImpl %d returned in order", i), invoice, equalTo(expected));
+			assertThat(format("InvoiceImpl %d data preserved", i), invoice.isSameAs(expected),
 					equalTo(true));
 		}
 	}
@@ -310,8 +310,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			for ( int i = 0; i < expectedCount; i++ ) {
 				SnfInvoice invoice = invoices.get(i);
 				SnfInvoice expected = expectedInvoices.get(offset + i);
-				assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
-				assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+				assertThat(format("InvoiceImpl %d returned in order", i), invoice, equalTo(expected));
+				assertThat(format("InvoiceImpl %d data preserved", i), invoice.isSameAs(expected),
 						equalTo(true));
 			}
 		}
@@ -343,8 +343,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Returned page results", invoices, hasSize(1));
 		SnfInvoice invoice = invoices.get(0);
 		SnfInvoice expected = expectedInvoices.get(0);
-		assertThat("Invoice returned in order", invoice, equalTo(expected));
-		assertThat("Invoice data preserved", invoice.isSameAs(expected), equalTo(true));
+		assertThat("InvoiceImpl returned in order", invoice, equalTo(expected));
+		assertThat("InvoiceImpl data preserved", invoice.isSameAs(expected), equalTo(true));
 	}
 
 }
