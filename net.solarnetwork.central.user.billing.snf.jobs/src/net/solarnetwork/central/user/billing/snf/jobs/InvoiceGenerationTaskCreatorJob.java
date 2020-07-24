@@ -54,7 +54,7 @@ public class InvoiceGenerationTaskCreatorJob extends JobSupport {
 	@Override
 	protected boolean handleJob(Event job) throws Exception {
 		creator.createTasks();
-		return false;
+		return true;
 	}
 
 }
