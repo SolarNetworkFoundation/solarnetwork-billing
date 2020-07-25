@@ -30,6 +30,7 @@ import org.easymock.EasyMock;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.context.support.ResourceBundleMessageSource;
+import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.user.billing.snf.SnfBillingSystem;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
@@ -50,6 +51,7 @@ public class AbstractSnfBililngSystemTest {
 	protected SnfInvoiceItemDao invoiceItemDao;
 	protected NodeUsageDao usageDao;
 	protected TaxCodeDao taxCodeDao;
+	protected VersionedMessageDao messageDao;
 	protected ResourceBundleMessageSource messageSource;
 	protected SnfBillingSystem system;
 
@@ -64,11 +66,12 @@ public class AbstractSnfBililngSystemTest {
 		invoiceItemDao = EasyMock.createMock(SnfInvoiceItemDao.class);
 		usageDao = EasyMock.createMock(NodeUsageDao.class);
 		taxCodeDao = EasyMock.createMock(TaxCodeDao.class);
+		messageDao = EasyMock.createMock(VersionedMessageDao.class);
 		messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasename(SnfBillingSystem.class.getName());
 
 		system = new SnfBillingSystem(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao,
-				messageSource);
+				messageDao);
 
 		userId = UUID.randomUUID().getMostSignificantBits();
 		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)
@@ -77,12 +80,12 @@ public class AbstractSnfBililngSystemTest {
 	}
 
 	protected void replayAll() {
-		EasyMock.replay(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao);
+		EasyMock.replay(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao, messageDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao);
+		EasyMock.verify(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao, messageDao);
 	}
 
 }
