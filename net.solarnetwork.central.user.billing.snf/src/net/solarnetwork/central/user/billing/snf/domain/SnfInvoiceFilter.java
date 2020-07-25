@@ -64,6 +64,20 @@ public class SnfInvoiceFilter extends SimplePagination {
 		return f;
 	}
 
+	/**
+	 * Create a new filter with an account.
+	 * 
+	 * @param account
+	 *        the account to extract the ID and userId from
+	 * @return the filter, never {@literal null}
+	 */
+	public static SnfInvoiceFilter forAccount(Account account) {
+		SnfInvoiceFilter f = new SnfInvoiceFilter();
+		f.setAccountId(account.getId().getId());
+		f.setUserId(account.getUserId());
+		return f;
+	}
+
 	@Override
 	public SnfInvoiceFilter clone() {
 		return (SnfInvoiceFilter) super.clone();

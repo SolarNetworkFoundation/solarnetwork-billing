@@ -40,6 +40,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.StreamSupport;
+import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -47,10 +49,14 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.dao.VersionedMessageDao;
+import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
 import net.solarnetwork.central.domain.FilterResults;
 import net.solarnetwork.central.domain.SortDescriptor;
 import net.solarnetwork.central.security.AuthorizationException;
 import net.solarnetwork.central.security.AuthorizationException.Reason;
+import net.solarnetwork.central.support.BasicFilterResults;
+import net.solarnetwork.central.support.VersionedMessageDaoMessageSource;
 import net.solarnetwork.central.user.billing.biz.BillingSystem;
 import net.solarnetwork.central.user.billing.domain.BillingSystemInfo;
 import net.solarnetwork.central.user.billing.domain.Invoice;
@@ -91,12 +97,18 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	/** The {@literal accounting} billing data value for SNF. */
 	public static final String ACCOUNTING_SYSTEM_KEY = "snf";
 
+	/** The message bundle name to use for versioned messages. */
+	public static final String MESSAGE_BUNDLE_NAME = "snf.billing";
+
+	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { MESSAGE_BUNDLE_NAME };
+
 	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
 	private final SnfInvoiceItemDao invoiceItemDao;
 	private final NodeUsageDao usageDao;
-	private final MessageSource messageSource;
 	private final TaxCodeDao taxCodeDao;
+	private final VersionedMessageDao messageDao;
+	private Cache<String, VersionedMessages> messageCache;
 	private OptionalService<SnfTaxCodeResolver> taxCodeResolver;
 	private String datumPropertiesInKey = NodeUsage.DATUM_PROPS_IN_KEY;
 	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
@@ -117,14 +129,14 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 *        the usage DAO
 	 * @param taxCodeDAO
 	 *        the tax code DAO
-	 * @param messageSource
-	 *        the message source
+	 * @param messageDao
+	 *        the message DAO
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public SnfBillingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
 			SnfInvoiceItemDao invoiceItemDao, NodeUsageDao usageDao, TaxCodeDao taxCodeDao,
-			MessageSource messageSource) {
+			VersionedMessageDao messageDao) {
 		super();
 		if ( accountDao == null ) {
 			throw new IllegalArgumentException("The accountDao argument must be provided.");
@@ -142,14 +154,14 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new IllegalArgumentException("The usageDao argument must be provided.");
 		}
 		this.usageDao = usageDao;
-		if ( messageSource == null ) {
-			throw new IllegalArgumentException("The messageSource argument must be provided.");
-		}
 		if ( taxCodeDao == null ) {
 			throw new IllegalArgumentException("The taxCodeDao argument must be provided.");
 		}
 		this.taxCodeDao = taxCodeDao;
-		this.messageSource = messageSource;
+		if ( messageDao == null ) {
+			throw new IllegalArgumentException("The messageDao argument must be provided.");
+		}
+		this.messageDao = messageDao;
 	}
 
 	@Override
@@ -170,8 +182,21 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	@Override
 	public FilterResults<InvoiceMatch> findFilteredInvoices(InvoiceFilter filter,
 			List<SortDescriptor> sortDescriptors, Integer offset, Integer max) {
-		// TODO Auto-generated method stub
-		return null;
+		// get account
+		Account account = accountDao.getForUser(filter.getUserId());
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
+		}
+		SnfInvoiceFilter invoiceFilter = SnfInvoiceFilter.forAccount(account);
+		if ( filter.getUnpaid() != null ) {
+			// TODO: implements support for this
+		}
+		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
+				.findFiltered(invoiceFilter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, offset, max);
+		List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)
+				.map(InvoiceImpl::new).collect(toList());
+		return new BasicFilterResults<>(matches, results.getTotalResults(), results.getStartingOffset(),
+				results.getReturnedResultCount());
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -183,13 +208,17 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
 
+		final Instant version = invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant();
+		final MessageSource messageSource = new VersionedMessageDaoMessageSource(messageDao,
+				MESSAGE_BUNDLE_NAMES, version, messageCache);
+
 		List<InvoiceItem> invoiceItems = null;
 		if ( locale != null ) {
 			invoiceItems = invoice.getItems().stream().map(e -> {
-				String desc = messageSource.getMessage(e.getKey(), null, null, locale);
+				String desc = messageSource.getMessage(e.getKey() + ".item", null, null, locale);
 				UsageInfo usageInfo = e.getUsageInfo();
-				String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType(), null, null,
-						locale);
+				String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType() + ".unit", null,
+						null, locale);
 				LocalizedInvoiceItemUsageRecord locInfo = new LocalizedInvoiceItemUsageRecord(usageInfo,
 						locale, unitTypeDesc);
 				return new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(
@@ -202,10 +231,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			}).collect(toList());
 		}
 
-		InvoiceImpl result = new InvoiceImpl(invoice, invoiceItems);
-
-		// TODO Auto-generated method stub
-		return result;
+		return new InvoiceImpl(invoice, invoiceItems);
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -546,6 +572,25 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 */
 	public void setTaxCodeResolver(OptionalService<SnfTaxCodeResolver> taxCodeResolver) {
 		this.taxCodeResolver = taxCodeResolver;
+	}
+
+	/**
+	 * Get the optional message cache.
+	 * 
+	 * @return the cache
+	 */
+	public Cache<String, VersionedMessages> getMessageCache() {
+		return messageCache;
+	}
+
+	/**
+	 * Set the optional message cache.
+	 * 
+	 * @param cache
+	 *        the cache to set
+	 */
+	public void setMessageCache(Cache<String, VersionedMessages> cache) {
+		this.messageCache = messageCache;
 	}
 
 }

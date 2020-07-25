@@ -20,8 +20,19 @@
 		http://www.springframework.org/schema/tx
 		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd">
 
+	<!-- Configuration -->
+	
+	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.billing.snf">
+		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/user/billing/snf/ehcache.xml</beans:prop>
+		<beans:prop key="messageCache.ttl">600</beans:prop>
+	</osgix:cm-properties>
+	
+	<ctx:property-placeholder properties-ref="cfg"/>
+	
 	<!-- Service references -->
 	
+	<reference id="messageDao" interface="net.solarnetwork.central.dao.VersionedMessageDao"/>
+
 	<reference id="accountDao" interface="net.solarnetwork.central.user.billing.snf.dao.AccountDao"/>
 	<reference id="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 	<reference id="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
@@ -35,23 +46,39 @@
 	<tx:annotation-driven transaction-manager="transactionManager"/>
 
 	<!-- Support -->
+	
+	<bean id="cacheManager" class="net.solarnetwork.central.support.JCacheManagerFactoryBean">
+		<property name="cacheManagerUri" value="${cache.conf.uri}"/>
+	</bean>
+
+	<bean id="messageCache" class="net.solarnetwork.central.support.JCacheFactoryBean">
+		<argument ref="cacheManager"/>
+		<argument value="java.lang.String"/>
+		<argument value="net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages"/>
+		<property name="name" value="versioned-messages"/>
+		<property name="expiryPolicy" value="Created"/>
+		<property name="expiryDuration">
+			<bean class="javax.cache.expiry.Duration">
+				<argument value="#{T(java.util.concurrent.TimeUnit).SECONDS}"/>
+				<argument value="${messageCache.ttl}"/>
+			</bean>
+		</property>
+	</bean>
+
 	<bean id="billingSystem" class="net.solarnetwork.central.user.billing.snf.SnfBillingSystem">
 		<argument ref="accountDao"/>
 		<argument ref="invoiceDao"/>
 		<argument ref="invoiceItemDao"/>
 		<argument ref="nodeUsageDao"/>
 		<argument ref="taxCodeDao"/>
-		<argument>
-			<bean class="org.springframework.context.support.ResourceBundleMessageSource">
-				<property name="basename" value="net.solarnetwork.central.user.billing.snf.SnfBillingSystem"/>
-			</bean>
-		</argument>
+		<argument ref="messageDao"/>
 		<property name="taxCodeResolver">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
 				<property name="serviceClassName" value="net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver"/>
 			</bean>
 		</property>
+		<property name="messageCache" ref="messageCache"/>
 	</bean>
 	
 	<!-- Published Services -->

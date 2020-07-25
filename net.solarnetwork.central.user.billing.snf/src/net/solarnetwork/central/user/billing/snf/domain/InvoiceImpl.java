@@ -32,6 +32,7 @@ import org.joda.time.DateTime;
 import net.solarnetwork.central.domain.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
 
 /**
  * Wrap a {@link SnfInvoiceItem} as an
@@ -40,7 +41,7 @@ import net.solarnetwork.central.user.billing.domain.InvoiceItem;
  * @author matt
  * @version 1.0
  */
-public class InvoiceImpl extends BaseStringEntity implements Invoice {
+public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
 	private static final long serialVersionUID = -8004601006737637111L;
 
