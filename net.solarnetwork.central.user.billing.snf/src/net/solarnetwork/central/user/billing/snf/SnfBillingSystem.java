@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf;
 
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
@@ -49,6 +50,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MimeType;
+import net.solarnetwork.central.RepeatableTaskException;
 import net.solarnetwork.central.dao.VersionedMessageDao;
 import net.solarnetwork.central.dao.VersionedMessageDao.VersionedMessages;
 import net.solarnetwork.central.domain.FilterResults;
@@ -85,6 +87,7 @@ import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.util.OptionalService;
+import net.solarnetwork.util.OptionalServiceCollection;
 
 /**
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
@@ -113,6 +116,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	private String datumPropertiesInKey = NodeUsage.DATUM_PROPS_IN_KEY;
 	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
 	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
+	private OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -471,10 +475,27 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		return taxItems;
 	}
 
+	private SnfInvoiceDeliverer invoiceDeliverer(Long userId) {
+		OptionalServiceCollection<SnfInvoiceDeliverer> services = getDeliveryServices();
+		Iterable<SnfInvoiceDeliverer> iterable = (services != null ? services.services() : null);
+		Iterator<SnfInvoiceDeliverer> itr = (iterable != null ? iterable.iterator() : null);
+		return (itr != null && itr.hasNext() ? itr.next() : null);
+	}
+
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public boolean deliverInvoice(final UserLongPK invoiceId) {
-		// TODO Auto-generated method stub
+		final SnfInvoice invoice = invoiceDao.get(invoiceId);
+		if ( invoice == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
+		}
+		SnfInvoiceDeliverer deliverer = invoiceDeliverer(invoice.getUserId());
+		if ( deliverer == null ) {
+			String msg = format("No invoice delivery service available to delivery invoice %d",
+					invoiceId.getId());
+			log.error(msg);
+			throw new RepeatableTaskException(msg);
+		}
 		return true;
 	}
 
@@ -589,8 +610,27 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 * @param cache
 	 *        the cache to set
 	 */
-	public void setMessageCache(Cache<String, VersionedMessages> cache) {
+	public void setMessageCache(Cache<String, VersionedMessages> messageCache) {
 		this.messageCache = messageCache;
+	}
+
+	/**
+	 * Get the invoice delivery services.
+	 * 
+	 * @return the services
+	 */
+	public OptionalServiceCollection<SnfInvoiceDeliverer> getDeliveryServices() {
+		return deliveryServices;
+	}
+
+	/**
+	 * Set the invoice delivery services.
+	 * 
+	 * @param deliveryServices
+	 *        the services to set
+	 */
+	public void setDeliveryServices(OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices) {
+		this.deliveryServices = deliveryServices;
 	}
 
 }
