@@ -103,7 +103,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	@Override
 	public String getInvoiceNumber() {
-		return Long.toHexString(invoice.getId().getId()).toUpperCase();
+		return Long.toString(invoice.getId().getId(), 36).toUpperCase();
 	}
 
 	@Override
