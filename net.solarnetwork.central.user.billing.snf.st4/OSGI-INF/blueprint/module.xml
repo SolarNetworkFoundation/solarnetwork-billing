@@ -13,7 +13,7 @@
 
 	<service interface="net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver">
 		<bean class="net.solarnetwork.central.user.billing.snf.st4.VersionedMessageSourceSnfInvoiceRendererResolver">
-			<argument value="/snf/invoice"/>
+			<argument value="/snf/text/html/invoice"/>
 			<argument value="invoice"/>
 			<argument value="#{T(org.springframework.util.MimeTypeUtils).TEXT_HTML}"/>
 			<argument ref="messageDao"/>
