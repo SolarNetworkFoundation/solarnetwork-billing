@@ -1,1 +1,1 @@
-body(invoice,messages) ::= "Hello, world."
+body() ::= "<p>Hello, world.</p><table>$invoice.invoiceItems:itemRow()$</table>"

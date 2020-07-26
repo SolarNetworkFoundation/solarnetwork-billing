@@ -27,6 +27,8 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -41,11 +43,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,6 +90,7 @@ import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.support.TemplateRenderer;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.OptionalServiceCollection;
 
@@ -117,6 +122,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
 	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
 	private OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices;
+	private OptionalServiceCollection<SnfInvoiceRendererResolver> rendererResolvers;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -203,19 +209,23 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				results.getReturnedResultCount());
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
-	@Override
-	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
+	private SnfInvoice getSnfInvoice(Long userId, String invoiceId) {
 		final UserLongPK id = new UserLongPK(userId, Long.valueOf(invoiceId));
 		final SnfInvoice invoice = invoiceDao.get(id);
 		if ( invoice == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
+		return invoice;
+	}
 
+	private VersionedMessageDaoMessageSource messageSourceForInvoice(SnfInvoice invoice) {
 		final Instant version = invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant();
-		final MessageSource messageSource = new VersionedMessageDaoMessageSource(messageDao,
-				MESSAGE_BUNDLE_NAMES, version, messageCache);
+		return new VersionedMessageDaoMessageSource(messageDao, MESSAGE_BUNDLE_NAMES, version,
+				messageCache);
+	}
 
+	private InvoiceImpl invoiceForSnfInvoice(SnfInvoice invoice, MessageSource messageSource,
+			Locale locale) {
 		List<InvoiceItem> invoiceItems = null;
 		if ( locale != null ) {
 			invoiceItems = invoice.getItems().stream().map(e -> {
@@ -240,9 +250,47 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	@Override
+	public Invoice getInvoice(Long userId, String invoiceId, Locale locale) {
+		final SnfInvoice invoice = getSnfInvoice(userId, invoiceId);
+		final MessageSource messageSource = messageSourceForInvoice(invoice);
+		return invoiceForSnfInvoice(invoice, messageSource, locale);
+	}
+
+	private TemplateRenderer renderer(SnfInvoice invoice, MimeType mimeType, Locale locale) {
+		for ( SnfInvoiceRendererResolver resolver : rendererResolvers.services() ) {
+			TemplateRenderer r = resolver.rendererForInvoice(invoice, mimeType, locale);
+			if ( r != null ) {
+				return r;
+			}
+		}
+		String msg = String.format("MIME %s not supported for invoice rendering.", invoice, mimeType,
+				locale);
+		throw new IllegalArgumentException(msg);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
 	public Resource renderInvoice(Long userId, String invoiceId, MimeType outputType, Locale locale) {
-		// TODO Auto-generated method stub
-		return null;
+		SnfInvoice invoice = getSnfInvoice(userId, invoiceId);
+		return renderInvoice(invoice, outputType, locale);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
+	@Override
+	public Resource renderInvoice(SnfInvoice invoice, MimeType outputType, Locale locale) {
+		TemplateRenderer renderer = renderer(invoice, outputType, locale);
+		VersionedMessageDaoMessageSource messageSource = messageSourceForInvoice(invoice);
+		InvoiceImpl localizedInvoice = invoiceForSnfInvoice(invoice, messageSource, locale);
+		Properties messages = messageSource.propertiesForLocale(locale);
+		Map<String, Object> parameters = new LinkedHashMap<>(4);
+		parameters.put("invoice", localizedInvoice);
+		parameters.put("messages", messages);
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream(4096)) {
+			renderer.render(locale, outputType, parameters, out);
+			return new ByteArrayResource(out.toByteArray());
+		} catch ( IOException e ) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
@@ -631,6 +679,26 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 */
 	public void setDeliveryServices(OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices) {
 		this.deliveryServices = deliveryServices;
+	}
+
+	/**
+	 * Get the invoice renderer resolver services.
+	 * 
+	 * @return the services
+	 */
+	public OptionalServiceCollection<SnfInvoiceRendererResolver> getRendererResolvers() {
+		return rendererResolvers;
+	}
+
+	/**
+	 * Set the invoice renderer resolver services.
+	 * 
+	 * @param rendererResolvers
+	 *        the services to set
+	 */
+	public void setRendererResolvers(
+			OptionalServiceCollection<SnfInvoiceRendererResolver> rendererResolvers) {
+		this.rendererResolvers = rendererResolvers;
 	}
 
 }

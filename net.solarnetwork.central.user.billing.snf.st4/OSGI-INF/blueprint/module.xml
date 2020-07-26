@@ -5,6 +5,20 @@
 	xsi:schemaLocation="
 		http://www.osgi.org/xmlns/blueprint/v1.0.0
 		http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+		
+	<reference id="messageDao" interface="net.solarnetwork.central.dao.VersionedMessageDao"/>
+	
+	<reference id="messageCache" interface="javax.cache.Cache"
+			filter="(&amp;(function=central)(role=versioned-messages))"/>
 
+	<service interface="net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver">
+		<bean class="net.solarnetwork.central.user.billing.snf.st4.VersionedMessageSourceSnfInvoiceRendererResolver">
+			<argument value="/snf/invoice"/>
+			<argument value="invoice"/>
+			<argument value="#{T(org.springframework.util.MimeTypeUtils).TEXT_HTML}"/>
+			<argument ref="messageDao"/>
+			<argument ref="messageCache"/>
+		</bean>
+	</service>
 
 </blueprint>

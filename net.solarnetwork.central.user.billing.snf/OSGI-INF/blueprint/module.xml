@@ -72,16 +72,35 @@
 		<argument ref="nodeUsageDao"/>
 		<argument ref="taxCodeDao"/>
 		<argument ref="messageDao"/>
+		<property name="messageCache" ref="messageCache"/>
 		<property name="taxCodeResolver">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
 				<property name="serviceClassName" value="net.solarnetwork.central.user.billing.snf.SnfTaxCodeResolver"/>
 			</bean>
 		</property>
-		<property name="messageCache" ref="messageCache"/>
+		<property name="deliveryServices">
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="net.solarnetwork.central.user.billing.snf.SnfInvoiceDeliverer"/>
+			</bean>
+		</property>
+		<property name="rendererResolvers">
+			<bean class="net.solarnetwork.util.DynamicServiceTracker">
+				<property name="bundleContext" ref="bundleContext"/>
+				<property name="serviceClassName" value="net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver"/>
+			</bean>
+		</property>
 	</bean>
 	
 	<!-- Published Services -->
+	
+	<service ref="messageCache" interface="javax.cache.Cache">
+		<service-properties>
+			<entry key="function" value="central"/>
+			<entry key="role" value="versioned-messages"/>
+		</service-properties>
+	</service>
 	
 	<service ref="billingSystem">
 		<interfaces>

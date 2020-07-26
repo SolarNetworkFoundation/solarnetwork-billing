@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Locale;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
@@ -231,7 +232,7 @@ public class Account extends BasicEntity<UserLongPK>
 	/**
 	 * Get the locale.
 	 * 
-	 * @return the locale
+	 * @return the locale, as a BCP 47 language tag
 	 */
 	public String getLocale() {
 		return locale;
@@ -241,10 +242,24 @@ public class Account extends BasicEntity<UserLongPK>
 	 * Set the locale.
 	 * 
 	 * @param locale
-	 *        the locale to set
+	 *        the locale to set, as a BCP 47 language tag
 	 */
 	public void setLocale(String locale) {
 		this.locale = locale;
+	}
+
+	/**
+	 * Get the locale.
+	 * 
+	 * @return the locale as represented by the {@link #getLocale()} language
+	 *         tag, or {@link Locale#US} if not available
+	 */
+	public Locale locale() {
+		String s = getLocale();
+		if ( s == null || s.isEmpty() ) {
+			return Locale.US;
+		}
+		return Locale.forLanguageTag(s);
 	}
 
 }

@@ -23,6 +23,9 @@
 package net.solarnetwork.central.user.billing.snf;
 
 import java.time.LocalDate;
+import java.util.Locale;
+import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -84,5 +87,28 @@ public interface SnfInvoicingSystem {
 	 * @return {@literal true} if the invoice was delivered successfully
 	 */
 	boolean deliverInvoice(UserLongPK invoiceId);
+
+	/**
+	 * Render an invoice entity.
+	 * 
+	 * <p>
+	 * This is similar to
+	 * {@link net.solarnetwork.central.user.billing.biz.BillingSystem#renderInvoice(Long, String, MimeType, Locale)}
+	 * except it is meant to be used internally, when an invoice entity instance
+	 * already exists.
+	 * </p>
+	 * 
+	 * @param invoice
+	 *        the invoice to render
+	 * @param outputType
+	 *        the desired output type
+	 * @param locale
+	 *        the output locale
+	 * @return a resource with the result data, or {@literal null} if the
+	 *         invoice is not available
+	 * @throws IllegalArgumentException
+	 *         if {@code outputType} is not supported
+	 */
+	Resource renderInvoice(SnfInvoice invoice, MimeType outputType, Locale locale);
 
 }

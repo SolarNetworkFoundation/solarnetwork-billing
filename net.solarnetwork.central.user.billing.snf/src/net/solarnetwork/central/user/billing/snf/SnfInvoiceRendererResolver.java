@@ -1,5 +1,5 @@
 /* ==================================================================
- * SnfInvoiceDeliverer.java - 25/07/2020 3:18:14 PM
+ * SnfInvoiceRendererResolver.java - 26/07/2020 3:13:19 PM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -22,33 +22,30 @@
 
 package net.solarnetwork.central.user.billing.snf;
 
-import java.util.concurrent.CompletableFuture;
-import net.solarnetwork.central.user.billing.snf.domain.Account;
+import java.util.Locale;
+import org.springframework.util.MimeType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
-import net.solarnetwork.domain.IdentifiableConfiguration;
-import net.solarnetwork.domain.Identity;
-import net.solarnetwork.domain.Result;
+import net.solarnetwork.support.TemplateRenderer;
 
 /**
- * API for a service that can deliver an invoice to an account holder.
+ * API for resolving a {@link TemplateRenderer} for rendering an invoice.
  * 
  * @author matt
  * @version 1.0
  */
-public interface SnfInvoiceDeliverer extends Identity<String> {
+public interface SnfInvoiceRendererResolver {
 
 	/**
-	 * Deliver an invoice.
+	 * Resolve a renderer for a given invoice and output characteristics.
 	 * 
 	 * @param invoice
-	 *        the invoice to deliver
-	 * @param account
-	 *        the account that owns the invoice
-	 * @param configuration
-	 *        any account-specific configuration to use
-	 * @return a future for the results
+	 *        the invoice to be rendered
+	 * @param mimeType
+	 *        the desired output MIME type
+	 * @param locale
+	 *        the output locale
+	 * @return the renderer, or {@literal null} if none can be resolved
 	 */
-	CompletableFuture<Result<Object>> deliverInvoice(SnfInvoice invoice, Account account,
-			IdentifiableConfiguration configuration);
+	TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType, Locale locale);
 
 }
