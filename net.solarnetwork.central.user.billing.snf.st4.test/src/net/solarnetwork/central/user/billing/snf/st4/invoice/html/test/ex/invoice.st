@@ -1,1 +1,1 @@
-invoice(invoice,messages) ::= "<html><head>$head(invoice,messages)$</head><body>$body(invoice,messages)$</body></html>"
+invoice(invoice,messages) ::= "<html><head>$head()$</head><body>$body()$</body></html>"

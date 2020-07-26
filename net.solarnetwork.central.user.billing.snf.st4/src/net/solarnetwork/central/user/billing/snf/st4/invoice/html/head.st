@@ -1,1 +1,1 @@
-head(invoice,messages) ::= "<title>$messages.title$</title>"
+head(invoice,messages) ::= "<title>$messages.title$ $invoice.invoiceNumber$</title>"

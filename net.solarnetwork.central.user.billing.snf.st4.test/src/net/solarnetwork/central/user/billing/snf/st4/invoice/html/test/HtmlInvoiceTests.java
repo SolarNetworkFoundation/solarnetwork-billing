@@ -27,16 +27,26 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertThat;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import org.junit.Test;
 import org.stringtemplate.v4.STGroupDir;
+import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemImpl;
+import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
+import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.common.tmpl.st4.ST4TemplateRenderer;
 
 /**
@@ -67,10 +77,20 @@ public class HtmlInvoiceTests {
 		// GIVEN
 		final Account account = createAccount(randomUUID().getMostSignificantBits(), "en_NZ",
 				createAddress("NZ", "Pacific/Auckland"));
-		final SnfInvoice invoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
+		final SnfInvoice snfInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
 				account.getUserId(), account.getId().getId(), Instant.now());
+		final SnfInvoiceItem item1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Usage,
+				NodeUsage.DATUM_PROPS_IN_KEY, new BigDecimal("123456789"), new BigDecimal("12345.67"));
+		final SnfInvoiceItem tax1 = SnfInvoiceItem.newItem(snfInvoice, InvoiceItemType.Tax, "GST",
+				new BigDecimal("12345"), new BigDecimal("123.67"));
+		snfInvoice.setItems(new LinkedHashSet<>(Arrays.asList(item1, tax1)));
+		final List<InvoiceItem> invoiceItems = Arrays.asList(new InvoiceItemImpl(snfInvoice, item1),
+				new InvoiceItemImpl(snfInvoice, tax1));
+		final InvoiceImpl invoice = new InvoiceImpl(snfInvoice, invoiceItems);
+
 		final Properties messages = new Properties();
 		messages.put("title", "Yo!");
+		messages.put("datum-props-in.item", "Metrics In");
 
 		STGroupDir group = new STGroupDir(
 				"net/solarnetwork/central/user/billing/snf/st4/invoice/html/test/ex", '$', '$');
@@ -85,8 +105,14 @@ public class HtmlInvoiceTests {
 
 		// THEN
 		String output = new String(byos.toByteArray(), ST4TemplateRenderer.UTF8);
-		assertThat("Output generated", output,
-				equalTo("<html><head><title>Yo!</title></head><body>Hello, world.</body></html>"));
+		// @formatter:off
+		String expected = String
+				.format("<html><head><title>Yo! %s</title></head><body><p>Hello, world.</p><table>"
+						+ "<tr>\n\t<th>datum-props-in</th>\n\t<td>Metrics In</td>\n\t<td>%1$s</td>\n</tr>" 
+						+ "<tr>\n\t<th>GST</th>\n\t<td></td>\n\t<td>%1$s</td>\n</tr>" 
+						+ "</table></body></html>", invoice.getInvoiceNumber());
+		// @formatter:on
+		assertThat("Output generated", output, equalTo(expected));
 	}
 
 }
