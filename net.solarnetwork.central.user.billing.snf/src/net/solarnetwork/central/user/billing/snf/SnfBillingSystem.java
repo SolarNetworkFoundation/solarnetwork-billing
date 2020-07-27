@@ -44,6 +44,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.StreamSupport;
 import javax.cache.Cache;
 import org.slf4j.Logger;
@@ -90,6 +93,7 @@ import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.domain.Result;
 import net.solarnetwork.support.TemplateRenderer;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.OptionalServiceCollection;
@@ -218,7 +222,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		return invoice;
 	}
 
-	private VersionedMessageDaoMessageSource messageSourceForInvoice(SnfInvoice invoice) {
+	@Override
+	public MessageSource messageSourceForInvoice(SnfInvoice invoice) {
 		final Instant version = invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant();
 		return new VersionedMessageDaoMessageSource(messageDao, MESSAGE_BUNDLE_NAMES, version,
 				messageCache);
@@ -279,7 +284,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	@Override
 	public Resource renderInvoice(SnfInvoice invoice, MimeType outputType, Locale locale) {
 		TemplateRenderer renderer = renderer(invoice, outputType, locale);
-		VersionedMessageDaoMessageSource messageSource = messageSourceForInvoice(invoice);
+		VersionedMessageDaoMessageSource messageSource = (VersionedMessageDaoMessageSource) messageSourceForInvoice(
+				invoice);
 		InvoiceImpl localizedInvoice = invoiceForSnfInvoice(invoice, messageSource, locale);
 		Properties messages = messageSource.propertiesForLocale(locale);
 		Map<String, Object> parameters = new LinkedHashMap<>(4);
@@ -533,10 +539,17 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public boolean deliverInvoice(final UserLongPK invoiceId) {
+		// get account
+		final Account account = accountDao.getForUser(invoiceId.getUserId());
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId.getUserId());
+		}
+
 		final SnfInvoice invoice = invoiceDao.get(invoiceId);
 		if ( invoice == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, invoiceId);
 		}
+
 		SnfInvoiceDeliverer deliverer = invoiceDeliverer(invoice.getUserId());
 		if ( deliverer == null ) {
 			String msg = format("No invoice delivery service available to delivery invoice %d",
@@ -544,7 +557,27 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			log.error(msg);
 			throw new RepeatableTaskException(msg);
 		}
-		return true;
+
+		// TODO: support configuration for account
+		try {
+			CompletableFuture<Result<Object>> future = deliverer.deliverInvoice(invoice, account, null);
+			Result<Object> result = future.get(1, TimeUnit.MINUTES);
+			return (result != null && result.getSuccess() != null && result.getSuccess().booleanValue());
+		} catch ( TimeoutException e ) {
+			throw new RepeatableTaskException("Tiemout delivering invoice", e);
+		} catch ( Exception e ) {
+			Throwable root = e;
+			while ( root.getCause() != null ) {
+				root = root.getCause();
+			}
+			if ( root instanceof IOException ) {
+				throw new RepeatableTaskException("Communication error delivering invoice.", e);
+			}
+			if ( !(e instanceof RuntimeException) ) {
+				e = new RuntimeException(e);
+			}
+			throw (RuntimeException) e;
+		}
 	}
 
 	/**

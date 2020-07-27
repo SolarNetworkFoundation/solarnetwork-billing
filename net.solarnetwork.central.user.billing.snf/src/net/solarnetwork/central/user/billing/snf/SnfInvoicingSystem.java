@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf;
 
 import java.time.LocalDate;
 import java.util.Locale;
+import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
 import org.springframework.util.MimeType;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
@@ -87,6 +88,15 @@ public interface SnfInvoicingSystem {
 	 * @return {@literal true} if the invoice was delivered successfully
 	 */
 	boolean deliverInvoice(UserLongPK invoiceId);
+
+	/**
+	 * Get a {@link MessageSource} appropriate for a given invoice.
+	 * 
+	 * @param invoice
+	 *        the invoice to get the message source for
+	 * @return the message source, never {@literal null}
+	 */
+	MessageSource messageSourceForInvoice(SnfInvoice invoice);
 
 	/**
 	 * Render an invoice entity.
