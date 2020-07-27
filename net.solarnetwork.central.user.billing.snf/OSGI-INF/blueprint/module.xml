@@ -104,6 +104,13 @@
 		</service-properties>
 	</service>
 	
+	<service ref="cacheManager" interface="javax.cache.CacheManager">
+		<service-properties>
+			<entry key="function" value="billing"/>
+			<entry key="role" value="snf"/>
+		</service-properties>
+	</service>
+	
 	<service ref="billingSystem">
 		<interfaces>
 			<value>net.solarnetwork.central.user.billing.biz.BillingSystem</value>

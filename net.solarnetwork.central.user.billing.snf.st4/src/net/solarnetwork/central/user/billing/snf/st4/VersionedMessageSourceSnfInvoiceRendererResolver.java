@@ -26,8 +26,6 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import javax.cache.Cache;
 import org.springframework.context.MessageSource;
 import org.springframework.util.MimeType;
@@ -44,6 +42,11 @@ import net.solarnetwork.support.TemplateRenderer;
  * {@link SnfInvoiceRendererResolver} that resolves {@link ST4TemplateRenderer}
  * renderers using a {@link MessageSourceGroup} for templates.
  * 
+ * <p>
+ * The start and end delimiters for ST are both configured as the {@literal $}
+ * character.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
@@ -54,7 +57,7 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 	private final List<MimeType> mimeTypes;
 	private final VersionedMessageDao messageDao;
 	private final Cache<String, VersionedMessages> messageCache;
-	private final ConcurrentMap<String, ST4TemplateRenderer> templateCache;
+	private final Cache<String, ST4TemplateRenderer> templateCache;
 
 	/**
 	 * Constructor.
@@ -69,12 +72,15 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 	 *        the message DAO
 	 * @param messageCache
 	 *        the message cache
+	 * @param templateCache
+	 *        the template cache
 	 * @throws IllegalArgumentException
 	 *         if any argument is {@literal null}
 	 */
 	public VersionedMessageSourceSnfInvoiceRendererResolver(String bundleName, String rootTemplateName,
 			MimeType mimeType, VersionedMessageDao messageDao,
-			Cache<String, VersionedMessages> messageCache) {
+			Cache<String, VersionedMessages> messageCache,
+			Cache<String, ST4TemplateRenderer> templateCache) {
 		super();
 		if ( bundleName == null ) {
 			throw new IllegalArgumentException("The bundleName argument must be provided.");
@@ -88,15 +94,18 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 			throw new IllegalArgumentException("The messageDao argument must be provided.");
 		}
 		this.messageDao = messageDao;
-		if ( messageCache == null ) {
-			throw new IllegalArgumentException("The messageCache argument must be provided.");
-		}
-		this.messageCache = messageCache;
 		if ( mimeType == null ) {
 			throw new IllegalArgumentException("The mimeType argument must be provided.");
 		}
 		this.mimeTypes = Collections.singletonList(mimeType);
-		this.templateCache = new ConcurrentHashMap<>(16, 0.9f, 1);
+		if ( messageCache == null ) {
+			throw new IllegalArgumentException("The messageCache argument must be provided.");
+		}
+		this.messageCache = messageCache;
+		if ( templateCache == null ) {
+			throw new IllegalArgumentException("The templateCache argument must be provided.");
+		}
+		this.templateCache = templateCache;
 	}
 
 	@Override
@@ -105,11 +114,14 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 		MessageSource messageSource = new VersionedMessageDaoMessageSource(messageDao, bundleNames,
 				version, messageCache);
 		String templateVersion = messageSource.getMessage("version", null, "", locale);
-		return templateCache.computeIfAbsent(templateVersion, k -> {
-			return new ST4TemplateRenderer(bundleNames[0],
+		ST4TemplateRenderer renderer = templateCache.get(templateVersion);
+		if ( renderer == null ) {
+			renderer = new ST4TemplateRenderer(bundleNames[0],
 					new MessageSourceGroup(bundleNames[0], messageSource, '$', '$'), rootTemplateName,
 					mimeTypes, ST4TemplateRenderer.UTF8);
-		});
+			templateCache.putIfAbsent(templateVersion, renderer);
+		}
+		return renderer;
 	}
 
 }
