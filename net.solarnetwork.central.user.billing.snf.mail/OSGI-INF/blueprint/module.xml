@@ -30,6 +30,8 @@
 	<reference id="mailSender" interface="org.springframework.mail.javamail.JavaMailSender"/>
 
 	<reference id="invoicingSystem" interface="net.solarnetwork.central.user.billing.snf.SnfInvoicingSystem"/>
+
+	<reference id="executor" interface="java.util.concurrent.Executor" filter="(function=central)"/>
 	
 	<!-- Published Services -->
 	
@@ -50,6 +52,7 @@
 					</property>
 				</bean>
 			</argument>
+			<argument ref="executor"/>
 		</bean>
 	</service>
 	
