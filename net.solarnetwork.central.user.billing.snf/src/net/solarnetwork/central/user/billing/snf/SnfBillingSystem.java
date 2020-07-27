@@ -112,6 +112,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	/** The message bundle name to use for versioned messages. */
 	public static final String MESSAGE_BUNDLE_NAME = "snf.billing";
 
+	/** The default {@code deliveryTimeoutSecs} property value. */
+	public static final int DEFAULT_DELIVERY_TIMEOUT = 60;
+
 	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { MESSAGE_BUNDLE_NAME };
 
 	private final AccountDao accountDao;
@@ -127,6 +130,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
 	private OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices;
 	private OptionalServiceCollection<SnfInvoiceRendererResolver> rendererResolvers;
+	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
 
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -560,8 +564,14 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 
 		// TODO: support configuration for account
 		try {
+			final int maxSeconds = getDeliveryTimeoutSecs();
 			CompletableFuture<Result<Object>> future = deliverer.deliverInvoice(invoice, account, null);
-			Result<Object> result = future.get(1, TimeUnit.MINUTES);
+			Result<Object> result;
+			if ( maxSeconds > 0 ) {
+				result = future.get(maxSeconds, TimeUnit.SECONDS);
+			} else {
+				result = future.get();
+			}
 			return (result != null && result.getSuccess() != null && result.getSuccess().booleanValue());
 		} catch ( TimeoutException e ) {
 			throw new RepeatableTaskException("Tiemout delivering invoice", e);
@@ -732,6 +742,26 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	public void setRendererResolvers(
 			OptionalServiceCollection<SnfInvoiceRendererResolver> rendererResolvers) {
 		this.rendererResolvers = rendererResolvers;
+	}
+
+	/**
+	 * Get the maximum amount of time to wait for invoice delivery to complete,
+	 * in seconds.
+	 * 
+	 * @return the timeout, in seconds
+	 */
+	public int getDeliveryTimeoutSecs() {
+		return deliveryTimeoutSecs;
+	}
+
+	/**
+	 * Set the maximum amount of time to wait for invoice delivery to complete.
+	 * 
+	 * @param deliveryTimeoutSecs
+	 *        the timeout to set, in seconds, or {@literal 0} for no timeout
+	 */
+	public void setDeliveryTimeoutSecs(int deliveryTimeoutSecs) {
+		this.deliveryTimeoutSecs = deliveryTimeoutSecs;
 	}
 
 }

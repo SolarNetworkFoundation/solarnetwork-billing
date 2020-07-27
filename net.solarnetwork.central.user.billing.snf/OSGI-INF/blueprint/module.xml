@@ -25,6 +25,7 @@
 	<osgix:cm-properties id="cfg" persistent-id="net.solarnetwork.central.user.billing.snf">
 		<beans:prop key="cache.conf.uri">classpath:/net/solarnetwork/central/user/billing/snf/ehcache.xml</beans:prop>
 		<beans:prop key="messageCache.ttl">600</beans:prop>
+		<beans:prop key="delivery.timeout">60</beans:prop>
 	</osgix:cm-properties>
 	
 	<ctx:property-placeholder properties-ref="cfg"/>
@@ -73,6 +74,7 @@
 		<argument ref="taxCodeDao"/>
 		<argument ref="messageDao"/>
 		<property name="messageCache" ref="messageCache"/>
+		<property name="deliveryTimeoutSecs" value="${delivery.timeout}"/>
 		<property name="taxCodeResolver">
 			<bean class="net.solarnetwork.util.DynamicServiceTracker">
 				<property name="bundleContext" ref="bundleContext"/>
