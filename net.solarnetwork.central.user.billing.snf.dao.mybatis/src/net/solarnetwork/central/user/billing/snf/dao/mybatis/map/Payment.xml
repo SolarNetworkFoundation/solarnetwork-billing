@@ -22,7 +22,7 @@
 			, #{externalKey}
 			, #{reference}
 		)
-		ON CONFLICT (id) DO UPDATE SET
+		ON CONFLICT (acct_id, id) DO UPDATE SET
 			pay_type = EXCLUDED.pay_type
 			, amount = EXCLUDED.amount
 			, currency = EXCLUDED.currency

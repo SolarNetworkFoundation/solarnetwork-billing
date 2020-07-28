@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.domain.UserLongPK;
 
 /**
@@ -39,7 +40,9 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	/** Query name enumeration. */
 	public enum QueryName {
 
-		GetForUser("get-Account-for-user");
+		GetForUser("get-Account-for-user"),
+
+		GetAccountBalanceForUser("get-AccountBalance-for-user");
 
 		private final String queryName;
 
@@ -67,6 +70,11 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	@Override
 	public Account getForUser(Long userId) {
 		return selectFirst(QueryName.GetForUser.getQueryName(), userId);
+	}
+
+	@Override
+	public AccountBalance getBalanceForUser(Long userId) {
+		return selectFirst(QueryName.GetAccountBalanceForUser.getQueryName(), userId);
 	}
 
 }

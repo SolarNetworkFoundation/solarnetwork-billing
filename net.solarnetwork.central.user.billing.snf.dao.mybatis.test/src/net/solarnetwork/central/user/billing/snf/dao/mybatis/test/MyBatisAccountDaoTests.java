@@ -26,11 +26,13 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAddressDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.domain.UserLongPK;
 
@@ -63,6 +65,7 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void insert() {
 		Account entity = createTestAccount(address);
 		UserLongPK pk = dao.save(entity);
+		getSqlSessionTemplate().flushStatements();
 		assertThat("PK created", pk, notNullValue());
 		assertThat("PK userId preserved", pk.getUserId(), equalTo(entity.getUserId()));
 		last = entity;
@@ -119,4 +122,28 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Entity unchanged", entity.isSameAs(last), equalTo(true));
 	}
 
+	@Test
+	public void balance_none() {
+		insert();
+		AccountBalance balance = dao.getBalanceForUser(last.getUserId());
+		assertThat("No balance available", balance, nullValue());
+	}
+
+	private void insertAccountBalance(Long accountId, BigDecimal chargeTotal, BigDecimal paymentTotal) {
+		jdbcTemplate.update(
+				"insert into solarbill.bill_account_balance (acct_id,charge_total,payment_total) VALUES (?,?,?)",
+				accountId, chargeTotal, paymentTotal);
+	}
+
+	@Test
+	public void balance_get() {
+		insert();
+		final BigDecimal charge = new BigDecimal("12345.67");
+		final BigDecimal payment = new BigDecimal("234789.01");
+		insertAccountBalance(last.getId().getId(), charge, payment);
+		AccountBalance balance = dao.getBalanceForUser(last.getUserId());
+		assertThat("Balance available", balance, notNullValue());
+		assertThat("Balance charge total", balance.getChargeTotal().compareTo(charge), equalTo(0));
+		assertThat("Balance charge total", balance.getPaymentTotal().compareTo(payment), equalTo(0));
+	}
 }

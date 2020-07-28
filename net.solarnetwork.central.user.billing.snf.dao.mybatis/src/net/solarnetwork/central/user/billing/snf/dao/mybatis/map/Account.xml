@@ -78,5 +78,38 @@
 		DELETE FROM solarbill.bill_account
 		WHERE id = #{id}
 	</delete>
+	
+	<!-- 
+		AccountBalance support
+	 -->
+	 
+	 <sql id="fragment-AccountBalance-full-result">
+		bal.acct_id AS bill_account_balance_acct_id
+		, bal.created AS bill_account_balance_created
+		, bal.charge_total AS bill_account_balance_charge_total
+		, bal.payment_total AS bill_account_balance_payment_total
+	</sql>
 
+	<resultMap id="AccountBalance-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.AccountBalance">
+		<constructor>
+			<idArg column="bill_account_balance_acct_id" javaType="Long"/>
+			<arg column="bill_account_user_id" javaType="Long"/>
+			<arg column="bill_account_balance_created" javaType="java.time.Instant"/>
+			<arg column="bill_account_balance_charge_total" javaType="java.math.BigDecimal"/>
+			<arg column="bill_account_balance_payment_total" javaType="java.math.BigDecimal"/>
+		</constructor>
+	</resultMap>
+	
+	<select id="get-AccountBalance-for-user" parameterType="long" resultMap="AccountBalance-FullResult">
+		SELECT
+			<include refid="fragment-AccountBalance-full-result"/>
+			, acct.user_id AS bill_account_user_id
+		FROM
+			solarbill.bill_account_balance bal
+		INNER JOIN
+			solarbill.bill_account acct ON acct.id = bal.acct_id
+		WHERE
+			acct.user_id = #{id}
+	</select>
+	
 </mapper>

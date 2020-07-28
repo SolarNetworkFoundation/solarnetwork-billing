@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.dao;
 
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.dao.GenericDao;
 
@@ -42,5 +43,14 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 * @return the account, or {@literal null} if not available
 	 */
 	Account getForUser(Long userId);
+
+	/**
+	 * Get the overall account balance for a given user.
+	 * 
+	 * @param userId
+	 *        the ID of the user to get the account balance for
+	 * @return the account balance, or {@literal null} if not available
+	 */
+	AccountBalance getBalanceForUser(Long userId);
 
 }

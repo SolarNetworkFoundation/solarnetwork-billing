@@ -26,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;
+import net.solarnetwork.central.user.dao.UserRelatedEntity;
 import net.solarnetwork.central.user.domain.UserUuidPK;
 import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
@@ -36,7 +37,8 @@ import net.solarnetwork.domain.Differentiable;
  * @author matt
  * @version 1.0
  */
-public class Payment extends BasicEntity<UserUuidPK> implements Differentiable<Payment> {
+public class Payment extends BasicEntity<UserUuidPK>
+		implements Differentiable<Payment>, UserRelatedEntity<UserUuidPK> {
 
 	private final Long accountId;
 	private PaymentType paymentType;
@@ -141,6 +143,18 @@ public class Payment extends BasicEntity<UserUuidPK> implements Differentiable<P
 	@Override
 	public boolean differsFrom(Payment other) {
 		return !isSameAs(other);
+	}
+
+	@Override
+	public boolean hasId() {
+		UserUuidPK id = getId();
+		return (id != null && id.getId() != null && id.getUserId() != null);
+	}
+
+	@Override
+	public Long getUserId() {
+		final UserUuidPK id = getId();
+		return id != null ? id.getUserId() : null;
 	}
 
 	/**
