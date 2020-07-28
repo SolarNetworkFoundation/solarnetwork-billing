@@ -1,5 +1,5 @@
 /* ==================================================================
- * Payment.java - 29/07/2020 7:01:06 AM
+ * InvoicePayment.java - 29/07/2020 10:52:56 AM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -33,27 +33,28 @@ import net.solarnetwork.dao.BasicEntity;
 import net.solarnetwork.domain.Differentiable;
 
 /**
- * Payment entity.
+ * Invoice payment entity.
  * 
  * @author matt
  * @version 1.0
  */
-public class Payment extends BasicEntity<UserUuidPK>
-		implements Differentiable<Payment>, UserRelatedEntity<UserUuidPK> {
+public class InvoicePayment extends BasicEntity<UserUuidPK>
+		implements Differentiable<InvoicePayment>, UserRelatedEntity<UserUuidPK> {
 
 	/**
 	 * Comparator that sorts {@link Payment} objects by {@code created} in
 	 * ascending order.
 	 */
-	public static final Comparator<Payment> SORT_BY_DATE = new PaymentDateComparator();
+	public static final Comparator<InvoicePayment> SORT_BY_DATE = new InvoicePaymentDateComparator();
 
 	/**
-	 * Compare {@link Payment} instances by start date in ascending order.
+	 * Compare {@link InvoicePayment} instances by start date in ascending
+	 * order.
 	 */
-	public static final class PaymentDateComparator implements Comparator<Payment> {
+	public static final class InvoicePaymentDateComparator implements Comparator<InvoicePayment> {
 
 		@Override
-		public int compare(Payment o1, Payment o2) {
+		public int compare(InvoicePayment o1, InvoicePayment o2) {
 			int result = o1.getCreated().compareTo(o2.getCreated());
 			if ( result == 0 ) {
 				result = o1.getId().compareTo(o2.getId());
@@ -64,21 +65,22 @@ public class Payment extends BasicEntity<UserUuidPK>
 	}
 
 	private final Long accountId;
-	private PaymentType paymentType;
+	private final Long paymentId;
+	private final Long invoiceId;
 	private BigDecimal amount;
-	private String currencyCode;
-	private String externalKey;
-	private String reference;
 
 	/**
 	 * Constructor.
 	 * 
 	 * @param accountId
 	 *        the account ID
+	 * @param paymentId
+	 *        the payment ID
+	 * @param invoiceId
+	 *        the invoice ID
 	 */
-	public Payment(Long accountId) {
-		super(new UserUuidPK(), Instant.now());
-		this.accountId = accountId;
+	public InvoicePayment(Long accountId, Long paymentId, Long invoiceId) {
+		this(new UserUuidPK(), accountId, paymentId, invoiceId, Instant.now());
 	}
 
 	/**
@@ -88,12 +90,19 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *        the ID
 	 * @param accountId
 	 *        the account ID
+	 * @param paymentId
+	 *        the payment ID
+	 * @param invoiceId
+	 *        the invoice ID
 	 * @param created
 	 *        the creation date
 	 */
-	public Payment(UserUuidPK id, Long accountId, Instant created) {
+	public InvoicePayment(UserUuidPK id, Long accountId, Long paymentId, Long invoiceId,
+			Instant created) {
 		super(id, created);
 		this.accountId = accountId;
+		this.paymentId = paymentId;
+		this.invoiceId = invoiceId;
 	}
 
 	/**
@@ -105,11 +114,16 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 *        the user ID
 	 * @param accountId
 	 *        the account ID
+	 * @param paymentId
+	 *        the payment ID
+	 * @param invoiceId
+	 *        the invoice ID
 	 * @param created
 	 *        the creation date
 	 */
-	public Payment(UUID id, Long userId, Long accountId, Instant created) {
-		this(new UserUuidPK(userId, id), accountId, created);
+	public InvoicePayment(UUID id, Long userId, Long accountId, Long paymentId, Long invoiceId,
+			Instant created) {
+		this(new UserUuidPK(userId, id), accountId, paymentId, invoiceId, created);
 	}
 
 	@Override
@@ -121,16 +135,12 @@ public class Payment extends BasicEntity<UserUuidPK>
 		builder.append(getCreated());
 		builder.append(", accountId=");
 		builder.append(accountId);
-		builder.append(", paymentType=");
-		builder.append(paymentType);
+		builder.append(", paymentId=");
+		builder.append(paymentId);
+		builder.append(", invoiceId=");
+		builder.append(invoiceId);
 		builder.append(", amount=");
 		builder.append(amount);
-		builder.append(", currencyCode=");
-		builder.append(currencyCode);
-		builder.append(", externalKey=");
-		builder.append(externalKey);
-		builder.append(", reference=");
-		builder.append(reference);
 		builder.append("}");
 		return builder.toString();
 	}
@@ -149,22 +159,20 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 * @return {@literal true} if the properties of this instance are equal to
 	 *         the other
 	 */
-	public boolean isSameAs(Payment other) {
+	public boolean isSameAs(InvoicePayment other) {
 		if ( other == null ) {
 			return false;
 		}
 		// @formatter:off
 		return Objects.equals(accountId, other.accountId)
-				&& (amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0)
-				&& Objects.equals(currencyCode, other.currencyCode)
-				&& Objects.equals(externalKey, other.externalKey)
-				&& Objects.equals(paymentType, other.paymentType)
-				&& Objects.equals(reference, other.reference);
+				&& Objects.equals(paymentId, other.paymentId)
+				&& Objects.equals(invoiceId, other.invoiceId)
+				&& (amount == other.amount) || (amount != null && amount.compareTo(other.amount) == 0);
 		// @formatter:on
 	}
 
 	@Override
-	public boolean differsFrom(Payment other) {
+	public boolean differsFrom(InvoicePayment other) {
 		return !isSameAs(other);
 	}
 
@@ -190,22 +198,21 @@ public class Payment extends BasicEntity<UserUuidPK>
 	}
 
 	/**
-	 * Get the payment type.
+	 * Get the payment ID.
 	 * 
-	 * @return the type
+	 * @return the payment ID
 	 */
-	public PaymentType getPaymentType() {
-		return paymentType;
+	public Long getPaymentId() {
+		return paymentId;
 	}
 
 	/**
-	 * Set the payment type.
+	 * Get the invoice ID.
 	 * 
-	 * @param paymentType
-	 *        the type to set
+	 * @return the invoice ID
 	 */
-	public void setPaymentType(PaymentType paymentType) {
-		this.paymentType = paymentType;
+	public Long getInvoiceId() {
+		return invoiceId;
 	}
 
 	/**
@@ -225,72 +232,6 @@ public class Payment extends BasicEntity<UserUuidPK>
 	 */
 	public void setAmount(BigDecimal amount) {
 		this.amount = amount;
-	}
-
-	/**
-	 * Get the currency code.
-	 * 
-	 * @return the currency code
-	 */
-	public String getCurrencyCode() {
-		return currencyCode;
-	}
-
-	/**
-	 * Set the currency code.
-	 * 
-	 * @param currencyCode
-	 *        the currency code to set
-	 */
-	public void setCurrencyCode(String currencyCode) {
-		this.currencyCode = currencyCode;
-	}
-
-	/**
-	 * Get the external key.
-	 * 
-	 * <p>
-	 * This refers to a payment identifier in some external system, for cross
-	 * referencing.
-	 * </p>
-	 * 
-	 * @return the external key
-	 */
-	public String getExternalKey() {
-		return externalKey;
-	}
-
-	/**
-	 * Set the external key.
-	 * 
-	 * @param externalKey
-	 *        the key to set
-	 */
-	public void setExternalKey(String externalKey) {
-		this.externalKey = externalKey;
-	}
-
-	/**
-	 * Get the reference.
-	 * 
-	 * <p>
-	 * This is arbitrary information associated with the payment.
-	 * </p>
-	 * 
-	 * @return the reference
-	 */
-	public String getReference() {
-		return reference;
-	}
-
-	/**
-	 * Set the reference.
-	 * 
-	 * @param reference
-	 *        the reference to set
-	 */
-	public void setReference(String reference) {
-		this.reference = reference;
 	}
 
 }
