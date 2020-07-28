@@ -1,5 +1,5 @@
 /* ==================================================================
- * InvoiceItemType.java - 20/07/2020 11:54:54 AM
+ * PaymentType.java - 29/07/2020 6:29:33 AM
  * 
  * Copyright 2020 SolarNetwork.net Dev Team
  * 
@@ -25,41 +25,24 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import net.solarnetwork.domain.CodedValue;
 
 /**
- * Type of invoice item.
- * 
- * <p>
- * The ordering of the enumeration is used as a sort order for invoice items.
- * </p>
+ * Enumeration of payment types.
  * 
  * @author matt
  * @version 1.0
  */
-public enum InvoiceItemType implements CodedValue {
+public enum PaymentType implements CodedValue {
 
 	Unknown(0),
 
-	/** A recurring charge. */
-	Recurring(1),
+	/** A normal payment. */
+	Payment(1),
 
-	/** A one-off fixed charge. */
-	Fixed(2),
-
-	/** A change based on usage. */
-	Usage(3),
-
-	/**
-	 * A credit adjustment.
-	 */
-	Credit(4),
-
-	/**
-	 * A tax item.
-	 */
-	Tax(5);
+	/** A one-off credit adjustment. */
+	Credit(2);
 
 	private final byte code;
 
-	private InvoiceItemType(int code) {
+	private PaymentType(int code) {
 		this.code = (byte) code;
 	}
 
@@ -81,14 +64,14 @@ public enum InvoiceItemType implements CodedValue {
 	 * @return the status, never {@literal null} and set to {@link #Unknown} if
 	 *         not any other valid code
 	 */
-	public static InvoiceItemType forCode(int code) {
+	public static PaymentType forCode(int code) {
 		final byte c = (byte) code;
-		for ( InvoiceItemType v : values() ) {
+		for ( PaymentType v : values() ) {
 			if ( v.code == c ) {
 				return v;
 			}
 		}
-		return InvoiceItemType.Unknown;
+		return PaymentType.Unknown;
 	}
 
 }
