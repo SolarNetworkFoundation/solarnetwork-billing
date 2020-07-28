@@ -34,9 +34,9 @@
 		  pay.id 			AS bill_payment_id
 		, pay.created 		AS bill_payment_created
 		, pay.acct_id 		AS bill_payment_acct_id
-		, pay.pay_type 	AS bill_payment_pay_type
+		, pay.pay_type 		AS bill_payment_pay_type
 		, pay.amount 		AS bill_payment_amount
-		, pay.currency 	AS bill_payment_currency
+		, pay.currency 		AS bill_payment_currency
 		, pay.ext_key 		AS bill_payment_ext_key
 		, pay.ref	 		AS bill_payment_ref
 	</sql>
@@ -66,6 +66,49 @@
 		WHERE
 			pay.id = #{id}
 			AND acct.user_id = #{userId}
+	</select>
+
+	<select id="find-Payment-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.PaymentFilter" 
+			resultMap="Payment-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-Payment-full-result"/>
+			, acct.user_id AS bill_account_user_id
+		FROM
+			solarbill.bill_payment pay
+		INNER JOIN 
+			solarbill.bill_account acct ON acct.id = pay.acct_id
+		<if test="startDate != null or endDate != null">
+			INNER JOIN
+				solarbill.bill_address addr ON addr.id = acct.addr_id
+		</if>
+		<where>
+			<if test="userId != null">
+				AND acct.user_id = #{userId}
+			</if>
+			<if test="accountId != null">
+				AND pay.acct_id = #{accountId}
+			</if>
+			<if test="startDate != null">
+				AND pay.created &gt;= (#{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
+			</if>
+			<if test="endDate != null">
+				AND pay.created &lt; (#{filter.endDate,javaType=java.time.LocalDate,jdbcType=DATE}::timestamp AT TIME ZONE addr.time_zone)
+			</if>
+		</where>
+		ORDER BY
+		<choose>
+			<when test="sorts != null and sorts.size &gt; 0">
+				 <foreach collection="sorts" item="item" separator=",">
+					<if test="item.sortKey == &quot;ACCOUNT&quot;">bill_payment_acct_id</if>
+					<if test="item.sortKey == &quot;DATE&quot;">bill_payment_created</if>
+					<if test="item.sortKey == &quot;ID&quot;">bill_payment_id</if>
+					<if test="item.descending">DESC</if>
+				</foreach>
+			</when>
+			<otherwise>
+				bill_payment_created DESC, bill_payment_id
+			</otherwise>
+		</choose>
 	</select>
 
 </mapper>

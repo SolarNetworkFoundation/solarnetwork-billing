@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.UUID;
 import net.solarnetwork.central.user.dao.UserRelatedEntity;
@@ -39,6 +40,28 @@ import net.solarnetwork.domain.Differentiable;
  */
 public class Payment extends BasicEntity<UserUuidPK>
 		implements Differentiable<Payment>, UserRelatedEntity<UserUuidPK> {
+
+	/**
+	 * Comparator that sorts {@link Payment} objects by {@code created} in
+	 * ascending order.
+	 */
+	public static final Comparator<Payment> SORT_BY_DATE = new PaymentDateComparator();
+
+	/**
+	 * Compare {@link SnfInvoice} instances by start date in ascending order.
+	 */
+	public static final class PaymentDateComparator implements Comparator<Payment> {
+
+		@Override
+		public int compare(Payment o1, Payment o2) {
+			int result = o1.getCreated().compareTo(o2.getCreated());
+			if ( result == 0 ) {
+				result = o1.getId().compareTo(o2.getId());
+			}
+			return result;
+		}
+
+	}
 
 	private final Long accountId;
 	private PaymentType paymentType;

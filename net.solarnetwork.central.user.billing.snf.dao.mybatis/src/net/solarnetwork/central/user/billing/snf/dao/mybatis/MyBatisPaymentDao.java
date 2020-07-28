@@ -22,10 +22,15 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import java.util.List;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.PaymentDao;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
+import net.solarnetwork.central.user.billing.snf.domain.PaymentFilter;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.dao.BasicFilterResults;
+import net.solarnetwork.dao.FilterResults;
+import net.solarnetwork.domain.SortDescriptor;
 
 /**
  * MyBatis implementation of {@link PaymentDao}.
@@ -36,11 +41,51 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
 public class MyBatisPaymentDao extends BaseMyBatisGenericDaoSupport<Payment, UserUuidPK>
 		implements PaymentDao {
 
+	/** Query name enumeration. */
+	public enum QueryName {
+
+		FindFiltered("find-Payment-for-filter");
+
+		private final String queryName;
+
+		private QueryName(String queryName) {
+			this.queryName = queryName;
+		}
+
+		/**
+		 * Get the query name.
+		 * 
+		 * @return the query name
+		 */
+		public String getQueryName() {
+			return queryName;
+		}
+	}
+
 	/**
 	 * Constructor.
 	 */
 	public MyBatisPaymentDao() {
 		super(Payment.class, UserUuidPK.class);
+	}
+
+	@Override
+	public FilterResults<Payment, UserUuidPK> findFiltered(PaymentFilter filter,
+			List<SortDescriptor> sorts, Integer offset, Integer max) {
+		if ( offset != null || max != null || sorts != null ) {
+			filter = filter.clone();
+			filter.setSorts(sorts);
+			filter.setMax(max);
+			if ( offset == null ) {
+				// force offset to 0 if implied
+				filter.setOffset(0);
+			} else {
+				filter.setOffset(offset);
+			}
+		}
+		List<Payment> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null, null);
+		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
+				results.size());
 	}
 
 }

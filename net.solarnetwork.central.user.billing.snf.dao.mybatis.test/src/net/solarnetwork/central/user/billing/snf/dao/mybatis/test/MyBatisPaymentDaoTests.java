@@ -22,12 +22,23 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static java.lang.String.format;
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
-import java.util.UUID;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisAccountDao;
@@ -36,8 +47,10 @@ import net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisPaymentDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.Payment;
+import net.solarnetwork.central.user.billing.snf.domain.PaymentFilter;
 import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
 import net.solarnetwork.central.user.domain.UserUuidPK;
+import net.solarnetwork.dao.FilterResults;
 
 /**
  * Test cases for the {@link MyBatisPaymentDao} class.
@@ -47,12 +60,11 @@ import net.solarnetwork.central.user.domain.UserUuidPK;
  */
 public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
-	private static final String TEST_EXT_KEY = randomUUID().toString();
-
 	private MyBatisAddressDao addressDao;
 	private MyBatisAccountDao accountDao;
 	private MyBatisPaymentDao dao;
 
+	private Address address;
 	private Account account;
 	private Payment last;
 
@@ -69,7 +81,7 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		last = null;
 
-		Address address = addressDao.get(addressDao.save(createTestAddress()));
+		address = addressDao.get(addressDao.save(createTestAddress()));
 		account = accountDao.get(accountDao.save(createTestAccount(address)));
 	}
 
@@ -77,10 +89,10 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 	public void insert() {
 		Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
 		entity.setAmount(new BigDecimal("12345.67"));
-		entity.setCurrencyCode("NZD");
-		entity.setExternalKey(TEST_EXT_KEY);
+		entity.setCurrencyCode(account.getCurrencyCode());
+		entity.setExternalKey(randomUUID().toString());
 		entity.setPaymentType(PaymentType.Payment);
-		entity.setReference(UUID.randomUUID().toString());
+		entity.setReference(randomUUID().toString());
 
 		UserUuidPK pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
@@ -96,6 +108,47 @@ public class MyBatisPaymentDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("ID", entity.getId(), equalTo(last.getId()));
 		assertThat("Created", entity.getCreated(), equalTo(last.getCreated()));
 		assertThat("Entity sameness", entity.isSameAs(last), equalTo(true));
+	}
+
+	@Test
+	public void filterForUser_sortDefault() {
+		// GIVEN
+		List<Payment> entities = new ArrayList<>(5);
+		LocalDate date = LocalDate.of(2020, 1, 5);
+		for ( int i = 0; i < 5; i++ ) {
+			Payment entity = new Payment(randomUUID(), account.getUserId(), account.getId().getId(),
+					date.atStartOfDay(address.getTimeZone()).toInstant());
+			entity.setAmount(new BigDecimal(Math.random() * 1000.0).setScale(2, RoundingMode.HALF_UP));
+			entity.setCurrencyCode(account.getCurrencyCode());
+			entity.setExternalKey(randomUUID().toString());
+			entity.setPaymentType(PaymentType.Payment);
+			entity.setReference(randomUUID().toString());
+			dao.save(entity);
+			entities.add(entity);
+			date = date.plusMonths(1);
+		}
+
+		// WHEN
+		PaymentFilter filter = PaymentFilter.forUser(account.getUserId());
+		final FilterResults<Payment, UserUuidPK> result = dao.findFiltered(filter, null, null, null);
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(5));
+		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+
+		List<Payment> expectedPayments = entities.stream()
+				.sorted(Collections.reverseOrder(Payment.SORT_BY_DATE)).collect(Collectors.toList());
+
+		List<Payment> payments = stream(result.spliterator(), false).collect(toList());
+		assertThat("Returned results", payments, hasSize(expectedPayments.size()));
+		for ( int i = 0; i < expectedPayments.size(); i++ ) {
+			Payment payment = payments.get(i);
+			Payment expected = expectedPayments.get(i);
+			assertThat(format("Payment %d returned in order", i), payment, equalTo(expected));
+			assertThat(format("Payment %d data preserved", i), payment.isSameAs(expected),
+					equalTo(true));
+		}
 	}
 
 }
