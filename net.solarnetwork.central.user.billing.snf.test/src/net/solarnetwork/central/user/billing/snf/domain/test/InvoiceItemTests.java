@@ -88,7 +88,7 @@ public class InvoiceItemTests {
 				equalTo(new org.joda.time.LocalDate(2020, 2, 1)));
 		assertThat("Ended not populated", item.getEnded(), nullValue());
 		assertThat("Item type is enum string value", item.getItemType(),
-				equalTo(itm.getItemType().toString()));
+				equalTo(itm.getItemType().toString().toUpperCase()));
 		assertThat("Metadata same", item.getMetadata(), equalTo(itm.getMetadata()));
 		assertThat("Item plan name is key", item.getPlanName(), equalTo(itm.getKey()));
 		assertThat("Time zone copied from invoice address", item.getTimeZoneId(),

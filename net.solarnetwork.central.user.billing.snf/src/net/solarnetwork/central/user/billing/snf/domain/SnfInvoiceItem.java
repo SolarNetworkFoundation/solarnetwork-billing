@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -54,6 +55,11 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 * </p>
 	 */
 	public static final String META_USAGE = "usage";
+
+	/**
+	 * A default sort ordering for invoice items within an invoice.
+	 */
+	public static final Comparator<SnfInvoiceItem> DEFAULT_ITEM_ORDER = new SnfInvoiceItemDefaultComparator();
 
 	private final Long invoiceId;
 	private InvoiceItemType itemType;

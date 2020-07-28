@@ -259,7 +259,8 @@ public class Account extends BasicEntity<UserLongPK>
 		if ( s == null || s.isEmpty() ) {
 			return Locale.US;
 		}
-		return Locale.forLanguageTag(s);
+		Locale l = Locale.forLanguageTag(s);
+		return (l != null ? l : Locale.US);
 	}
 
 }

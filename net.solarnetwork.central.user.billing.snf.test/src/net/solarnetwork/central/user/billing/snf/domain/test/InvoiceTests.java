@@ -52,7 +52,8 @@ public class InvoiceTests {
 
 	private void assertInvoiceItem(String prefix, SnfInvoiceItem expected, InvoiceItem item) {
 		assertThat(prefix + " ID", item.getId(), equalTo(expected.getId().toString()));
-		assertThat(prefix + " type", item.getItemType(), equalTo(expected.getItemType().toString()));
+		assertThat(prefix + " type", item.getItemType(),
+				equalTo(expected.getItemType().toString().toUpperCase()));
 		assertThat(prefix + " amount", item.getAmount(), equalTo(expected.getAmount()));
 	}
 
@@ -90,8 +91,8 @@ public class InvoiceTests {
 		assertThat("Amount same as total amount", invoice.getAmount(), equalTo(inv.getTotalAmount()));
 		assertThat("Balance same as total amount", invoice.getBalance(), equalTo(inv.getTotalAmount()));
 		assertThat("Currency same", invoice.getCurrencyCode(), equalTo(inv.getCurrencyCode()));
-		assertThat("InvoiceImpl number is upper-case base-16 string of ID", invoice.getInvoiceNumber(),
-				equalTo(Long.toHexString(inv.getId().getId()).toUpperCase()));
+		assertThat("InvoiceImpl number is upper-case base-36 string of ID", invoice.getInvoiceNumber(),
+				equalTo(Long.toString(inv.getId().getId(), 36).toUpperCase()));
 		assertThat("Tax is added up", invoice.getTaxAmount(),
 				equalTo(tax1.getAmount().add(tax2.getAmount())));
 		assertThat("Time zone same as invoice address", invoice.getTimeZoneId(),

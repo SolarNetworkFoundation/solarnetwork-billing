@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.DEFAULT_ITEM_ORDER;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -91,6 +92,7 @@ import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
+import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.domain.Result;
@@ -112,10 +114,14 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	/** The message bundle name to use for versioned messages. */
 	public static final String MESSAGE_BUNDLE_NAME = "snf.billing";
 
+	/** The message bundle name to use for global versioned messages. */
+	public static final String GLOBAL_MESSAGE_BUNDLE_NAME = "snf.global";
+
 	/** The default {@code deliveryTimeoutSecs} property value. */
 	public static final int DEFAULT_DELIVERY_TIMEOUT = 60;
 
-	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { MESSAGE_BUNDLE_NAME };
+	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { GLOBAL_MESSAGE_BUNDLE_NAME,
+			MESSAGE_BUNDLE_NAME };
 
 	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
@@ -237,19 +243,25 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			Locale locale) {
 		List<InvoiceItem> invoiceItems = null;
 		if ( locale != null ) {
-			invoiceItems = invoice.getItems().stream().map(e -> {
+			invoiceItems = invoice.getItems().stream().sorted(DEFAULT_ITEM_ORDER).map(e -> {
 				String desc = messageSource.getMessage(e.getKey() + ".item", null, null, locale);
+				InvoiceItemImpl item;
 				UsageInfo usageInfo = e.getUsageInfo();
-				String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType() + ".unit", null,
-						null, locale);
-				LocalizedInvoiceItemUsageRecord locInfo = new LocalizedInvoiceItemUsageRecord(usageInfo,
-						locale, unitTypeDesc);
-				return new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(
-						new InvoiceItemImpl(invoice, e, singletonList(locInfo)), locale, desc);
+				if ( usageInfo != null ) {
+					String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType() + ".unit",
+							null, null, locale);
+					LocalizedInvoiceItemUsageRecord locInfo = new LocalizedInvoiceItemUsageRecord(
+							usageInfo, locale, unitTypeDesc);
+					item = new InvoiceItemImpl(invoice, e, singletonList(locInfo));
+				} else {
+					item = new InvoiceItemImpl(invoice, e);
+				}
+				return new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(item,
+						locale, desc);
 
 			}).collect(toList());
 		} else {
-			invoiceItems = invoice.getItems().stream().map(e -> {
+			invoiceItems = invoice.getItems().stream().sorted(DEFAULT_ITEM_ORDER).map(e -> {
 				return new InvoiceItemImpl(invoice, e);
 			}).collect(toList());
 		}
@@ -290,10 +302,12 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		TemplateRenderer renderer = renderer(invoice, outputType, locale);
 		VersionedMessageDaoMessageSource messageSource = (VersionedMessageDaoMessageSource) messageSourceForInvoice(
 				invoice);
-		InvoiceImpl localizedInvoice = invoiceForSnfInvoice(invoice, messageSource, locale);
+		LocalizedInvoice localizedInvoice = new LocalizedInvoice(
+				invoiceForSnfInvoice(invoice, messageSource, locale), locale);
 		Properties messages = messageSource.propertiesForLocale(locale);
 		Map<String, Object> parameters = new LinkedHashMap<>(4);
 		parameters.put("invoice", localizedInvoice);
+		parameters.put("address", invoice.getAddress());
 		parameters.put("messages", messages);
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream(4096)) {
 			renderer.render(locale, outputType, parameters, out);

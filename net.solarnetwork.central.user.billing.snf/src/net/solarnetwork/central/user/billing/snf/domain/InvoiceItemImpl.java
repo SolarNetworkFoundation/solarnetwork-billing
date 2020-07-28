@@ -119,12 +119,12 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	@Override
 	public String getItemType() {
 		InvoiceItemType type = item.getItemType();
-		return (type != null ? type.toString() : null);
+		return (type != null ? type.toString().toUpperCase() : null);
 	}
 
 	@Override
 	public String getDescription() {
-		return null;
+		return getPlanName();
 	}
 
 	@Override

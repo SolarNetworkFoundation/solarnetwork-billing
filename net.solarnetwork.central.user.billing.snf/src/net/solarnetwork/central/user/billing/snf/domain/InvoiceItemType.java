@@ -27,6 +27,10 @@ import net.solarnetwork.domain.CodedValue;
 /**
  * Type of invoice item.
  * 
+ * <p>
+ * The ordering of the enumeration is used as a sort order for invoice items.
+ * </p>
+ * 
  * @author matt
  * @version 1.0
  */
