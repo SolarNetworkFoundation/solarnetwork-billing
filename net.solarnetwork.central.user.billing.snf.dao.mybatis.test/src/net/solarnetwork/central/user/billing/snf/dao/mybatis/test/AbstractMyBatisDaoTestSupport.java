@@ -22,6 +22,10 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertThat;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
@@ -187,6 +191,18 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 				+ "(ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
 				+ "VALUES (?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
 				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
+	}
+
+	protected void assertAccountBalance(Long accountId, BigDecimal chargeTotal,
+			BigDecimal paymentTotal) {
+		getSqlSessionTemplate().flushStatements();
+		List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_account_balance where acct_id = ?", accountId);
+		assertThat("Account balance row found", rows, hasSize(1));
+		BigDecimal charge = (BigDecimal) rows.get(0).get("charge_total");
+		BigDecimal payment = (BigDecimal) rows.get(0).get("payment_total");
+		assertThat("Account total charge matches", chargeTotal.compareTo(charge), equalTo(0));
+		assertThat("Account total payment matches", paymentTotal.compareTo(payment), equalTo(0));
 	}
 
 }

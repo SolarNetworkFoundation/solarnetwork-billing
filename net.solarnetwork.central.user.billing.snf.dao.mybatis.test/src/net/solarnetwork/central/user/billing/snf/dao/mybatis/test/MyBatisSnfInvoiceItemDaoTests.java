@@ -94,6 +94,7 @@ public class MyBatisSnfInvoiceItemDaoTests extends AbstractMyBatisDaoTestSupport
 				TEST_PROD_KEY, BigDecimal.ONE, new BigDecimal("3.45"));
 		UUID pk = dao.save(entity);
 		assertThat("PK preserved", pk, equalTo(entity.getId()));
+		assertAccountBalance(invoice.getAccountId(), entity.getAmount(), BigDecimal.ZERO);
 		last = entity;
 	}
 

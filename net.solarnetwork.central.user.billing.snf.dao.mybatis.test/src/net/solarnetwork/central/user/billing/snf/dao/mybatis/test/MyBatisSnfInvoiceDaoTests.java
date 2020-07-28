@@ -147,6 +147,8 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat("Returned item same as saved", other.isSameAs(item), equalTo(true));
 		}
 		assertThat("Expected items returned", itemMap.keySet(), hasSize(0));
+		assertAccountBalance(invoice.getAccountId(),
+				item1.getAmount().add(item2.getAmount()).add(item3.getAmount()), BigDecimal.ZERO);
 	}
 
 	private List<SnfInvoice> createMonthlyInvoices(Account account, Address address, String currencyCode,
