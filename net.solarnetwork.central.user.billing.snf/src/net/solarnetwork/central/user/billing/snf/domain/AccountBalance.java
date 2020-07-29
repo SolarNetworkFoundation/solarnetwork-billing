@@ -44,6 +44,7 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 
 	private final BigDecimal chargeTotal;
 	private final BigDecimal paymentTotal;
+	private final BigDecimal availableCredit;
 
 	/**
 	 * Constructor.
@@ -52,7 +53,8 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *        the account ID
 	 */
 	public AccountBalance(Long accountId) {
-		this(new UserLongPK(null, accountId), Instant.now(), BigDecimal.ZERO, BigDecimal.ZERO);
+		this(new UserLongPK(null, accountId), Instant.now(), BigDecimal.ZERO, BigDecimal.ZERO,
+				BigDecimal.ZERO);
 	}
 
 	/**
@@ -66,12 +68,16 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *        the charge total; {@literal null} will be stored as {@literal 0}
 	 * @param paymentTotal
 	 *        the payment total; {@literal null} will be stored as {@literal 0}
+	 * @param availableCredit
+	 *        the available credit; {@literal null} will be stored as
+	 *        {@literal 0}
 	 */
 	public AccountBalance(UserLongPK id, Instant created, BigDecimal chargeTotal,
-			BigDecimal paymentTotal) {
+			BigDecimal paymentTotal, BigDecimal availableCredit) {
 		super(id, created);
 		this.chargeTotal = (chargeTotal != null ? chargeTotal : BigDecimal.ZERO);
 		this.paymentTotal = (paymentTotal != null ? paymentTotal : BigDecimal.ZERO);
+		this.availableCredit = (availableCredit != null ? availableCredit : BigDecimal.ZERO);
 	}
 
 	/**
@@ -87,10 +93,13 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 *        the charge total; {@literal null} will be stored as {@literal 0}
 	 * @param paymentTotal
 	 *        the payment total; {@literal null} will be stored as {@literal 0}
+	 * @param availableCredit
+	 *        the available credit; {@literal null} will be stored as
+	 *        {@literal 0}
 	 */
 	public AccountBalance(Long accountId, Long userId, Instant created, BigDecimal chargeTotal,
-			BigDecimal paymentTotal) {
-		this(new UserLongPK(userId, accountId), created, chargeTotal, paymentTotal);
+			BigDecimal paymentTotal, BigDecimal availableCredit) {
+		this(new UserLongPK(userId, accountId), created, chargeTotal, paymentTotal, availableCredit);
 	}
 
 	@Override
@@ -127,7 +136,9 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 		return (chargeTotal == other.chargeTotal) 
 					|| (chargeTotal != null && chargeTotal.compareTo(other.chargeTotal) == 0)
 				&& (paymentTotal == other.paymentTotal) 
-					|| (paymentTotal != null && paymentTotal.compareTo(other.paymentTotal) == 0);
+					|| (paymentTotal != null && paymentTotal.compareTo(other.paymentTotal) == 0)
+				&& (availableCredit == other.availableCredit) 
+					|| (availableCredit != null && availableCredit.compareTo(other.availableCredit) == 0);
 		// @formatter:on
 	}
 
@@ -152,6 +163,15 @@ public class AccountBalance extends BasicEntity<UserLongPK>
 	 */
 	public BigDecimal getPaymentTotal() {
 		return paymentTotal;
+	}
+
+	/**
+	 * Get the available credit.
+	 * 
+	 * @return the available credit
+	 */
+	public BigDecimal getAvailableCredit() {
+		return availableCredit;
 	}
 
 }

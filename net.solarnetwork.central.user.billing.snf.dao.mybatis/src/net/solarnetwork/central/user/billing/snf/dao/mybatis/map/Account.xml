@@ -88,6 +88,7 @@
 		, bal.created AS bill_account_balance_created
 		, bal.charge_total AS bill_account_balance_charge_total
 		, bal.payment_total AS bill_account_balance_payment_total
+		, bal.avail_credit AS bill_account_balance_avail_credit
 	</sql>
 
 	<resultMap id="AccountBalance-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.AccountBalance">
@@ -97,6 +98,7 @@
 			<arg column="bill_account_balance_created" javaType="java.time.Instant"/>
 			<arg column="bill_account_balance_charge_total" javaType="java.math.BigDecimal"/>
 			<arg column="bill_account_balance_payment_total" javaType="java.math.BigDecimal"/>
+			<arg column="bill_account_balance_avail_credit" javaType="java.math.BigDecimal"/>
 		</constructor>
 	</resultMap>
 	

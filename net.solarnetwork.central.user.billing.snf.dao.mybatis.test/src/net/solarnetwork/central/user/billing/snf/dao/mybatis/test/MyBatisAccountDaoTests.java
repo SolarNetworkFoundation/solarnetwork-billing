@@ -129,10 +129,11 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("No balance available", balance, nullValue());
 	}
 
-	private void insertAccountBalance(Long accountId, BigDecimal chargeTotal, BigDecimal paymentTotal) {
+	private void insertAccountBalance(Long accountId, BigDecimal chargeTotal, BigDecimal paymentTotal,
+			BigDecimal availableCredit) {
 		jdbcTemplate.update(
-				"insert into solarbill.bill_account_balance (acct_id,charge_total,payment_total) VALUES (?,?,?)",
-				accountId, chargeTotal, paymentTotal);
+				"insert into solarbill.bill_account_balance (acct_id,charge_total,payment_total) VALUES (?,?,?,?)",
+				accountId, chargeTotal, paymentTotal, availableCredit);
 	}
 
 	@Test
@@ -140,10 +141,12 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		insert();
 		final BigDecimal charge = new BigDecimal("12345.67");
 		final BigDecimal payment = new BigDecimal("234789.01");
-		insertAccountBalance(last.getId().getId(), charge, payment);
+		final BigDecimal credit = new BigDecimal("65432.10");
+		insertAccountBalance(last.getId().getId(), charge, payment, credit);
 		AccountBalance balance = dao.getBalanceForUser(last.getUserId());
 		assertThat("Balance available", balance, notNullValue());
 		assertThat("Balance charge total", balance.getChargeTotal().compareTo(charge), equalTo(0));
-		assertThat("Balance charge total", balance.getPaymentTotal().compareTo(payment), equalTo(0));
+		assertThat("Balance payment total", balance.getPaymentTotal().compareTo(payment), equalTo(0));
+		assertThat("Balance credit", balance.getAvailableCredit().compareTo(credit), equalTo(0));
 	}
 }
