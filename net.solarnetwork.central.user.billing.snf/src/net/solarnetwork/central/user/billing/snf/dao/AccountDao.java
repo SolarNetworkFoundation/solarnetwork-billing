@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.dao;
 
+import java.math.BigDecimal;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -52,5 +53,23 @@ public interface AccountDao extends GenericDao<Account, UserLongPK> {
 	 * @return the account balance, or {@literal null} if not available
 	 */
 	AccountBalance getBalanceForUser(Long userId);
+
+	/**
+	 * Lay claim to a portion of an account balance credit.
+	 * 
+	 * <p>
+	 * This should only be invoked within a transaction, so other tasks cannot
+	 * also claim the credit returned by this method.
+	 * </p>
+	 * 
+	 * @param accountId
+	 *        the account ID to claim credit from
+	 * @param max
+	 *        the maximum amount of credit to claim, or {@literal null} to claim
+	 *        all available credit
+	 * @return the claimed credit, never {@literal null} but possibly less than
+	 *         the requested {@code max} if not enough credit is available
+	 */
+	BigDecimal claimAccountBalanceCredit(Long accountId, BigDecimal max);
 
 }

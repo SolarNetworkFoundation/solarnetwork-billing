@@ -114,4 +114,12 @@
 			acct.user_id = #{id}
 	</select>
 	
+	<select id="claim-AccountBalance-credit" parameterType="map" resultType="java.math.BigDecimal" 
+			flushCache="true" useCache="false">
+		SELECT solarbill.claim_account_credit(
+				#{accountId,javaType=long,jdbcType=BIGINT}
+				<if test="max != null">, #{max,javaType=java.math.BigDecimal,jdbcType=NUMERIC}</if>
+				)
+	</select>
+	
 </mapper>

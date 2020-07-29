@@ -22,6 +22,11 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
@@ -40,9 +45,11 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	/** Query name enumeration. */
 	public enum QueryName {
 
-		GetForUser("get-Account-for-user"),
+		ClaimCreditFromAccountBalance("claim-AccountBalance-credit"),
 
-		GetAccountBalanceForUser("get-AccountBalance-for-user");
+		GetAccountBalanceForUser("get-AccountBalance-for-user"),
+
+		GetForUser("get-Account-for-user");
 
 		private final String queryName;
 
@@ -75,6 +82,18 @@ public class MyBatisAccountDao extends BaseMyBatisGenericDaoSupport<Account, Use
 	@Override
 	public AccountBalance getBalanceForUser(Long userId) {
 		return selectFirst(QueryName.GetAccountBalanceForUser.getQueryName(), userId);
+	}
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	@Override
+	public BigDecimal claimAccountBalanceCredit(Long accountId, BigDecimal max) {
+		Map<String, Object> params = new HashMap<>(2);
+		params.put("accountId", accountId);
+		if ( max != null ) {
+			params.put("max", max);
+		}
+		BigDecimal claimed = selectFirst(QueryName.ClaimCreditFromAccountBalance.getQueryName(), params);
+		return claimed != null ? claimed : BigDecimal.ZERO;
 	}
 
 }

@@ -132,7 +132,7 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 	private void insertAccountBalance(Long accountId, BigDecimal chargeTotal, BigDecimal paymentTotal,
 			BigDecimal availableCredit) {
 		jdbcTemplate.update(
-				"insert into solarbill.bill_account_balance (acct_id,charge_total,payment_total) VALUES (?,?,?,?)",
+				"insert into solarbill.bill_account_balance (acct_id,charge_total,payment_total,avail_credit) VALUES (?,?,?,?)",
 				accountId, chargeTotal, paymentTotal, availableCredit);
 	}
 
@@ -148,5 +148,101 @@ public class MyBatisAccountDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Balance charge total", balance.getChargeTotal().compareTo(charge), equalTo(0));
 		assertThat("Balance payment total", balance.getPaymentTotal().compareTo(payment), equalTo(0));
 		assertThat("Balance credit", balance.getAvailableCredit().compareTo(credit), equalTo(0));
+	}
+
+	@Test
+	public void claimCredit_zeroWhenNoBalanceRecord() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+
+		// WHEN
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.ZERO);
+
+		// THEN
+		assertThat("Able to claim 0 when no claim available", claimed, equalTo(BigDecimal.ZERO));
+	}
+
+	@Test
+	public void claimCredit_noBalanceRecord() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+
+		// WHEN
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.TEN);
+
+		// THEN
+		assertThat("Able to claim 0 when no claim available", claimed, equalTo(BigDecimal.ZERO));
+	}
+
+	@Test
+	public void claimCredit_fullExplicit() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+
+		// WHEN
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.TEN);
+
+		// THEN
+		assertThat("Able to claim requested amount when equal to available credit",
+				claimed.compareTo(BigDecimal.TEN), equalTo(0));
+	}
+
+	@Test
+	public void claimCredit_fullImplicit() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+
+		// WHEN
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), null);
+
+		// THEN
+		assertThat("Able to claim entire amount when max implied", claimed.compareTo(BigDecimal.TEN),
+				equalTo(0));
+	}
+
+	@Test
+	public void claimCredit_partial() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+
+		// WHEN
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(), BigDecimal.ONE);
+
+		// THEN
+		assertThat("Able to claim requested amount when less than available credit",
+				claimed.compareTo(BigDecimal.ONE), equalTo(0));
+	}
+
+	@Test
+	public void claimCredit_fullImplicitTwice() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+
+		// WHEN
+		BigDecimal claimed1 = dao.claimAccountBalanceCredit(account.getId().getId(), null);
+		BigDecimal claimed2 = dao.claimAccountBalanceCredit(account.getId().getId(), null);
+
+		// THEN
+		assertThat("Able to claim full amount", claimed1.compareTo(BigDecimal.TEN), equalTo(0));
+		assertThat("Able to claim nothing further after full amount claimed",
+				claimed2.compareTo(BigDecimal.ZERO), equalTo(0));
+	}
+
+	@Test
+	public void claimCredit_negative() {
+		// GIVEN
+		Account account = dao.get(dao.save(createTestAccount(address)));
+		insertAccountBalance(account.getId().getId(), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.TEN);
+
+		// WHEN
+		BigDecimal claimed = dao.claimAccountBalanceCredit(account.getId().getId(),
+				new BigDecimal("-1.11"));
+
+		// THEN
+		assertThat("Negative claim clamped to 0", claimed.compareTo(BigDecimal.ZERO), equalTo(0));
 	}
 }
