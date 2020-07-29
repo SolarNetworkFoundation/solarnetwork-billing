@@ -79,6 +79,7 @@ import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
+import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemImpl;
@@ -134,6 +135,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	private String datumPropertiesInKey = NodeUsage.DATUM_PROPS_IN_KEY;
 	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
 	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
+	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices;
 	private OptionalServiceCollection<SnfInvoiceRendererResolver> rendererResolvers;
 	private int deliveryTimeoutSecs = DEFAULT_DELIVERY_TIMEOUT;
@@ -487,6 +489,21 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			invoice.getItems().add(taxItem);
 		}
 
+		// claim credit, if available
+		BigDecimal invoiceTotal = invoice.getTotalAmount();
+		if ( invoiceTotal.compareTo(BigDecimal.ZERO) > 0 ) {
+			BigDecimal credit = accountDao.claimAccountBalanceCredit(invoice.getAccountId(),
+					invoiceTotal);
+			if ( credit.compareTo(BigDecimal.ZERO) > 0 ) {
+				SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice, InvoiceItemType.Credit,
+						accountCreditKey, BigDecimal.ONE, credit.negate());
+				if ( !dryRun ) {
+					invoiceItemDao.save(creditItem);
+				}
+				invoice.getItems().add(creditItem);
+			}
+		}
+
 		log.info("Generated invoice for user {} for date {}: {}", userId, startDate, invoice);
 
 		return invoice;
@@ -672,6 +689,30 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new IllegalArgumentException("The datumDaysStoredKey argumust must not be null.");
 		}
 		this.datumDaysStoredKey = datumDaysStoredKey;
+	}
+
+	/**
+	 * Get the item key for account credit.
+	 * 
+	 * @return the key; defaults to {@link AccountBalance#ACCOUNT_CREDIT_KEY}
+	 */
+	public String getAccountCreditKey() {
+		return accountCreditKey;
+	}
+
+	/**
+	 * Set the item key for account credit.
+	 * 
+	 * @param accountCreditKey
+	 *        the accountCreditKey to set
+	 * @throws IllegalArgumentException
+	 *         if the argument is {@literal null}
+	 */
+	public void setAccountCreditKey(String accountCreditKey) {
+		if ( accountCreditKey == null ) {
+			throw new IllegalArgumentException("The accountCreditKey argumust must not be null.");
+		}
+		this.accountCreditKey = accountCreditKey;
 	}
 
 	/**

@@ -42,6 +42,9 @@ import net.solarnetwork.domain.Differentiable;
 public class AccountBalance extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<AccountBalance> {
 
+	/** A key to use for credit used in an invoice. */
+	public static final String ACCOUNT_CREDIT_KEY = "account-credit";
+
 	private final BigDecimal chargeTotal;
 	private final BigDecimal paymentTotal;
 	private final BigDecimal availableCredit;
