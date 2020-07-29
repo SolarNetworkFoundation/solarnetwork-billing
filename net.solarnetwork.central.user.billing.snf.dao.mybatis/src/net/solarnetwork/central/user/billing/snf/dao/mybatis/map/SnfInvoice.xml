@@ -68,13 +68,7 @@
 			AND acct.user_id = #{userId}
 	</select>
 	
-	<select id="find-SnfInvoice-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter" 
-			resultMap="SnfInvoice-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
-		SELECT
-			<include refid="fragment-SnfInvoice-full-result"/>
-			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
-			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
-			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+	<sql id="find-SnfInvoice-for-filter-body">
 		FROM
 			solarbill.bill_invoice inv
 		INNER JOIN 
@@ -160,6 +154,16 @@
 				</otherwise>
 			</choose>
 		</where>
+	</sql>
+	
+	<select id="find-SnfInvoice-for-filter" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter" 
+			resultMap="SnfInvoice-FullResult" fetchSize="50" resultSetType="FORWARD_ONLY">
+		SELECT
+			<include refid="fragment-SnfInvoice-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+		<include refid="find-SnfInvoice-for-filter-body"/>
 		ORDER BY
 		<choose>
 			<when test="sorts != null and sorts.size &gt; 0">
@@ -174,6 +178,12 @@
 				bill_invoice_date_start DESC, bill_invoice_id
 			</otherwise>
 		</choose>
+	</select>
+
+	<select id="find-SnfInvoice-for-filter-count" parameterType="net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter"
+			resultType="long">
+		SELECT count(DISTINCT inv.id)
+		<include refid="find-SnfInvoice-for-filter-body"/>
 	</select>
 	
 </mapper>

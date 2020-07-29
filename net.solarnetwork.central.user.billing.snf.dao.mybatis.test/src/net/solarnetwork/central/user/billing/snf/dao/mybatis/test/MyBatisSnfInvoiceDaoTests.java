@@ -33,7 +33,6 @@ import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.ne
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -198,7 +197,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// THEN
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(4));
-		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
 		List<SnfInvoice> expectedInvoices = Stream
 				.concat(Collections.singleton(last).stream(), others.stream())
@@ -239,7 +238,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat("Result returned", result, notNullValue());
 			assertThat("Returned result page count", result.getReturnedResultCount(),
 					equalTo(expectedCount));
-			assertThat("Total results unknown", result.getTotalResults(), nullValue());
+			assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
 			List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 			assertThat("Returned page results", invoices, hasSize(expectedCount));
@@ -268,7 +267,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// THEN
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result count", result.getReturnedResultCount(), equalTo(4));
-		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
 		List<SnfInvoice> expectedInvoices = Stream
 				.concat(Collections.singleton(last).stream(), others.stream())
@@ -309,7 +308,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			assertThat("Result returned", result, notNullValue());
 			assertThat("Returned result page count", result.getReturnedResultCount(),
 					equalTo(expectedCount));
-			assertThat("Total results unknown", result.getTotalResults(), nullValue());
+			assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
 			List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 			assertThat("Returned page results", invoices, hasSize(expectedCount));
@@ -343,7 +342,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// THEN
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result page count", result.getReturnedResultCount(), equalTo(1));
-		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 		assertThat("Returned page results", invoices, hasSize(1));
@@ -415,7 +414,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// THEN
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result page count", result.getReturnedResultCount(), equalTo(0));
-		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+		assertThat("Total results provided", result.getTotalResults(), equalTo(0L));
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 		assertThat("Returned results", invoices, hasSize(0));
@@ -457,7 +456,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		// THEN
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result page count", result.getReturnedResultCount(), equalTo(1));
-		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+		assertThat("Total results provided", result.getTotalResults(), equalTo(4L));
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 		assertThat("Returned page results", invoices, hasSize(1));
@@ -510,7 +509,7 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Result returned", result, notNullValue());
 		assertThat("Returned result page count", result.getReturnedResultCount(),
 				equalTo(expectedCount));
-		assertThat("Total results unknown", result.getTotalResults(), nullValue());
+		assertThat("Total results provided", result.getTotalResults(), equalTo((long) expectedCount));
 
 		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
 		for ( int i = 0; i < expectedCount; i++ ) {

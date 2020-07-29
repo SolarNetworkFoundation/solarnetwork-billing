@@ -60,6 +60,15 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 		public String getQueryName() {
 			return queryName;
 		}
+
+		/**
+		 * Get the query name to use for a count-only result.
+		 * 
+		 * @return the count query name
+		 */
+		public String getCountQueryName() {
+			return queryName + "-count";
+		}
 	}
 
 	/**
@@ -83,8 +92,22 @@ public class MyBatisSnfInvoiceDao extends BaseMyBatisGenericDaoSupport<SnfInvoic
 				filter.setOffset(offset);
 			}
 		}
+
+		// attempt count first, if max NOT specified as -1 and NOT a mostRecent query
+		Long totalCount = null;
+		if ( max == null || max.intValue() != -1 ) {
+			SnfInvoiceFilter countFilter = filter.clone();
+			countFilter.setOffset(null);
+			countFilter.setMax(null);
+			Number n = getSqlSession().selectOne(QueryName.FindFiltered.getCountQueryName(),
+					countFilter);
+			if ( n != null ) {
+				totalCount = n.longValue();
+			}
+		}
+
 		List<SnfInvoice> results = selectList(QueryName.FindFiltered.getQueryName(), filter, null, null);
-		return new BasicFilterResults<>(results, null, offset != null ? offset.intValue() : 0,
+		return new BasicFilterResults<>(results, totalCount, offset != null ? offset.intValue() : 0,
 				results.size());
 	}
 
