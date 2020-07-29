@@ -26,6 +26,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.reverseOrder;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.StreamSupport.stream;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
@@ -495,6 +496,114 @@ public class MyBatisSnfInvoiceDaoTests extends AbstractMyBatisDaoTestSupport {
 			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getId().getId(), paymentAmount);
 			paymentIds.add(paymentId);
 		}
+
+		debugRows("solarbill.bill_invoice_item", "inv_id,id");
+		debugRows("solarbill.bill_invoice_payment", "inv_id");
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setUnpaidOnly(true);
+		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, null, null);
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Returned result page count", result.getReturnedResultCount(),
+				equalTo(expectedCount));
+		assertThat("Total results provided", result.getTotalResults(), equalTo((long) expectedCount));
+
+		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+		for ( int i = 0; i < expectedCount; i++ ) {
+			SnfInvoice invoice = invoices.get(i);
+			SnfInvoice expected = expectedInvoices.get(i);
+			assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
+			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+					equalTo(true));
+		}
+	}
+
+	@Test
+	public void findUnpaid_partialPayment() {
+		// GIVEN
+		final SnfInvoice oldest = insertWithItems();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		// make full payment on oldest, partial payment on 2nd to oldest
+		final int expectedCount = 3;
+		final List<SnfInvoice> paidInvoices = singletonList(oldest);
+
+		final List<UUID> paymentIds = new ArrayList<>(paidInvoices.size());
+		final List<SnfInvoice> expectedInvoices = others.stream().filter(e -> !paidInvoices.contains(e))
+				.sorted(reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(toList());
+
+		for ( SnfInvoice invoice : Arrays.asList(oldest, others.get(0)) ) {
+			final BigDecimal paymentAmount = invoice.getItems().stream().map(SnfInvoiceItem::getAmount)
+					.reduce(BigDecimal.ZERO, BigDecimal::add)
+					.subtract(paymentIds.isEmpty() ? BigDecimal.ZERO : BigDecimal.ONE);
+
+			// make payment for invoice amount
+			final UUID paymentId = insertPayment(last.getAccountId(), PaymentType.Payment, paymentAmount,
+					invoice.getCurrencyCode());
+
+			// associate payment with invoice
+			insertInvoicePayment(last.getAccountId(), paymentId, invoice.getId().getId(), paymentAmount);
+			paymentIds.add(paymentId);
+		}
+
+		debugRows("solarbill.bill_invoice_item", "inv_id,id");
+		debugRows("solarbill.bill_invoice_payment", "inv_id");
+
+		// WHEN
+		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(last.getAccountId());
+		filter.setUnpaidOnly(true);
+		final FilterResults<SnfInvoice, UserLongPK> result = dao.findFiltered(filter,
+				SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, null, null);
+
+		// THEN
+		assertThat("Result returned", result, notNullValue());
+		assertThat("Returned result page count", result.getReturnedResultCount(),
+				equalTo(expectedCount));
+		assertThat("Total results provided", result.getTotalResults(), equalTo((long) expectedCount));
+
+		List<SnfInvoice> invoices = stream(result.spliterator(), false).collect(toList());
+		for ( int i = 0; i < expectedCount; i++ ) {
+			SnfInvoice invoice = invoices.get(i);
+			SnfInvoice expected = expectedInvoices.get(i);
+			assertThat(format("Invoice %d returned in order", i), invoice, equalTo(expected));
+			assertThat(format("Invoice %d data preserved", i), invoice.isSameAs(expected),
+					equalTo(true));
+		}
+	}
+
+	@Test
+	public void findUnpaid_singlePayment_partialCover() {
+		// GIVEN
+		final SnfInvoice oldest = insertWithItems();
+		List<SnfInvoice> others = createMonthlyInvoices(
+				accountDao.get(new UserLongPK(last.getUserId(), last.getAccountId())), last.getAddress(),
+				"NZD", last.getStartDate().plusMonths(1), 3);
+
+		// make full payments on oldest and partial payment on 2nd to oldest, so 3 unpaid
+		final int expectedCount = 3;
+		final List<SnfInvoice> paidInvoices = singletonList(oldest);
+
+		final List<SnfInvoice> expectedInvoices = others.stream().filter(e -> !paidInvoices.contains(e))
+				.sorted(reverseOrder(SnfInvoice.SORT_BY_DATE)).collect(toList());
+
+		// make payment for invoice amount
+		final BigDecimal paymentAmount = new BigDecimal("14.02"); // 2 cents sort of 2 invoices
+		final UUID paymentId = insertPayment(last.getAccountId(), PaymentType.Payment, paymentAmount,
+				"NZD");
+
+		// associate full payment with first invoice
+		insertInvoicePayment(oldest.getAccountId(), paymentId, oldest.getId().getId(),
+				new BigDecimal("7.02"));
+
+		// associate partial payment with 2nd invoice
+		insertInvoicePayment(oldest.getAccountId(), paymentId, others.get(0).getId().getId(),
+				new BigDecimal("7.00"));
 
 		debugRows("solarbill.bill_invoice_item", "inv_id,id");
 		debugRows("solarbill.bill_invoice_payment", "inv_id");
