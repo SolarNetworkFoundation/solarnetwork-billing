@@ -212,9 +212,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
 		}
 		SnfInvoiceFilter invoiceFilter = SnfInvoiceFilter.forAccount(account);
-		if ( filter.getUnpaid() != null ) {
-			// TODO: implements support for this
-		}
+		invoiceFilter.setUnpaidOnly(filter.getUnpaid());
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
 				.findFiltered(invoiceFilter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, offset, max);
 		List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)

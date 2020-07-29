@@ -37,6 +37,7 @@ public class SnfInvoiceFilter extends SimplePagination {
 	private Long accountId;
 	private LocalDate startDate;
 	private LocalDate endDate;
+	private boolean unpaidOnly;
 
 	/**
 	 * Create a new filter with a user ID.
@@ -157,6 +158,25 @@ public class SnfInvoiceFilter extends SimplePagination {
 	 */
 	public void setEndDate(LocalDate endDate) {
 		this.endDate = endDate;
+	}
+
+	/**
+	 * Get the "unpaid only" flag.
+	 * 
+	 * @return {@literal true} to only include invoices that are not fully paid
+	 */
+	public boolean getUnpaidOnly() {
+		return unpaidOnly;
+	}
+
+	/**
+	 * Set the "unpaid only" flag.
+	 * 
+	 * @param unpaidOnly
+	 *        {@literal true} to only include invoices that are not fully paid
+	 */
+	public void setUnpaidOnly(boolean unpaidOnly) {
+		this.unpaidOnly = unpaidOnly;
 	}
 
 }
