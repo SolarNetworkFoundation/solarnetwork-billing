@@ -40,6 +40,29 @@ import net.solarnetwork.central.user.domain.UserLongPK;
 public interface SnfInvoicingSystem {
 
 	/**
+	 * API for invoice generation options.
+	 */
+	interface InvoiceGenerationOptions {
+
+		/**
+		 * Get the "dry run" flag.
+		 * 
+		 * @return {@literal true} if an invoice should be generated but not
+		 *         persisted nor delivered to the account holder
+		 */
+		boolean isDryRun();
+
+		/**
+		 * Get the "use account credit" flag.
+		 * 
+		 * @return {@literal true} to use available account credit by adding a
+		 *         credit item to the generated invoice
+		 */
+		boolean isUseAccountCredit();
+
+	}
+
+	/**
 	 * Get the billing account for a given user.
 	 * 
 	 * @param userId
@@ -69,15 +92,13 @@ public interface SnfInvoicingSystem {
 	 * @param endDate
 	 *        the desired invoice period ending date; will be interpreted in the
 	 *        user's account's time zone
-	 * @param dryRun
-	 *        {@literal true} to generate an ephemeral invoice that is not
-	 *        persisted nor delivered to the account holder, {@literal false} to
-	 *        generate a persistent invoice that is also delivered to the
-	 *        account holder if appropriate
+	 * @param options
+	 *        the invoice generation options
 	 * @return the generated invoice, or {@literal null} if no invoice is
 	 *         necessary (i.e. no charges)
 	 */
-	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate, boolean dryRun);
+	SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
+			InvoiceGenerationOptions options);
 
 	/**
 	 * Deliver an invoice via an account-specific delivery mechanism (such as

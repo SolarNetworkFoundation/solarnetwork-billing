@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.jobs;
 import static java.lang.String.format;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTask.newTask;
 import static net.solarnetwork.central.user.billing.snf.domain.AccountTaskType.DeliverInvoice;
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -113,7 +114,8 @@ public class InvoiceGenerator implements AccountTaskHandler {
 
 		log.info("Generating invoice for user {} for month {}", account.getUserId(), invoiceStartDate);
 		SnfInvoice invoice = invoicingSystem.generateInvoice(account.getUserId(),
-				invoiceStartDate.toLocalDate(), invoiceStartDate.plusMonths(1).toLocalDate(), false);
+				invoiceStartDate.toLocalDate(), invoiceStartDate.plusMonths(1).toLocalDate(),
+				defaultOptions());
 		if ( invoice != null ) {
 			log.info("InvoiceImpl for user {} for month {} total = {} {}", account.getUserId(),
 					invoiceStartDate, invoice.getTotalAmount(), invoice.getCurrencyCode());

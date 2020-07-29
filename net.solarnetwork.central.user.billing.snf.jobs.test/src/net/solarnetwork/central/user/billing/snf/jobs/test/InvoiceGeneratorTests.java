@@ -23,6 +23,7 @@
 package net.solarnetwork.central.user.billing.snf.jobs.test;
 
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.defaultOptions;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.expect;
 import static org.hamcrest.Matchers.allOf;
@@ -110,7 +111,7 @@ public class InvoiceGeneratorTests {
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
 				account.getUserId(), account.getId().getId(), Instant.now());
-		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
+		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.andReturn(generatedInvoice);
 
 		// create "deliver invoice" task
@@ -150,7 +151,7 @@ public class InvoiceGeneratorTests {
 		// generate invoice for month ending on endDate
 		SnfInvoice generatedInvoice = new SnfInvoice(randomUUID().getMostSignificantBits(),
 				account.getUserId(), account.getId().getId(), Instant.now());
-		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), false))
+		expect(invoicingSystem.generateInvoice(TEST_USER_ID, date, date.plusMonths(1), defaultOptions()))
 				.andReturn(generatedInvoice);
 
 		// create "deliver invoice" task

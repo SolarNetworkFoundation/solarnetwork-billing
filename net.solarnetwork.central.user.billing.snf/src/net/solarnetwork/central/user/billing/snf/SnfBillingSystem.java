@@ -410,12 +410,16 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
 	@Override
 	public SnfInvoice generateInvoice(Long userId, LocalDate startDate, LocalDate endDate,
-			boolean dryRun) {
+			SnfInvoicingSystem.InvoiceGenerationOptions options) {
 		// get account
 		Account account = accountDao.getForUser(userId);
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
+
+		final boolean dryRun = (options != null ? options.isDryRun() : false);
+		final boolean useCredit = (options != null ? options.isUseAccountCredit()
+				: dryRun ? false : true);
 
 		// query for usage
 		List<NodeUsage> usages = usageDao.findUsageForUser(userId, startDate, endDate);
@@ -490,17 +494,19 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		}
 
 		// claim credit, if available
-		BigDecimal invoiceTotal = invoice.getTotalAmount();
-		if ( invoiceTotal.compareTo(BigDecimal.ZERO) > 0 ) {
-			BigDecimal credit = accountDao.claimAccountBalanceCredit(invoice.getAccountId(),
-					invoiceTotal);
-			if ( credit.compareTo(BigDecimal.ZERO) > 0 ) {
-				SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice, InvoiceItemType.Credit,
-						accountCreditKey, BigDecimal.ONE, credit.negate());
-				if ( !dryRun ) {
-					invoiceItemDao.save(creditItem);
+		if ( useCredit ) {
+			BigDecimal invoiceTotal = invoice.getTotalAmount();
+			if ( invoiceTotal.compareTo(BigDecimal.ZERO) > 0 ) {
+				BigDecimal credit = accountDao.claimAccountBalanceCredit(invoice.getAccountId(),
+						invoiceTotal);
+				if ( credit.compareTo(BigDecimal.ZERO) > 0 ) {
+					SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice, InvoiceItemType.Credit,
+							accountCreditKey, BigDecimal.ONE, credit.negate());
+					if ( !dryRun ) {
+						invoiceItemDao.save(creditItem);
+					}
+					invoice.getItems().add(creditItem);
 				}
-				invoice.getItems().add(creditItem);
 			}
 		}
 

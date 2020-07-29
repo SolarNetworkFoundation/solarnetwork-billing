@@ -27,6 +27,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.UUID.randomUUID;
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions.dryRunOptions;
 import static net.solarnetwork.central.user.billing.snf.test.SnfMatchers.matchesFilter;
 import static org.easymock.EasyMock.capture;
 import static org.easymock.EasyMock.eq;
@@ -60,6 +61,7 @@ import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -199,12 +201,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		expect(taxCodeDao.findFiltered(EasyMock.capture(taxCodeFilterCaptor), isNull(), isNull(),
 				isNull())).andReturn(taxCodeResults);
 
-		expect(accountDao.claimAccountBalanceCredit(account.getId().getId(), usage.getTotalCost()))
-				.andReturn(BigDecimal.ZERO);
-
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
+		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, dryRunOptions());
 
 		// THEN
 		assertThat("InvoiceImpl created", invoice, notNullValue());
@@ -267,12 +266,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 				.add(usage.getDatumDaysStoredCost().multiply(datumStoredTax.getRate()))
 				.setScale(2, RoundingMode.HALF_UP);
 
-		expect(accountDao.claimAccountBalanceCredit(account.getId().getId(),
-				usage.getTotalCost().add(expectedTax))).andReturn(BigDecimal.ZERO);
-
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
+		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, dryRunOptions());
 
 		// THEN
 		assertThat("InvoiceImpl created", invoice, notNullValue());
@@ -346,7 +342,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
+		final SnfInvoicingOptions options = dryRunOptions();
+		options.setUseAccountCredit(true);
+		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, options);
 
 		// THEN
 		assertThat("InvoiceImpl created", invoice, notNullValue());
@@ -427,7 +425,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		// WHEN
 		replayAll();
-		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, true);
+		final SnfInvoicingOptions options = dryRunOptions();
+		options.setUseAccountCredit(true);
+		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, options);
 
 		// THEN
 		assertThat("InvoiceImpl created", invoice, notNullValue());
