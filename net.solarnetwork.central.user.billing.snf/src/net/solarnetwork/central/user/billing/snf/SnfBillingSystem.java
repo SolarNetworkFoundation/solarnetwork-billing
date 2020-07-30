@@ -155,7 +155,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 *        the invoice item DAO
 	 * @param usageDao
 	 *        the usage DAO
-	 * @param taxCodeDAO
+	 * @param taxCodeDao
 	 *        the tax code DAO
 	 * @param messageDao
 	 *        the message DAO
@@ -774,7 +774,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	/**
 	 * Set the optional message cache.
 	 * 
-	 * @param cache
+	 * @param messageCache
 	 *        the cache to set
 	 */
 	public void setMessageCache(Cache<String, VersionedMessages> messageCache) {

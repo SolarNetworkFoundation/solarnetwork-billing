@@ -403,11 +403,12 @@ public class NodeUsage extends BasicLongEntity {
 	}
 
 	/**
-	 * Get the node usage costs.
+	 * Set the node usage costs.
 	 * 
-	 * @return the costs, never {@literal null}
+	 * @param costTiers
+	 *        the costs to set
 	 */
-	public void getCostsTiers(NodeUsageCost[] costTiers) {
+	public void setCostsTiers(NodeUsageCost[] costTiers) {
 		this.costsTiers = costTiers;
 	}
 

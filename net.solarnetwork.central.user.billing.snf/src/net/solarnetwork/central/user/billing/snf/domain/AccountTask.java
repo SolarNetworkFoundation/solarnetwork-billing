@@ -87,6 +87,10 @@ public class AccountTask extends BasicUuidEntity implements Differentiable<Accou
 	/**
 	 * Constructor.
 	 * 
+	 * @param taskType
+	 *        the task type
+	 * @param accountId
+	 *        the account ID
 	 * @throws IllegalArgumentException
 	 *         if {@code taskType} or {@code accountId} are {@literal null}
 	 */

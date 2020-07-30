@@ -69,8 +69,8 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 	 *        the invoice to wrap
 	 * @param item
 	 *        the item to wrap
-	 * @param the
-	 *        explicit usage records to use
+	 * @param itemUsageRecords
+	 *        the explicit usage records to use
 	 * @throws IllegalArgumentException
 	 *         if {@code invoice} or {@code item} are {@literal null}
 	 */
