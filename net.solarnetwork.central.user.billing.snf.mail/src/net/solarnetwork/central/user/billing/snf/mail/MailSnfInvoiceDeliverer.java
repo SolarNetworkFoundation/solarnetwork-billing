@@ -66,10 +66,6 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 	 *        the invoicing system to render invoices with
 	 * @param mailService
 	 *        the mail service
-	 * @param messageDao
-	 *        the message DAO
-	 * @param messageCache
-	 *        the message cache
 	 * @param executor
 	 *        the executor for running delivery tasks
 	 * @throws IllegalArgumentException
