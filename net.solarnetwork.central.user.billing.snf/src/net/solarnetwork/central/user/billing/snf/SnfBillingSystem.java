@@ -27,6 +27,7 @@ import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.DEFAULT_ITEM_ORDER;
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -97,6 +98,7 @@ import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
 import net.solarnetwork.central.user.domain.UserLongPK;
 import net.solarnetwork.domain.Result;
+import net.solarnetwork.javax.money.MoneyUtils;
 import net.solarnetwork.support.TemplateRenderer;
 import net.solarnetwork.util.OptionalService;
 import net.solarnetwork.util.OptionalServiceCollection;
@@ -214,7 +216,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, filter.getUserId());
 		}
 		SnfInvoiceFilter invoiceFilter = SnfInvoiceFilter.forAccount(account);
-		invoiceFilter.setUnpaidOnly(filter.getUnpaid());
+		if ( filter.getUnpaid() != null ) {
+			invoiceFilter.setUnpaidOnly(filter.getUnpaid());
+		}
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
 				.findFiltered(invoiceFilter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, offset, max);
 		List<InvoiceMatch> matches = StreamSupport.stream(results.spliterator(), false)
@@ -254,6 +258,16 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 							usageInfo, locale, unitTypeDesc);
 					item = new InvoiceItemImpl(invoice, e, singletonList(locInfo));
 				} else {
+					if ( e.getItemType() == InvoiceItemType.Credit
+							&& e.getMetadata().containsKey(META_AVAILABLE_CREDIT) ) {
+						Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
+						BigDecimal availCredit = (availCreditVal instanceof BigDecimal
+								? (BigDecimal) availCreditVal
+								: new BigDecimal(availCreditVal.toString()));
+						e.getMetadata().put("localizedAvailableCredit",
+								MoneyUtils.formattedMoneyAmountFormatWithSymbolCurrencyStyle(locale,
+										invoice.getCurrencyCode(), availCredit));
+					}
 					item = new InvoiceItemImpl(invoice, e);
 				}
 				return new net.solarnetwork.central.user.billing.support.LocalizedInvoiceItem(item,
@@ -500,8 +514,11 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				BigDecimal credit = accountDao.claimAccountBalanceCredit(invoice.getAccountId(),
 						invoiceTotal);
 				if ( credit.compareTo(BigDecimal.ZERO) > 0 ) {
+					AccountBalance balance = accountDao.getBalanceForUser(invoice.getUserId());
 					SnfInvoiceItem creditItem = SnfInvoiceItem.newItem(invoice, InvoiceItemType.Credit,
 							accountCreditKey, BigDecimal.ONE, credit.negate());
+					creditItem.setMetadata(Collections.singletonMap(META_AVAILABLE_CREDIT,
+							balance.getAvailableCredit().toPlainString()));
 					if ( !dryRun ) {
 						invoiceItemDao.save(creditItem);
 					}

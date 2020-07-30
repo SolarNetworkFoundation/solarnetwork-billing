@@ -57,6 +57,11 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	public static final String META_USAGE = "usage";
 
 	/**
+	 * A metadata key for an "available credit" number value.
+	 */
+	public static final String META_AVAILABLE_CREDIT = "availableCredit";
+
+	/**
 	 * A default sort ordering for invoice items within an invoice.
 	 */
 	public static final Comparator<SnfInvoiceItem> DEFAULT_ITEM_ORDER = new SnfInvoiceItemDefaultComparator();

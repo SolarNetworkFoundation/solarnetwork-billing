@@ -165,13 +165,17 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		assertThat(item.getKey() + " Item amount", item.getAmount(), equalTo(amount));
 	}
 
-	private static void assertCreditItem(SnfInvoice invoice, SnfInvoiceItem item, BigDecimal amount) {
+	private static void assertCreditItem(SnfInvoice invoice, SnfInvoiceItem item, BigDecimal amount,
+			BigDecimal remainingCredit) {
 		assertThat(item.getKey() + " Item ID generated", item.getId(), notNullValue());
 		assertThat(item.getKey() + " Item invoice ID", item.getInvoiceId(),
 				equalTo(invoice.getId().getId()));
 		assertThat(item.getKey() + " Item type", item.getItemType(), equalTo(InvoiceItemType.Credit));
 		assertThat(item.getKey() + " Item quantity", item.getQuantity(), equalTo(BigDecimal.ONE));
 		assertThat(item.getKey() + " Item amount", item.getAmount(), equalTo(amount));
+		assertThat(item.getKey() + " Item metadata available credit",
+				item.getMetadata().get(SnfInvoiceItem.META_AVAILABLE_CREDIT),
+				equalTo(remainingCredit.toPlainString()));
 	}
 
 	@Test
@@ -339,6 +343,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		expect(accountDao.claimAccountBalanceCredit(account.getId().getId(),
 				usage.getTotalCost().add(expectedTax))).andReturn(expectedTotal);
+		final AccountBalance remainingBalance = new AccountBalance(account.getId(), Instant.now(),
+				BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("22.33"));
+		expect(accountDao.getBalanceForUser(account.getUserId())).andReturn(remainingBalance);
 
 		// WHEN
 		replayAll();
@@ -366,7 +373,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		item = itemMap.get("GST");
 		assertTaxItem(invoice, item, expectedTax);
 		item = itemMap.get(AccountBalance.ACCOUNT_CREDIT_KEY);
-		assertCreditItem(invoice, item, expectedTotal.negate());
+		assertCreditItem(invoice, item, expectedTotal.negate(), remainingBalance.getAvailableCredit());
 
 		assertThat("Invoice total has credit applied so zero balance",
 				invoice.getTotalAmount().compareTo(BigDecimal.ZERO), equalTo(0));
@@ -422,6 +429,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		expect(accountDao.claimAccountBalanceCredit(account.getId().getId(),
 				usage.getTotalCost().add(expectedTax))).andReturn(partialCredit);
+		final AccountBalance remainingBalance = new AccountBalance(account.getId(), Instant.now(),
+				BigDecimal.ZERO, BigDecimal.ZERO, new BigDecimal("0.00"));
+		expect(accountDao.getBalanceForUser(account.getUserId())).andReturn(remainingBalance);
 
 		// WHEN
 		replayAll();
@@ -449,7 +459,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		item = itemMap.get("GST");
 		assertTaxItem(invoice, item, expectedTax);
 		item = itemMap.get(AccountBalance.ACCOUNT_CREDIT_KEY);
-		assertCreditItem(invoice, item, partialCredit.negate());
+		assertCreditItem(invoice, item, partialCredit.negate(), remainingBalance.getAvailableCredit());
 
 		assertThat("Invoice total has credit applied so balance reduced by credit amount",
 				invoice.getTotalAmount().compareTo(expectedTotal.subtract(partialCredit)), equalTo(0));
