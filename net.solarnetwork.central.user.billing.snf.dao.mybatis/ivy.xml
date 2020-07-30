@@ -13,7 +13,7 @@
 		<artifact type="sources" ext="jar" conf="sources" m:classifier="sources"/>
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[2.5,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[2.6,)"/>
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing.snf" rev="[1.0,)"/>
 	</dependencies>
 </ivy-module>
