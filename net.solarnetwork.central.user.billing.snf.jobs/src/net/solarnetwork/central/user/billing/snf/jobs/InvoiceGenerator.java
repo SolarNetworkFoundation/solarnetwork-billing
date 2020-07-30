@@ -88,8 +88,8 @@ public class InvoiceGenerator implements AccountTaskHandler {
 	/**
 	 * Generate a single invoice for the given task.
 	 * 
-	 * @param endDate
-	 *        the end date
+	 * @param task
+	 *        the task
 	 */
 	@Override
 	public boolean handleTask(final AccountTask task) {
