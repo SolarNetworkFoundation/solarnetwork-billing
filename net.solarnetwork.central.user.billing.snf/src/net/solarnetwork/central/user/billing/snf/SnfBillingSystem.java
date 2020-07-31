@@ -258,7 +258,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 							usageInfo, locale, unitTypeDesc);
 					item = new InvoiceItemImpl(invoice, e, singletonList(locInfo));
 				} else {
-					if ( e.getItemType() == InvoiceItemType.Credit
+					if ( e.getItemType() == InvoiceItemType.Credit && e.getMetadata() != null
 							&& e.getMetadata().containsKey(META_AVAILABLE_CREDIT) ) {
 						Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
 						BigDecimal availCredit = (availCreditVal instanceof BigDecimal
