@@ -5,9 +5,13 @@ import static java.util.stream.Collectors.toList;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -113,13 +117,16 @@ public class MigratorTool implements ApplicationRunner {
     addr = SnDbUtils.addAddress(con, addr);
     log.info("Created SN address {}: {}", addr.getId(), addr);
 
-    Account account = new Account(kbAccount.snUserId(), null);
+    final Long userId = kbAccount.snUserId();
+    Account account = new Account(userId, null);
     account.setAddress(addr);
     account.setCurrencyCode(kbAccount.currencyCode);
     account.setLocale(kbAccount.locale().toLanguageTag());
     account = SnDbUtils.addAccount(con, account);
-    log.info("Created SN account {}: {}", account.getId(), account);
+    final Long accountId = account.getId().getId();
+    log.info("Created SN account {}: {}", accountId, account);
 
+    Map<Long, SnfInvoice> allInvoices = new LinkedHashMap<>(32);
     KbDbUtils.allInvoiceItems(kbJdbc, kbAccount.recordId, account, new Consumer<SnfInvoice>() {
 
       @Override
@@ -130,6 +137,7 @@ public class MigratorTool implements ApplicationRunner {
         }
         try {
           SnDbUtils.addInvoice(con, invoice);
+          allInvoices.put(invoice.getId().getId(), invoice);
         } catch (SQLException e) {
           throw new RuntimeException(e);
         }
@@ -142,7 +150,20 @@ public class MigratorTool implements ApplicationRunner {
       @Override
       public void accept(Payment payment) {
         try {
+          Long invoiceId = Long.valueOf(payment.getReference());
+          UUID invoicePaymentId = UUID.fromString(payment.getExternalKey());
+          payment.setReference(null);
+          payment.setExternalKey(null);
           SnDbUtils.addPayment(con, payment);
+          BigDecimal invoiceAmount = allInvoices.get(invoiceId).getTotalAmount();
+          BigDecimal invoicePayAmount = payment.getAmount();
+          if (invoicePayAmount.compareTo(invoiceAmount) > 0) {
+            invoicePayAmount = invoiceAmount;
+            log.warn("Invoice payment amount {} capped to invoice amount {}", invoicePayAmount,
+                invoiceAmount);
+          }
+          SnDbUtils.addInvoicePayment(con, payment, invoiceId, invoicePaymentId, invoicePayAmount);
+          log.info("Applied payment {} to invoice {}", payment, invoiceId);
         } catch (SQLException e) {
           throw new RuntimeException(e);
         }

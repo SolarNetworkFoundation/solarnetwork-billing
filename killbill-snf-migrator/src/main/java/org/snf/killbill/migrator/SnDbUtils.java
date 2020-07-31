@@ -1,6 +1,7 @@
 
 package org.snf.killbill.migrator;
 
+import java.math.BigDecimal;
 import java.sql.Array;
 import java.sql.Connection;
 import java.sql.Date;
@@ -11,6 +12,7 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.Instant;
+import java.util.UUID;
 
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
@@ -143,6 +145,22 @@ public class SnDbUtils {
       stmt.setInt(++col, payment.getPaymentType().getCode());
       stmt.setBigDecimal(++col, payment.getAmount());
       stmt.setString(++col, payment.getCurrencyCode());
+      stmt.execute();
+    }
+  }
+
+  public static void addInvoicePayment(Connection con, Payment payment, Long invoiceId,
+      UUID invoicePaymentId, BigDecimal payAmount) throws SQLException {
+    try (PreparedStatement stmt = con.prepareStatement(
+        "insert into solarbill.bill_invoice_payment (id,created,acct_id,pay_id,inv_id,amount) "
+            + "VALUES (?::uuid,?,?,?::uuid,?,?)")) {
+      int col = 0;
+      stmt.setString(++col, invoicePaymentId.toString());
+      stmt.setTimestamp(++col, new Timestamp(payment.getCreated().toEpochMilli()));
+      stmt.setObject(++col, payment.getAccountId());
+      stmt.setString(++col, payment.getId().getId().toString());
+      stmt.setObject(++col, invoiceId);
+      stmt.setBigDecimal(++col, payAmount);
       stmt.execute();
     }
   }

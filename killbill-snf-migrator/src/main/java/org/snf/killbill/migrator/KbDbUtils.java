@@ -229,6 +229,10 @@ public class KbDbUtils {
               }
             }
           }
+          if (currInvoice != null) {
+            addCurrItem();
+            consumer.accept(currInvoice);
+          }
         }
         return null;
       }
@@ -260,12 +264,16 @@ public class KbDbUtils {
             final UUID paymentId = UUID.fromString(rs.getString(++col));
             final Timestamp paymentDate = rs.getTimestamp(++col);
             final BigDecimal amount = rs.getBigDecimal(++col).setScale(2, RoundingMode.HALF_UP);
+            final String invoiceId = rs.getString(++col);
+            final String invoicePaymentId = rs.getString(++col);
 
             Payment payment = new Payment(paymentId, account.getUserId(), account.getId().getId(),
                 Instant.ofEpochMilli(paymentDate.getTime()));
             payment.setAmount(amount);
             payment.setCurrencyCode(account.getCurrencyCode());
             payment.setPaymentType(PaymentType.Payment);
+            payment.setExternalKey(invoicePaymentId); // for invoice payment
+            payment.setReference(invoiceId); // for invoice payments
             consumer.accept(payment);
           }
         }
