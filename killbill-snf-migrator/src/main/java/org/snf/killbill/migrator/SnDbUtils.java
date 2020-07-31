@@ -1,5 +1,5 @@
 
-package killbill.snf.migrator;
+package org.snf.killbill.migrator;
 
 import java.sql.Array;
 import java.sql.Connection;

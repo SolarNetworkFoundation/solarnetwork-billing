@@ -1,5 +1,5 @@
 
-package killbill.snf.migrator.domain;
+package org.snf.killbill.migrator.domain;
 
 import java.time.ZoneId;
 import java.util.Locale;

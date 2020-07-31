@@ -1,5 +1,5 @@
 
-package killbill.snf.migrator;
+package org.snf.killbill.migrator;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

@@ -1,5 +1,5 @@
 
-package killbill.snf.migrator.config;
+package org.snf.killbill.migrator.config;
 
 import javax.sql.DataSource;
 

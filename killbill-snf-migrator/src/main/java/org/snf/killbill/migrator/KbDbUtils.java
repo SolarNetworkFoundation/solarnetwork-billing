@@ -1,5 +1,5 @@
 
-package killbill.snf.migrator;
+package org.snf.killbill.migrator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,13 +21,13 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.snf.killbill.migrator.domain.KbAccount;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
 
-import killbill.snf.migrator.domain.KbAccount;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -129,6 +129,14 @@ public class KbDbUtils {
         currInvoiceItem = null;
       }
 
+      private UUID uuid(String maybeUuid) {
+        try {
+          return UUID.fromString(maybeUuid);
+        } catch (IllegalArgumentException | NullPointerException e) {
+          return UUID.randomUUID();
+        }
+      }
+
       @Override
       public Void doInPreparedStatement(PreparedStatement ps)
           throws SQLException, DataAccessException {
@@ -152,7 +160,7 @@ public class KbDbUtils {
               currInvoice.setCurrencyCode(account.getCurrencyCode());
             }
 
-            final UUID itemId = UUID.fromString(rs.getString(++col));
+            final UUID itemId = uuid(rs.getString(++col));
             if (currInvoiceItem == null || !currInvoiceItem.getId().equals(itemId)) {
               addCurrItem();
 
@@ -168,13 +176,16 @@ public class KbDbUtils {
                 continue;
               }
               final String itemKey = rs.getString(++col);
-              final BigDecimal itemAmount = rs.getBigDecimal(++col);
               currInvoiceItem = new SnfInvoiceItem(itemId, currInvoice.getId().getId(),
                   currInvoice.getCreated());
               currInvoiceItem.setItemType(itemType);
               currInvoiceItem.setKey(itemKey);
               currInvoiceItem.setQuantity(BigDecimal.ZERO);
-              currInvoiceItem.setAmount(itemAmount.setScale(2, RoundingMode.HALF_UP));
+
+              final BigDecimal itemAmount = rs.getBigDecimal(++col);
+              final BigDecimal itemAmountAgg = rs.getBigDecimal(++col);
+              currInvoiceItem.setAmount((itemAmountAgg != null ? itemAmountAgg : itemAmount)
+                  .setScale(2, RoundingMode.HALF_UP));
 
               final Date itemStartDate = rs.getDate(++col);
               if (itemStartDate != null) {

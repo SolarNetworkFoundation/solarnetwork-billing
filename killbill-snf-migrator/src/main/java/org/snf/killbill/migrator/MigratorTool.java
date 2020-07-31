@@ -1,5 +1,5 @@
 
-package killbill.snf.migrator;
+package org.snf.killbill.migrator;
 
 import static java.util.stream.Collectors.toList;
 
@@ -12,6 +12,8 @@ import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.snf.killbill.migrator.config.DatabaseConfig;
+import org.snf.killbill.migrator.domain.KbAccount;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationArguments;
@@ -24,8 +26,6 @@ import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcOperations;
 import org.springframework.util.StreamUtils;
 
-import killbill.snf.migrator.config.DatabaseConfig;
-import killbill.snf.migrator.domain.KbAccount;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
@@ -123,6 +123,10 @@ public class MigratorTool implements ApplicationRunner {
 
       @Override
       public void accept(SnfInvoice invoice) {
+        if (invoice.getItemCount() < 1) {
+          log.debug("Ignoring empty invoice {}", invoice);
+          return;
+        }
         log.info("Migrated invoice {}", invoice);
       }
     });
