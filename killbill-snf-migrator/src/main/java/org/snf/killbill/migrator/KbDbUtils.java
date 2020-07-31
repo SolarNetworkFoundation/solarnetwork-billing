@@ -8,6 +8,8 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -30,6 +32,8 @@ import org.springframework.jdbc.core.RowMapper;
 
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
+import net.solarnetwork.central.user.billing.snf.domain.Payment;
+import net.solarnetwork.central.user.billing.snf.domain.PaymentType;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
@@ -187,6 +191,10 @@ public class KbDbUtils {
               final BigDecimal itemAmountAgg = rs.getBigDecimal(++col);
               currInvoiceItem.setAmount((itemAmountAgg != null ? itemAmountAgg : itemAmount)
                   .setScale(2, RoundingMode.HALF_UP));
+              if (itemType == InvoiceItemType.Credit
+                  && currInvoiceItem.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                currInvoiceItem.setAmount(currInvoiceItem.getAmount().negate());
+              }
 
               final Date itemStartDate = rs.getDate(++col);
               if (itemStartDate != null) {
@@ -220,6 +228,45 @@ public class KbDbUtils {
                     currUsageInfo.getAmount().add(usageValue), null);
               }
             }
+          }
+        }
+        return null;
+      }
+
+    });
+  }
+
+  public static void allPayments(JdbcOperations jdbc, Long kbAccountId, Account account,
+      Consumer<Payment> consumer) throws SQLException {
+    final String sql = Utils.getResource("sql/kb-payments-query.sql", KbDbUtils.class);
+    jdbc.execute(new PreparedStatementCreator() {
+
+      @Override
+      public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+        PreparedStatement stmt = con.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY,
+            ResultSet.CONCUR_READ_ONLY);
+        stmt.setObject(1, kbAccountId);
+        return stmt;
+      }
+    }, new PreparedStatementCallback<Void>() {
+
+      @Override
+      public Void doInPreparedStatement(PreparedStatement ps)
+          throws SQLException, DataAccessException {
+        try (ResultSet rs = ps.executeQuery()) {
+          int col = 0;
+          while (rs.next()) {
+            col = 0;
+            final UUID paymentId = UUID.fromString(rs.getString(++col));
+            final Timestamp paymentDate = rs.getTimestamp(++col);
+            final BigDecimal amount = rs.getBigDecimal(++col).setScale(2, RoundingMode.HALF_UP);
+
+            Payment payment = new Payment(paymentId, account.getUserId(), account.getId().getId(),
+                Instant.ofEpochMilli(paymentDate.getTime()));
+            payment.setAmount(amount);
+            payment.setCurrencyCode(account.getCurrencyCode());
+            payment.setPaymentType(PaymentType.Payment);
+            consumer.accept(payment);
           }
         }
         return null;

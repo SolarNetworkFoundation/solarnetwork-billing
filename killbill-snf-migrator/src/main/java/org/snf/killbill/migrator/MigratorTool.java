@@ -28,6 +28,7 @@ import org.springframework.util.StreamUtils;
 
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 
 /**
@@ -134,6 +135,20 @@ public class MigratorTool implements ApplicationRunner {
         }
         log.info("Migrated invoice {}", invoice);
       }
+    });
+
+    KbDbUtils.allPayments(kbJdbc, kbAccount.recordId, account, new Consumer<Payment>() {
+
+      @Override
+      public void accept(Payment payment) {
+        try {
+          SnDbUtils.addPayment(con, payment);
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
+        log.info("Migrated payment {}", payment);
+      }
+
     });
   }
 

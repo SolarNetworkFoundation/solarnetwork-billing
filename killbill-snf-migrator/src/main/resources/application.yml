@@ -29,24 +29,29 @@ app:
 ---
 spring:
   profiles: development
+  
+app:
   datasource:
-    url: jdbc:postgresql://localhost:5496/solarnetwork
-    username: solarnet
-    password: solarnet
-
-debugMode: true
+    kb:
+      url: jdbc:mariadb://localhost:3306/killbill
+      username: killbill
+      password: killbill
+      driveClassName: com.mysql.cj.jdbc.Driver
+    sn:
+      url: jdbc:postgresql://localhost:5496/solarnetwork
+      username: solarnet
+      password: solarnet
+      driverClassName: org.postgresql.Driver
 
 logging:
   level:
-    net.solarnetwork: DEBUG
+    org.snf: INFO
 
 ---
 spring:
   profiles: production
 
-debugMode: false
-
 logging:
   level:
-    net.solarnetwork: INFO
+    org.snf: INFO
     

@@ -14,6 +14,7 @@ import java.time.Instant;
 
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.Payment;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.domain.UserLongPK;
@@ -128,6 +129,21 @@ public class SnDbUtils {
         }
         itemStmt.execute();
       }
+    }
+  }
+
+  public static void addPayment(Connection con, Payment payment) throws SQLException {
+    try (PreparedStatement stmt = con.prepareStatement(
+        "insert into solarbill.bill_payment (id,created,acct_id,pay_type,amount,currency) "
+            + "VALUES (?::uuid,?,?,?,?,?)")) {
+      int col = 0;
+      stmt.setString(++col, payment.getId().getId().toString());
+      stmt.setTimestamp(++col, new Timestamp(payment.getCreated().toEpochMilli()));
+      stmt.setObject(++col, payment.getAccountId());
+      stmt.setInt(++col, payment.getPaymentType().getCode());
+      stmt.setBigDecimal(++col, payment.getAmount());
+      stmt.setString(++col, payment.getCurrencyCode());
+      stmt.execute();
     }
   }
 

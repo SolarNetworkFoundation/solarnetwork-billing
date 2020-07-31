@@ -16,6 +16,7 @@ SELECT
 		WHEN 'queried-datum-daily-usage' THEN 'datum-out'
 		WHEN 'stored-datum-daily-usage' THEN 'datum-days-stored'
 		WHEN 'Adjustment (use of account credit)' THEN 'account-credit'
+		WHEN 'Adjustment (account credit)' THEN 'account-credit-add'
 		ELSE itm.description
 		END AS itm_key
 	, CASE itm.type
