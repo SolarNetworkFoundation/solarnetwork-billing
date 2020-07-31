@@ -169,7 +169,8 @@ public class KbDbUtils {
               try {
                 itemType = InvoiceItemType.valueOf(itemTypeName);
               } catch (IllegalArgumentException | NullPointerException e) {
-                log.info("Dropping unsupported invoice item type [{}]", itemTypeName);
+                log.info("Dropping unsupported invoice item type [{}] on invoice {}", itemTypeName,
+                    invRecordId);
                 currNodeId = null;
                 currInvoiceItem = null;
                 currUsageInfo = null;
@@ -180,7 +181,7 @@ public class KbDbUtils {
                   currInvoice.getCreated());
               currInvoiceItem.setItemType(itemType);
               currInvoiceItem.setKey(itemKey);
-              currInvoiceItem.setQuantity(BigDecimal.ZERO);
+              currInvoiceItem.setQuantity(BigDecimal.ONE);
 
               final BigDecimal itemAmount = rs.getBigDecimal(++col);
               final BigDecimal itemAmountAgg = rs.getBigDecimal(++col);

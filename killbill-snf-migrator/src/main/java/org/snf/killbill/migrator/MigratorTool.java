@@ -127,6 +127,11 @@ public class MigratorTool implements ApplicationRunner {
           log.debug("Ignoring empty invoice {}", invoice);
           return;
         }
+        try {
+          SnDbUtils.addInvoice(con, invoice);
+        } catch (SQLException e) {
+          throw new RuntimeException(e);
+        }
         log.info("Migrated invoice {}", invoice);
       }
     });

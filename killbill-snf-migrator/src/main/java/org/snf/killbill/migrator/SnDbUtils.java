@@ -3,6 +3,7 @@ package org.snf.killbill.migrator;
 
 import java.sql.Array;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,7 +14,10 @@ import java.time.Instant;
 
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.domain.UserLongPK;
+import net.solarnetwork.util.JsonUtils;
 
 /**
  * Utility methods for the SolarNetwork database.
@@ -79,6 +83,50 @@ public class SnDbUtils {
         result.setCurrencyCode(account.getCurrencyCode());
         result.setLocale(account.getLocale());
         return result;
+      }
+    }
+  }
+
+  public static void addInvoice(Connection con, SnfInvoice invoice) throws SQLException {
+    try (PreparedStatement invoiceStmt = con.prepareStatement(
+        "insert into solarbill.bill_invoice (id,created,acct_id,addr_id,date_start,date_end,currency) "
+            + "VALUES (?,?,?,?,?,?,?)");
+        PreparedStatement itemStmt = con.prepareStatement(
+            "insert into solarbill.bill_invoice_item (inv_id,id,created,item_type,amount,quantity,item_key,jmeta) "
+                + "VALUES (?,?::uuid,?,?,?,?,?,?::jsonb)")) {
+      // first invoice
+      int col = 0;
+      invoiceStmt.setObject(++col, invoice.getId().getId());
+      invoiceStmt.setTimestamp(++col, new Timestamp(invoice.getCreated().toEpochMilli()));
+      invoiceStmt.setObject(++col, invoice.getAccountId());
+      invoiceStmt.setObject(++col, invoice.getAddress().getId());
+      invoiceStmt.setDate(++col, Date.valueOf(invoice.getStartDate()));
+      invoiceStmt.setDate(++col, Date.valueOf(invoice.getEndDate()));
+      invoiceStmt.setString(++col, invoice.getCurrencyCode());
+      invoiceStmt.execute();
+
+      // now items
+      if (invoice.getItemCount() < 1) {
+        return;
+      }
+
+      itemStmt.setObject(1, invoice.getId().getId());
+      for (SnfInvoiceItem item : invoice.getItems()) {
+        col = 1;
+        itemStmt.setString(++col, item.getId().toString());
+        itemStmt.setTimestamp(++col,
+            new Timestamp(item.getCreated() != null ? item.getCreated().toEpochMilli()
+                : invoice.getCreated().toEpochMilli()));
+        itemStmt.setInt(++col, item.getItemType().getCode());
+        itemStmt.setBigDecimal(++col, item.getAmount());
+        itemStmt.setBigDecimal(++col, item.getQuantity());
+        itemStmt.setString(++col, item.getKey());
+        if (item.getMetadata() != null) {
+          itemStmt.setString(++col, JsonUtils.getJSONString(item.getMetadata(), null));
+        } else {
+          itemStmt.setNull(++col, Types.VARCHAR);
+        }
+        itemStmt.execute();
       }
     }
   }
