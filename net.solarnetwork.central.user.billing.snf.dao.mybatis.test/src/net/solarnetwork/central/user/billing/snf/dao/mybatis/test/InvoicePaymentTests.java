@@ -26,6 +26,7 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.junit.Assert.fail;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -117,7 +118,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				accountId, paymentId, invoiceId, amount);
 	}
 
-	@Test(expected = DataIntegrityViolationException.class)
+	@Test
 	public void addInvoicePayment_exceedPaymentAmount() {
 		// create invoice
 		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
@@ -140,11 +141,16 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to add another payment
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
-				new BigDecimal("0.01"));
+		try {
+			addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+					new BigDecimal("0.01"));
+			fail("Should have thrown DataIntegrigtyViolationException from lack of funds in payment.");
+		} catch ( DataIntegrityViolationException e ) {
+			// good one
+		}
 	}
 
-	@Test(expected = DataIntegrityViolationException.class)
+	@Test
 	public void updatePayment_underflowInvoicePaymentAmount() {
 		// create invoice
 		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
@@ -167,8 +173,13 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to decrease payment amount < invoice payments
-		jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
-				new BigDecimal("1.11"), payment.getId().getId());
+		try {
+			jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
+					new BigDecimal("1.11"), payment.getId().getId());
+			fail("Should have thrown DataIntegrigtyViolationException from lack of funds in payment.");
+		} catch ( DataIntegrityViolationException e ) {
+			// good one
+		}
 	}
 
 	@Test
@@ -198,5 +209,37 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
 				newPaymentAmount, payment.getId().getId());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), newPaymentAmount);
+	}
+
+	@Test
+	public void addInvoicePayment_exceedInvoiceTotalAmount() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		// create payment with extra dollar
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
+		payment.setAmount(invoice.getTotalAmount().add(BigDecimal.ONE));
+		payment.setCurrencyCode(account.getCurrencyCode());
+		payment.setExternalKey(randomUUID().toString());
+		payment.setPaymentType(PaymentType.Payment);
+		payment.setReference(randomUUID().toString());
+
+		paymentDao.save(payment);
+		getSqlSessionTemplate().flushStatements();
+
+		// add one payment, full amount
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+				invoice.getTotalAmount());
+		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
+
+		// try to add another payment to same invoice using that extra dollar
+		try {
+			addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+					BigDecimal.ONE);
+			fail("Should have thrown DataIntegrigtyViolationException from paying more than invoice amount.");
+		} catch ( DataIntegrityViolationException e ) {
+			// good one
+		}
 	}
 }
