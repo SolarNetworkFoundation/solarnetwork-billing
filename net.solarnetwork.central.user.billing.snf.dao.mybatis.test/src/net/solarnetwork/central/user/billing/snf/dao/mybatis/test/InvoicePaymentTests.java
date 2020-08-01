@@ -26,10 +26,16 @@ import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -241,5 +247,35 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		} catch ( DataIntegrityViolationException e ) {
 			// good one
 		}
+	}
+
+	private List<Map<String, Object>> addPaymentViaProcedure(Long accountId, Long invoiceId,
+			BigDecimal amount, Instant date) {
+		return jdbcTemplate.queryForList(
+				"select * from solarbill.add_payment(accountid => ?, pay_amount => ?, pay_ref => ?, pay_date => ?)",
+				accountId, amount, invoiceId.toString(), Timestamp.from(date));
+	}
+
+	@Test
+	public void addInvoicePayment_procedure() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		List<Map<String, Object>> payRows = addPaymentViaProcedure(invoice.getAccountId(),
+				invoice.getId().getId(), invoice.getTotalAmount(), now());
+		assertThat("Payment row added", payRows, hasSize(1));
+		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
+		assertThat("Payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
+				equalTo(0));
+
+		// now verify invoice payment is present
+		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where inv_id = ?",
+				invoice.getId().getId());
+		assertThat("Invoice payment row added", invPayRows, hasSize(1));
+		val = (BigDecimal) invPayRows.get(0).get("amount");
+		assertThat("Invoice payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
+				equalTo(0));
 	}
 }
