@@ -24,12 +24,14 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -276,6 +278,44 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Invoice payment row added", invPayRows, hasSize(1));
 		val = (BigDecimal) invPayRows.get(0).get("amount");
 		assertThat("Invoice payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
+				equalTo(0));
+	}
+
+	private List<Map<String, Object>> addInvoicePaymentsViaProcedure(Long accountId, Long[] invoiceIds,
+			BigDecimal amount, Instant date) {
+		String ids = String.format("{%s}", arrayToCommaDelimitedString(invoiceIds));
+		return jdbcTemplate.queryForList(
+				"select * from solarbill.add_invoice_payments(accountid => ?, pay_amount => ?, pay_date => ?, inv_ids => ?::BIGINT[])",
+				accountId, amount, Timestamp.from(date), ids);
+	}
+
+	@Test
+	public void addInvoicePayments_procedure() {
+		// create invoices
+		final SnfInvoice invoice1 = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+		final SnfInvoice invoice2 = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 3, 1));
+		final BigDecimal totalPayment = invoice1.getTotalAmount().add(invoice2.getTotalAmount());
+
+		List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(invoice1.getAccountId(),
+				new Long[] { invoice1.getId().getId(), invoice2.getId().getId() }, totalPayment, now());
+		assertThat("Payment row added", payRows, hasSize(1));
+		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
+		assertThat("Payment for full payment amount", val.compareTo(totalPayment), equalTo(0));
+
+		// now verify invoice payment rows are present
+		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where pay_id = ?",
+				payRows.get(0).get("id"));
+		assertThat("Invoice payment row added", invPayRows, hasSize(2));
+		Map<Long, Map<String, Object>> invoicePaymentsById = invPayRows.stream()
+				.collect(toMap(e -> (Long) e.get("inv_id"), e -> e));
+		val = (BigDecimal) invoicePaymentsById.get(invoice1.getId().getId()).get("amount");
+		assertThat("Invoice payment for full payment amount", val.compareTo(invoice1.getTotalAmount()),
+				equalTo(0));
+		val = (BigDecimal) invoicePaymentsById.get(invoice2.getId().getId()).get("amount");
+		assertThat("Invoice payment for full payment amount", val.compareTo(invoice2.getTotalAmount()),
 				equalTo(0));
 	}
 }
