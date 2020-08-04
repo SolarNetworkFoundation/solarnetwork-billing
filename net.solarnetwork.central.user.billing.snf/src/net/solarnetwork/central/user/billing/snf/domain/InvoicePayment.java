@@ -65,7 +65,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	}
 
 	private final Long accountId;
-	private final Long paymentId;
+	private final UUID paymentId;
 	private final Long invoiceId;
 	private BigDecimal amount;
 
@@ -79,7 +79,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @param invoiceId
 	 *        the invoice ID
 	 */
-	public InvoicePayment(Long accountId, Long paymentId, Long invoiceId) {
+	public InvoicePayment(Long accountId, UUID paymentId, Long invoiceId) {
 		this(new UserUuidPK(), accountId, paymentId, invoiceId, Instant.now());
 	}
 
@@ -97,7 +97,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @param created
 	 *        the creation date
 	 */
-	public InvoicePayment(UserUuidPK id, Long accountId, Long paymentId, Long invoiceId,
+	public InvoicePayment(UserUuidPK id, Long accountId, UUID paymentId, Long invoiceId,
 			Instant created) {
 		super(id, created);
 		this.accountId = accountId;
@@ -121,7 +121,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * @param created
 	 *        the creation date
 	 */
-	public InvoicePayment(UUID id, Long userId, Long accountId, Long paymentId, Long invoiceId,
+	public InvoicePayment(UUID id, Long userId, Long accountId, UUID paymentId, Long invoiceId,
 			Instant created) {
 		this(new UserUuidPK(userId, id), accountId, paymentId, invoiceId, created);
 	}
@@ -202,7 +202,7 @@ public class InvoicePayment extends BasicEntity<UserUuidPK>
 	 * 
 	 * @return the payment ID
 	 */
-	public Long getPaymentId() {
+	public UUID getPaymentId() {
 		return paymentId;
 	}
 
