@@ -33,6 +33,7 @@ import net.solarnetwork.central.domain.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 
 /**
  * Wrap a {@link SnfInvoiceItem} as an
@@ -103,7 +104,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 
 	@Override
 	public String getInvoiceNumber() {
-		return Long.toString(invoice.getId().getId(), 36).toUpperCase();
+		return SnfBillingUtils.invoiceNumForId(invoice.getId().getId());
 	}
 
 	@Override

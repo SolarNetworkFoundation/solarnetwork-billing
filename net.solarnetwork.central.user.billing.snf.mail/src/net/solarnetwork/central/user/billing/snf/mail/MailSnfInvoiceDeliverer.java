@@ -117,7 +117,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 
 					MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
 					String subject = messageSource.getMessage("invoice.mail.subject", subjectArgs,
-							format("SolarNetwork invoice INV-%s (%s)", subjectArgs), locale);
+							format("SolarNetwork invoice %s (%s)", subjectArgs), locale);
 
 					mailService.sendMail(to, new SimpleMessageDataSource(subject,
 							copyToString(new InputStreamReader(content.getInputStream(), "UTF-8"))));

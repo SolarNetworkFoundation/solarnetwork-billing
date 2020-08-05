@@ -41,6 +41,7 @@ import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 
 /**
  * Test cases for the {@link InvoiceImpl} class.
@@ -92,7 +93,7 @@ public class InvoiceTests {
 		assertThat("Balance same as total amount", invoice.getBalance(), equalTo(inv.getTotalAmount()));
 		assertThat("Currency same", invoice.getCurrencyCode(), equalTo(inv.getCurrencyCode()));
 		assertThat("InvoiceImpl number is upper-case base-36 string of ID", invoice.getInvoiceNumber(),
-				equalTo(Long.toString(inv.getId().getId(), 36).toUpperCase()));
+				equalTo(SnfBillingUtils.invoiceNumForId(inv.getId().getId())));
 		assertThat("Tax is added up", invoice.getTaxAmount(),
 				equalTo(tax1.getAmount().add(tax2.getAmount())));
 		assertThat("Time zone same as invoice address", invoice.getTimeZoneId(),
