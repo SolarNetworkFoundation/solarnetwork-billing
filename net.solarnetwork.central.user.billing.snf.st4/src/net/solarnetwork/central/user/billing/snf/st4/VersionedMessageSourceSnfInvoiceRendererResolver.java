@@ -48,7 +48,7 @@ import net.solarnetwork.support.TemplateRenderer;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvoiceRendererResolver {
 
@@ -110,6 +110,16 @@ public class VersionedMessageSourceSnfInvoiceRendererResolver implements SnfInvo
 
 	@Override
 	public TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType, Locale locale) {
+		boolean mimeMatch = false;
+		for ( MimeType allowed : mimeTypes ) {
+			if ( allowed.isCompatibleWith(mimeType) ) {
+				mimeMatch = true;
+				break;
+			}
+		}
+		if ( !mimeMatch ) {
+			return null;
+		}
 		final Instant version = invoice.getStartDate().atStartOfDay(invoice.getTimeZone()).toInstant();
 		MessageSource messageSource = new VersionedMessageDaoMessageSource(messageDao, bundleNames,
 				version, messageCache);
