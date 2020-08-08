@@ -56,7 +56,11 @@ public class HtmlToPdfSnfInvoiceRendererResolver implements SnfInvoiceRendererRe
 
 	@Override
 	public TemplateRenderer rendererForInvoice(SnfInvoice invoice, MimeType mimeType, Locale locale) {
-		TemplateRenderer renderer = htmlRendererResolver.rendererForInvoice(invoice, mimeType, locale);
+		if ( !HtmlToPdfTemplateRenderer.PDF_MIME_TYPE.isCompatibleWith(mimeType) ) {
+			return null;
+		}
+		TemplateRenderer renderer = htmlRendererResolver.rendererForInvoice(invoice,
+				MimeTypeUtils.TEXT_HTML, locale);
 		if ( renderer == null || !renderer.supportsMimeType(MimeTypeUtils.TEXT_HTML) ) {
 			return null;
 		}

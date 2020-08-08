@@ -7,6 +7,7 @@ Bundle-Vendor: SolarNetwork
 Automatic-Module-Name: net.solarnetwork.central.user.billing.snf.pdf
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 
+ com.openhtmltopdf.extend;version="[1.0.4,2.0)",
  com.openhtmltopdf.outputdevice.helper;version="[1.0.4,2.0)",
  com.openhtmltopdf.pdfboxout;version="[1.0.4,2.0)",
  com.openhtmltopdf.slf4j;version="[1.0.4,2.0)",

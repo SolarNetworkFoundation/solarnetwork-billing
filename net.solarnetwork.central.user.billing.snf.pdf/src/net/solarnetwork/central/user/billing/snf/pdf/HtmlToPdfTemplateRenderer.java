@@ -159,6 +159,8 @@ public class HtmlToPdfTemplateRenderer extends BasicIdentity<String> implements 
 			String html = new String(byos.toByteArray(), UTF8);
 			html = replaceImgDataSvg(html);
 			renderPdf(html, out);
+			out.flush();
+			out.close();
 		}
 	}
 
