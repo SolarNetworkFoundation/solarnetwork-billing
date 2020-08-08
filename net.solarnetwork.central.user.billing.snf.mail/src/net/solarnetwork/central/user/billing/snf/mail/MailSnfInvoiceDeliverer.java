@@ -23,15 +23,16 @@
 package net.solarnetwork.central.user.billing.snf.mail;
 
 import static java.lang.String.format;
+import static java.util.Collections.singleton;
 import static org.springframework.util.FileCopyUtils.copyToString;
 import java.io.InputStreamReader;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
+import java.time.YearMonth;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import org.springframework.context.MessageSource;
 import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
 import net.solarnetwork.central.domain.BaseStringIdentity;
 import net.solarnetwork.central.mail.MailService;
@@ -54,6 +55,8 @@ import net.solarnetwork.domain.Result;
 public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfInvoiceDeliverer {
 
 	private static final long serialVersionUID = -2150380154034292953L;
+
+	private static final MimeType APPLICATION_PDF = MimeType.valueOf("application/pdf");
 
 	private final SnfInvoicingSystem invoicingSystem;
 	private final MailService mailService;
@@ -103,6 +106,7 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 					// TODO: allow output type to be specified via configuration; for now assume HTML
 					Resource content = invoicingSystem.renderInvoice(invoice, MimeTypeUtils.TEXT_HTML,
 							locale);
+					Resource pdf = invoicingSystem.renderInvoice(invoice, APPLICATION_PDF, locale);
 
 					// TODO: allow rendering to attachment
 					BasicMailAddress to = new BasicMailAddress(account.getAddress().getName(),
@@ -110,17 +114,19 @@ public class MailSnfInvoiceDeliverer extends BaseStringIdentity implements SnfIn
 
 					// generate subject and pass invoice number and date as arguments
 					InvoiceImpl invoiceImpl = new InvoiceImpl(invoice);
-					DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
 					String invoiceKey = invoiceImpl.getInvoiceNumber();
-					String invoiceDate = formatter.format(invoice.getStartDate());
+					String invoiceDate = YearMonth.from(invoice.getStartDate()).toString();
 					Object[] subjectArgs = new Object[] { invoiceKey, invoiceDate };
 
 					MessageSource messageSource = invoicingSystem.messageSourceForInvoice(invoice);
 					String subject = messageSource.getMessage("invoice.mail.subject", subjectArgs,
 							format("SolarNetwork invoice %s (%s)", subjectArgs), locale);
 
-					mailService.sendMail(to, new SimpleMessageDataSource(subject,
-							copyToString(new InputStreamReader(content.getInputStream(), "UTF-8"))));
+					mailService.sendMail(to,
+							new SimpleMessageDataSource(subject,
+									copyToString(
+											new InputStreamReader(content.getInputStream(), "UTF-8")),
+									singleton(pdf)));
 					result.complete(Result.result(null));
 				} catch ( Exception e ) {
 					result.completeExceptionally(e);

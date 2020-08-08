@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SNF Billing Mail Support
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.snf.mail
-Bundle-Version: 1.0.1
+Bundle-Version: 1.0.2
 Bundle-Vendor: SolarNetwork Foundation
 Automatic-Module-Name: net.solarnetwork.central.user.billing.snf.mail
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
