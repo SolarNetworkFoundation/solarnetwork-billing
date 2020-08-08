@@ -47,6 +47,9 @@
 	</bean>
 
 	<service interface="net.solarnetwork.central.user.billing.snf.SnfInvoiceRendererResolver">
+		<service-properties>
+			<entry key="role" value="html"/>
+		</service-properties>
 		<bean class="net.solarnetwork.central.user.billing.snf.st4.VersionedMessageSourceSnfInvoiceRendererResolver">
 			<argument value="/snf/text/html/invoice"/>
 			<argument value="invoice"/>

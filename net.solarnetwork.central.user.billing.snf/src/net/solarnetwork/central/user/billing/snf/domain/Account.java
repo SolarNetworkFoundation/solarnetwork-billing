@@ -153,6 +153,7 @@ public class Account extends BasicEntity<UserLongPK>
 		if ( getId() != null ) {
 			builder.append("id=");
 			builder.append(getId());
+			builder.append(", ");
 		}
 		if ( address != null ) {
 			builder.append("address=");

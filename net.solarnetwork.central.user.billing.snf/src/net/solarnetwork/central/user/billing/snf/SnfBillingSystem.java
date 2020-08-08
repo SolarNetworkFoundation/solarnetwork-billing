@@ -36,6 +36,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,6 +94,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
+import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 import net.solarnetwork.central.user.billing.support.BasicBillingSystemInfo;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoice;
 import net.solarnetwork.central.user.billing.support.LocalizedInvoiceItemUsageRecord;
@@ -107,7 +109,7 @@ import net.solarnetwork.util.OptionalServiceCollection;
  * {@link BillingSystem} implementation for SolarNetwork Foundation.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfTaxCodeResolver {
 
@@ -258,7 +260,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 							usageInfo, locale, unitTypeDesc);
 					item = new InvoiceItemImpl(invoice, e, singletonList(locInfo));
 				} else {
-					if ( e.getItemType() == InvoiceItemType.Credit
+					if ( e.getItemType() == InvoiceItemType.Credit && e.getMetadata() != null
 							&& e.getMetadata().containsKey(META_AVAILABLE_CREDIT) ) {
 						Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
 						BigDecimal availCredit = (availCreditVal instanceof BigDecimal
@@ -298,8 +300,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				return r;
 			}
 		}
-		String msg = String.format("MIME %s not supported for invoice rendering.", invoice, mimeType,
-				locale);
+		String msg = String.format("MIME %s not supported for invoice rendering.", mimeType);
 		throw new IllegalArgumentException(msg);
 	}
 
@@ -325,10 +326,32 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		parameters.put("messages", messages);
 		try (ByteArrayOutputStream out = new ByteArrayOutputStream(4096)) {
 			renderer.render(locale, outputType, parameters, out);
-			return new ByteArrayResource(out.toByteArray());
+			return invoiceResource(out.toByteArray(), invoice, messageSource, outputType, locale);
 		} catch ( IOException e ) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private Resource invoiceResource(byte[] data, SnfInvoice invoice, MessageSource messageSource,
+			MimeType outputType, Locale locale) {
+		String extension = ".txt";
+		if ( outputType.isCompatibleWith(MimeType.valueOf("application/pdf")) ) {
+			extension = ".pdf";
+		} else {
+			extension = "." + outputType.getSubtype();
+		}
+		Object[] filenameArgs = new Object[] { SnfBillingUtils.invoiceNumForId(invoice.getId().getId()),
+				YearMonth.from(invoice.getStartDate()).toString(), extension };
+		String filename = messageSource.getMessage("invoice.filename", filenameArgs,
+				"SolarNetwork Invoice {0} - {1}{2}", locale);
+		return new ByteArrayResource(data) {
+
+			@Override
+			public String getFilename() {
+				return filename;
+			}
+
+		};
 	}
 
 	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)

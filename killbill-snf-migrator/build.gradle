@@ -1,0 +1,66 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.3.2.RELEASE'
+}
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+
+repositories {
+    jcenter()
+	maven {
+		url "https://dev.solarnetwork.net/archive/repository/solarnetwork-stage/"
+	}
+}
+
+ext {
+	jacksonVersion = '2.9.8'
+	mariaDbJdbcVersion = '2.6.2'
+	postgresJdbcVersion = '42.2.14'
+	springBootVersion = '2.3.2.RELEASE'
+}
+
+configurations {
+	all*.exclude group: 'org.apache.commons', module: 'commons-compress'
+	all*.exclude group: 'org.eclipse.virgo.mirrored'
+	all*.exclude group: 'org.osgi'
+	all*.exclude group: 'org.osgi.core'
+	all*.exclude group: 'org.osgi.enterprise'
+	all*.exclude group: 'org.springframework', module: 'spring-messaging'
+	all*.exclude group: 'org.springframework', module: 'spring-websocket'
+	all*.exclude group: 'org.springframework.security'
+	all*.exclude group: 'javax.servlet'
+	all*.exclude group: 'javax.servlet.jsp'
+	all*.exclude group: 'net.sf.supercsv'
+	all*.exclude group: 'net.solarnetwork.common', module: 'net.solarnetwork.common.web'
+	all*.exclude group: 'net.solarnetwork.central', module: 'net.solarnetwork.central.common.security'
+}
+
+dependencies {
+	compile "org.springframework.boot:spring-boot-starter:${springBootVersion}"
+	compile "org.springframework.boot:spring-boot-starter-jdbc:${springBootVersion}"
+
+	// DB
+	runtime "org.mariadb.jdbc:mariadb-java-client:${mariaDbJdbcVersion}"
+	runtime "org.postgresql:postgresql:${postgresJdbcVersion}"
+
+	// SN
+	compile "net.solarnetwork.central:net.solarnetwork.central.user.billing.snf:1.0.0"
+
+	
+    // Testing
+    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+archivesBaseName = 'snf-kb-migrator'
+
+jar {
+    version =  version
+    manifest {
+        attributes 'Implementation-Title': 'SNF Kill Bill Migration Tool',
+                   'Implementation-Version': version
+    }
+}

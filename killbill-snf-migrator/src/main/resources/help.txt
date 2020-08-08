@@ -1,0 +1,8 @@
+<options> 
+
+--help                   Show this help.
+                         Use do-help=(true|false) in application.properties.
+
+--verbose                Show more verbose messages.
+                         Use do-verbose=(true|false) in application.properties.
+

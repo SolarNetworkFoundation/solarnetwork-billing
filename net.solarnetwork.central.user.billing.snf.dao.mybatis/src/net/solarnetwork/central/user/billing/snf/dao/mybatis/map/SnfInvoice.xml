@@ -129,10 +129,10 @@
 								AND inv1.acct_id = #{accountId}
 							</if>
 							<if test="startDate != null">
-								AND inv1.date_start &gt;= #{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}
+								AND inv1.date_start &gt;= #{startDate,javaType=java.time.LocalDate,jdbcType=DATE}
 							</if>
 							<if test="endDate != null">
-								AND inv1.date_end &lt; #{filter.endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+								AND inv1.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
 							</if>
 						</where>
 						ORDER BY
@@ -160,10 +160,10 @@
 						AND inv.acct_id = #{accountId}
 					</if>
 					<if test="startDate != null">
-						AND inv.date_start &gt;= #{filter.startDate,javaType=java.time.LocalDate,jdbcType=DATE}
+						AND inv.date_start &gt;= #{startDate,javaType=java.time.LocalDate,jdbcType=DATE}
 					</if>
 					<if test="endDate != null">
-						AND inv.date_end &lt; #{filter.endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+						AND inv.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
 					</if>
 				</otherwise>
 			</choose>

@@ -115,9 +115,4 @@ public class HtmlInvoiceTests {
 		assertThat("Output generated", output, equalTo(expected));
 	}
 
-	@Test
-	public void render() throws IOException {
-
-	}
-
 }

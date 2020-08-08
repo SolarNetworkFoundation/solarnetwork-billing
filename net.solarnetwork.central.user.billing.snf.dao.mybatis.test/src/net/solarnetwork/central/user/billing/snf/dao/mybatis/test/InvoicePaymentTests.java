@@ -24,11 +24,20 @@ package net.solarnetwork.central.user.billing.snf.dao.mybatis.test;
 
 import static java.time.Instant.now;
 import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toMap;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Fixed;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
+import static org.springframework.util.StringUtils.arrayToCommaDelimitedString;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.Before;
 import org.junit.Test;
@@ -117,7 +126,7 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 				accountId, paymentId, invoiceId, amount);
 	}
 
-	@Test(expected = DataIntegrityViolationException.class)
+	@Test
 	public void addInvoicePayment_exceedPaymentAmount() {
 		// create invoice
 		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
@@ -140,11 +149,16 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to add another payment
-		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
-				new BigDecimal("0.01"));
+		try {
+			addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+					new BigDecimal("0.01"));
+			fail("Should have thrown DataIntegrigtyViolationException from lack of funds in payment.");
+		} catch ( DataIntegrityViolationException e ) {
+			// good one
+		}
 	}
 
-	@Test(expected = DataIntegrityViolationException.class)
+	@Test
 	public void updatePayment_underflowInvoicePaymentAmount() {
 		// create invoice
 		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
@@ -167,8 +181,13 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
 
 		// try to decrease payment amount < invoice payments
-		jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
-				new BigDecimal("1.11"), payment.getId().getId());
+		try {
+			jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
+					new BigDecimal("1.11"), payment.getId().getId());
+			fail("Should have thrown DataIntegrigtyViolationException from lack of funds in payment.");
+		} catch ( DataIntegrityViolationException e ) {
+			// good one
+		}
 	}
 
 	@Test
@@ -198,5 +217,105 @@ public class InvoicePaymentTests extends AbstractMyBatisDaoTestSupport {
 		jdbcTemplate.update("update solarbill.bill_payment SET amount = ? WHERE id = ?::uuid",
 				newPaymentAmount, payment.getId().getId());
 		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), newPaymentAmount);
+	}
+
+	@Test
+	public void addInvoicePayment_exceedInvoiceTotalAmount() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		// create payment with extra dollar
+		Payment payment = new Payment(randomUUID(), account.getUserId(), account.getId().getId(), now());
+		payment.setAmount(invoice.getTotalAmount().add(BigDecimal.ONE));
+		payment.setCurrencyCode(account.getCurrencyCode());
+		payment.setExternalKey(randomUUID().toString());
+		payment.setPaymentType(PaymentType.Payment);
+		payment.setReference(randomUUID().toString());
+
+		paymentDao.save(payment);
+		getSqlSessionTemplate().flushStatements();
+
+		// add one payment, full amount
+		addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+				invoice.getTotalAmount());
+		assertAccountBalance(payment.getAccountId(), invoice.getTotalAmount(), payment.getAmount());
+
+		// try to add another payment to same invoice using that extra dollar
+		try {
+			addInvoicePayment(invoice.getAccountId(), payment.getId().getId(), invoice.getId().getId(),
+					BigDecimal.ONE);
+			fail("Should have thrown DataIntegrigtyViolationException from paying more than invoice amount.");
+		} catch ( DataIntegrityViolationException e ) {
+			// good one
+		}
+	}
+
+	private List<Map<String, Object>> addPaymentViaProcedure(Long accountId, Long invoiceId,
+			BigDecimal amount, Instant date) {
+		return jdbcTemplate.queryForList(
+				"select * from solarbill.add_payment(accountid => ?, pay_amount => ?, pay_ref => ?, pay_date => ?)",
+				accountId, amount, invoiceId.toString(), Timestamp.from(date));
+	}
+
+	@Test
+	public void addInvoicePayment_procedure() {
+		// create invoice
+		final SnfInvoice invoice = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+
+		List<Map<String, Object>> payRows = addPaymentViaProcedure(invoice.getAccountId(),
+				invoice.getId().getId(), invoice.getTotalAmount(), now());
+		assertThat("Payment row added", payRows, hasSize(1));
+		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
+		assertThat("Payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
+				equalTo(0));
+
+		// now verify invoice payment is present
+		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where inv_id = ?",
+				invoice.getId().getId());
+		assertThat("Invoice payment row added", invPayRows, hasSize(1));
+		val = (BigDecimal) invPayRows.get(0).get("amount");
+		assertThat("Invoice payment for full payment amount", val.compareTo(invoice.getTotalAmount()),
+				equalTo(0));
+	}
+
+	private List<Map<String, Object>> addInvoicePaymentsViaProcedure(Long accountId, Long[] invoiceIds,
+			BigDecimal amount, Instant date) {
+		String ids = String.format("{%s}", arrayToCommaDelimitedString(invoiceIds));
+		return jdbcTemplate.queryForList(
+				"select * from solarbill.add_invoice_payments(accountid => ?, pay_amount => ?, pay_date => ?, inv_ids => ?::BIGINT[])",
+				accountId, amount, Timestamp.from(date), ids);
+	}
+
+	@Test
+	public void addInvoicePayments_procedure() {
+		// create invoices
+		final SnfInvoice invoice1 = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 2, 1));
+		final SnfInvoice invoice2 = createTestInvoiceWithDefaultItems(account, address,
+				LocalDate.of(2020, 3, 1));
+		final BigDecimal totalPayment = invoice1.getTotalAmount().add(invoice2.getTotalAmount());
+
+		List<Map<String, Object>> payRows = addInvoicePaymentsViaProcedure(invoice1.getAccountId(),
+				new Long[] { invoice1.getId().getId(), invoice2.getId().getId() }, totalPayment, now());
+		assertThat("Payment row added", payRows, hasSize(1));
+		BigDecimal val = (BigDecimal) payRows.get(0).get("amount");
+		assertThat("Payment for full payment amount", val.compareTo(totalPayment), equalTo(0));
+
+		// now verify invoice payment rows are present
+		List<Map<String, Object>> invPayRows = jdbcTemplate.queryForList(
+				"select * from solarbill.bill_invoice_payment where pay_id = ?",
+				payRows.get(0).get("id"));
+		assertThat("Invoice payment row added", invPayRows, hasSize(2));
+		Map<Long, Map<String, Object>> invoicePaymentsById = invPayRows.stream()
+				.collect(toMap(e -> (Long) e.get("inv_id"), e -> e));
+		val = (BigDecimal) invoicePaymentsById.get(invoice1.getId().getId()).get("amount");
+		assertThat("Invoice payment for full payment amount", val.compareTo(invoice1.getTotalAmount()),
+				equalTo(0));
+		val = (BigDecimal) invoicePaymentsById.get(invoice2.getId().getId()).get("amount");
+		assertThat("Invoice payment for full payment amount", val.compareTo(invoice2.getTotalAmount()),
+				equalTo(0));
 	}
 }
