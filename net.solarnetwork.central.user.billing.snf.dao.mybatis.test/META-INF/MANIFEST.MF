@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Foundation Billing DAO - MyBatis Tests
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.snf.dao.mybatis.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.1.0
 Bundle-Vendor: SolarNetwork Foundation
 Fragment-Host: net.solarnetwork.central.user.billing.snf.dao.mybatis;bundle-version="1.0.0"
 Automatic-Module-Name: net.solarnetwork.central.user.billing.snf.dao.mybatis.test
