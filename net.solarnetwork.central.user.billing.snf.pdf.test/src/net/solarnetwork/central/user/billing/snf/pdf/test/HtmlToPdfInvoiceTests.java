@@ -185,4 +185,24 @@ public class HtmlToPdfInvoiceTests {
 		};
 	}
 
+	@Test
+	public void render_withFloats() throws IOException {
+		// GIVEN
+		TemplateRenderer htmlRenderer = htmlRenderer("test-02.html");
+		HtmlToPdfTemplateRenderer t = new HtmlToPdfTemplateRenderer(htmlRenderer);
+
+		// WHEN
+		Path tmpFile = Files.createTempFile("HtmlToPdfInvoiceTests-SVG-", ".pdf");
+		try (BufferedOutputStream out = new BufferedOutputStream(
+				new FileOutputStream(tmpFile.toFile()))) {
+			t.render(Locale.ENGLISH, HtmlToPdfTemplateRenderer.PDF_MIME_TYPE, Collections.emptyMap(),
+					out);
+		}
+
+		// THEN
+		assertThat(String.format("PDF generated to temp file %s", tmpFile), Files.size(tmpFile),
+				greaterThan(0L));
+		log.info("PDF generated at {}", tmpFile);
+	}
+
 }
