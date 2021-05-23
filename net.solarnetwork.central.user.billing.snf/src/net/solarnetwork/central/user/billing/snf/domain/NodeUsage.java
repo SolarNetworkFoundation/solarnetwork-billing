@@ -58,7 +58,8 @@ import net.solarnetwork.util.ArrayUtils;
  * @author matt
  * @version 1.1
  */
-public class NodeUsage extends BasicLongEntity implements InvoiceUsageRecord, Differentiable<NodeUsage> {
+public class NodeUsage extends BasicLongEntity
+		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage> {
 
 	/** A key to use for datum properties added usage. */
 	public static final String DATUM_PROPS_IN_KEY = "datum-props-in";
@@ -179,9 +180,8 @@ public class NodeUsage extends BasicLongEntity implements InvoiceUsageRecord, Di
 	}
 
 	@Override
-	public String getUsageKey() {
-		Long id = getId();
-		return id != null ? id.toString() : "";
+	public Long getUsageKey() {
+		return getId();
 	}
 
 	@Override

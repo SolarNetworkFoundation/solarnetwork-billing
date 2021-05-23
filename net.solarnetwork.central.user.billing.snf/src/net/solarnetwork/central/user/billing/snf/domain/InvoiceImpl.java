@@ -147,7 +147,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	}
 
 	@Override
-	public List<InvoiceUsageRecord> getInvoiceUsageRecords() {
+	public List<InvoiceUsageRecord<Long>> getNodeUsageRecords() {
 		if ( invoice == null ) {
 			return Collections.emptyList();
 		}
