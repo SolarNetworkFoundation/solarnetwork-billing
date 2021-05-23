@@ -82,6 +82,7 @@
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Account.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/AccountTask.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceItem.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceUsage.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoice.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/NodeUsage.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Payment.xml</value>

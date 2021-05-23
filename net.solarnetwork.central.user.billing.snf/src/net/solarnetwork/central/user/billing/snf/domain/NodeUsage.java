@@ -32,9 +32,13 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
+import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.dao.BasicLongEntity;
+import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.util.ArrayUtils;
 
 /**
@@ -52,9 +56,9 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class NodeUsage extends BasicLongEntity {
+public class NodeUsage extends BasicLongEntity implements InvoiceUsageRecord, Differentiable<NodeUsage> {
 
 	/** A key to use for datum properties added usage. */
 	public static final String DATUM_PROPS_IN_KEY = "datum-props-in";
@@ -142,6 +146,53 @@ public class NodeUsage extends BasicLongEntity {
 		builder.append(totalCost);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code id} and {@code created} properties and all {@code cost}
+	 * properties are not compared by this method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(NodeUsage other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(datumPropertiesIn, other.datumPropertiesIn)
+				&& Objects.equals(datumOut, other.datumOut)
+				&& Objects.equals(datumDaysStored, other.datumDaysStored);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(NodeUsage other) {
+		return !isSameAs(other);
+	}
+
+	@Override
+	public String getUsageKey() {
+		Long id = getId();
+		return id != null ? id.toString() : "";
+	}
+
+	@Override
+	public List<InvoiceItemUsageRecord> getUsageRecords() {
+		List<InvoiceItemUsageRecord> recs = new ArrayList<>(3);
+		recs.add(new UsageInfo(DATUM_PROPS_IN_KEY, new BigDecimal(datumPropertiesIn),
+				costs.getDatumPropertiesInCost()));
+		recs.add(new UsageInfo(DATUM_OUT_KEY, new BigDecimal(datumOut), costs.getDatumOutCost()));
+		recs.add(new UsageInfo(DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored),
+				costs.getDatumDaysStoredCost()));
+		return recs;
 	}
 
 	/**
