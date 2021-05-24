@@ -39,7 +39,7 @@ import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTiers;
  * MyBatis implementation of {@link NodeUsageDao}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage, Long>
 		implements NodeUsageDao {
@@ -49,8 +49,20 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 
 		FindEffectiveUsageTierForDate("find-EffectiveNodeUsageTier-for-date"),
 
+		/**
+		 * Find all available usage for a given user and date range, by node.
+		 */
+		FindMonthlyUsageForUser("find-NodeUsage-for-user"),
+
 		/** Find all available usage for a given user and date range. */
-		FindMonthlyUsageForUser("find-NodeUsage-for-user");
+		FindMonthlyUsageForAccount("find-Usage-for-user"),
+
+		/**
+		 * Find all available usage for a given user and date range, by node.
+		 */
+		FindMonthlyNodeUsageForAccount("find-NodeUsage-for-account"),
+
+		;
 
 		private final String queryName;
 
@@ -89,8 +101,8 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 		return new EffectiveNodeUsageTiers(results.get(0).getDate(), new NodeUsageTiers(tierList));
 	}
 
-	@Override
-	public List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate) {
+	private List<NodeUsage> usageForUser(String queryName, Long userId, LocalDate startDate,
+			LocalDate endDate) {
 		if ( userId == null ) {
 			throw new IllegalArgumentException("The userId argument must be provided.");
 		}
@@ -101,7 +113,25 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 		params.put("userId", userId);
 		params.put("startDate", startDate);
 		params.put("endDate", startDate.plusMonths(1));
-		return selectList(QueryName.FindMonthlyUsageForUser.getQueryName(), params, null, null);
+		return selectList(queryName, params, null, null);
+	}
+
+	@Override
+	public List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate) {
+		return usageForUser(QueryName.FindMonthlyUsageForUser.getQueryName(), userId, startDate,
+				endDate);
+	}
+
+	@Override
+	public List<NodeUsage> findUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate) {
+		return usageForUser(QueryName.FindMonthlyUsageForAccount.getQueryName(), userId, startDate,
+				endDate);
+	}
+
+	@Override
+	public List<NodeUsage> findNodeUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate) {
+		return usageForUser(QueryName.FindMonthlyNodeUsageForAccount.getQueryName(), userId, startDate,
+				endDate);
 	}
 
 }

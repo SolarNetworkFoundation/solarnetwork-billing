@@ -31,7 +31,7 @@ import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
  * DAO API for billing usage data.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public interface NodeUsageDao {
 
@@ -47,6 +47,16 @@ public interface NodeUsageDao {
 	/**
 	 * Find all node usage for a given user and time range.
 	 * 
+	 * <p>
+	 * This method applies all metered tier rates to the <b>node</b> level.
+	 * </p>
+	 * 
+	 * <p>
+	 * This method differs from
+	 * {@link #findNodeUsageForAccount(Long, LocalDate, LocalDate)} in that rows
+	 * with no associated cost are <b>excluded</b> from the output.
+	 * </p>
+	 * 
 	 * @param userId
 	 *        the user to get usage for
 	 * @param startDate
@@ -56,5 +66,46 @@ public interface NodeUsageDao {
 	 * @return the matching usage, never {@literal null}
 	 */
 	List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate);
+
+	/**
+	 * Find all usage for a given user and time range.
+	 * 
+	 * <p>
+	 * This method applies all metered tier rates to the <b>account</b> level.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user to get usage for
+	 * @param startDate
+	 *        the minimum date to get usage for (inclusive)
+	 * @param endDate
+	 *        the maximum date to get usage for (exclusive)
+	 * @return the matching usage, never {@literal null}
+	 * @since 1.1
+	 */
+	List<NodeUsage> findUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate);
+
+	/**
+	 * Find all node usage for a given user and time range.
+	 * 
+	 * <p>
+	 * This method differs from
+	 * {@link #findUsageForUser(Long, LocalDate, LocalDate)} in that rows with
+	 * no cost are <b>included</b> in the output. This is meant to support
+	 * finding the total metered usage by node by tier, which can be combined
+	 * with an account-level tier cost calculation provided by
+	 * {@link #findUsageForAccount(Long, LocalDate, LocalDate)}.
+	 * </p>
+	 * 
+	 * @param userId
+	 *        the user to get usage for
+	 * @param startDate
+	 *        the minimum date to get usage for (inclusive)
+	 * @param endDate
+	 *        the maximum date to get usage for (exclusive)
+	 * @return the matching usage, never {@literal null}
+	 * @since 1.1
+	 */
+	List<NodeUsage> findNodeUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate);
 
 }

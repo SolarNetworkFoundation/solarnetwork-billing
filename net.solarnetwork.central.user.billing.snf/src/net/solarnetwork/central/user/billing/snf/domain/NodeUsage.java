@@ -113,6 +113,17 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Constructor.
 	 * 
+	 * @param created
+	 *        the creation date
+	 * @since 1.1
+	 */
+	public NodeUsage(Instant created) {
+		this(null, created);
+	}
+
+	/**
+	 * Constructor.
+	 * 
 	 * @param id
 	 *        the node ID
 	 * @param created
