@@ -168,4 +168,15 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 		return null;
 	}
 
+	@Override
+	public BigDecimal getTotalUsageAmount() {
+		BigDecimal result = BigDecimal.ZERO;
+		List<InvoiceItemUsageRecord> items = getItemUsageRecords();
+		if ( items != null ) {
+			result = items.stream().map(InvoiceItemUsageRecord::getAmount).reduce(result,
+					BigDecimal::add);
+		}
+		return result;
+	}
+
 }

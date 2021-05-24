@@ -257,7 +257,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 					String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType() + ".unit",
 							null, null, locale);
 					LocalizedInvoiceItemUsageRecord locInfo = new LocalizedInvoiceItemUsageRecord(
-							usageInfo, locale, unitTypeDesc);
+							usageInfo, locale, unitTypeDesc, invoice.getCurrencyCode());
 					item = new InvoiceItemImpl(invoice, e, singletonList(locInfo));
 				} else {
 					if ( e.getItemType() == InvoiceItemType.Credit && e.getMetadata() != null
