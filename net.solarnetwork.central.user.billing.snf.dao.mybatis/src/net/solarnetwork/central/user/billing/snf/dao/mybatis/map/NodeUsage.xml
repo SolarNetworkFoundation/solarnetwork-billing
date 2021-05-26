@@ -17,7 +17,6 @@
 		, nu.datum_out_tiers_cost 		AS node_usage_datum_out_tiers_cost
 		, nu.datum_stored_tiers 		AS node_usage_datum_stored_tiers
 		, nu.datum_stored_tiers_cost 	AS node_usage_datum_stored_tiers_cost
-		, nu.total_tiers_cost			AS node_usage_total_tiers_cost
 	</sql>
 
 	<resultMap id="Usage-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
@@ -38,7 +37,6 @@
 		<result property="datumOutCostTiers"				column="node_usage_datum_out_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumDaysStoredTiersNumeric" 		column="node_usage_datum_stored_tiers" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 		<result property="datumDaysStoredCostTiers"			column="node_usage_datum_stored_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
-		<result property="totalCostTiers"					column="node_usage_total_tiers_cost" typeHandler="net.solarnetwork.central.dao.mybatis.type.NumericArrayTypeHandler"/>
 	</resultMap>
 
 	<select id="find-Usage-for-user" parameterType="map" resultMap="Usage-FullResult">

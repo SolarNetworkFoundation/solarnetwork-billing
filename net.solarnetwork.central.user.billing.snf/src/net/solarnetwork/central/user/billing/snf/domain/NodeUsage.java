@@ -86,7 +86,6 @@ public class NodeUsage extends BasicLongEntity
 	private BigInteger[] datumOutTiers;
 	private BigInteger[] datumDaysStoredTiers;
 	private NodeUsageCost[] costsTiers;
-	private BigDecimal[] totalCostTiers;
 
 	/**
 	 * Compare {@link NodeUsageTier} instances by quantity in ascending order.
@@ -667,25 +666,6 @@ public class NodeUsage extends BasicLongEntity
 					: null);
 			costsTiers[i].setDatumOutCost(val);
 		}
-	}
-
-	/**
-	 * Get the overall cost, per tier.
-	 * 
-	 * @return the costs
-	 */
-	public BigDecimal[] getTotalCostTiers() {
-		return totalCostTiers;
-	}
-
-	/**
-	 * Set the overall cost, per tier.
-	 * 
-	 * @param totalCostTiers
-	 *        the costs to set
-	 */
-	public void setTotalCostTiers(BigDecimal[] totalCostTiers) {
-		this.totalCostTiers = totalCostTiers;
 	}
 
 }
