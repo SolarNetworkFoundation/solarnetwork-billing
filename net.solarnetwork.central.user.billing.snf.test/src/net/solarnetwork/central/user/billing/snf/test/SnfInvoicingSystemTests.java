@@ -189,7 +189,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		account.setAddress(addr);
 		expect(accountDao.getForUser(userId)).andReturn(account);
 
-		final NodeUsage usage = new NodeUsage(randomUUID().getMostSignificantBits());
+		final NodeUsage usage = new NodeUsage(Instant.now());
 		usage.setDatumPropertiesIn(new BigInteger("123"));
 		usage.setDatumPropertiesInCost(new BigDecimal("1.23"));
 		usage.setDatumOut(new BigInteger("234"));
@@ -199,6 +199,14 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setTotalCost(new BigDecimal("7.02"));
 
 		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+
+		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumDaysStored(new BigInteger("345"));
+
+		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate))
+				.andReturn(singletonList(nodeUsage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(emptyList());
@@ -250,6 +258,14 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setTotalCost(new BigDecimal("7.02"));
 
 		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+
+		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumDaysStored(new BigInteger("345"));
+
+		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate))
+				.andReturn(singletonList(nodeUsage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",
@@ -319,6 +335,14 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setTotalCost(new BigDecimal("7.02"));
 
 		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+
+		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumDaysStored(new BigInteger("345"));
+
+		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate))
+				.andReturn(singletonList(nodeUsage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",
@@ -403,6 +427,14 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setTotalCost(new BigDecimal("7.02"));
 
 		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
+
+		final NodeUsage nodeUsage = new NodeUsage(randomUUID().getMostSignificantBits());
+		usage.setDatumPropertiesIn(new BigInteger("123"));
+		usage.setDatumOut(new BigInteger("234"));
+		usage.setDatumDaysStored(new BigInteger("345"));
+
+		expect(usageDao.findNodeUsageForAccount(userId, startDate, endDate))
+				.andReturn(singletonList(nodeUsage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",

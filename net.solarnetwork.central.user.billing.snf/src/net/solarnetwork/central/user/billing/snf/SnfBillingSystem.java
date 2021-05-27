@@ -459,7 +459,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				: dryRun ? false : true);
 
 		// query for usage
-		List<NodeUsage> usages = usageDao.findUsageForAccount(userId, startDate, endDate);
+		final List<NodeUsage> usages = usageDao.findUsageForAccount(userId, startDate, endDate);
 		if ( usages == null || usages.isEmpty() ) {
 			// no invoice necessary
 			return null;
@@ -478,11 +478,19 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		}
 
 		// turn usage into invoice items
-		SnfInvoice invoice = new SnfInvoice(account.getId().getId(), userId, Instant.now());
+		final SnfInvoice invoice = new SnfInvoice(account.getId().getId(), userId, Instant.now());
 		invoice.setAddress(account.getAddress());
 		invoice.setCurrencyCode(account.getCurrencyCode());
 		invoice.setStartDate(startDate);
 		invoice.setEndDate(endDate);
+
+		// query for node usage counts
+		final List<NodeUsage> nodeUsages = usageDao.findNodeUsageForAccount(userId, startDate, endDate);
+		if ( nodeUsages != null ) {
+			invoice.setUsages(new LinkedHashSet<>(nodeUsages));
+		} else {
+			invoice.setUsages(Collections.emptySet());
+		}
 
 		// for dryRun support, we generate a negative invoice ID based on current time
 		final UserLongPK invoiceId = (dryRun ? new UserLongPK(userId, -System.currentTimeMillis())
