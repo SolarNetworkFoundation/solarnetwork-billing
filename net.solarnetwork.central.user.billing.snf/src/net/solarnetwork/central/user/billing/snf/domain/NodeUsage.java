@@ -88,7 +88,7 @@ public class NodeUsage extends BasicLongEntity
 	private NodeUsageCost[] costsTiers;
 
 	/**
-	 * Compare {@link NodeUsageTier} instances by quantity in ascending order.
+	 * Compare {@link NodeUsage} instances by quantity in ascending order.
 	 */
 	public static final class NodeUsageNodeIdComparator implements Comparator<NodeUsage> {
 

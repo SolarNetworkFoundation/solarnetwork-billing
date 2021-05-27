@@ -158,9 +158,9 @@ public class UsageTiers {
 	@Override
 	public String toString() {
 		StringBuilder buf = new StringBuilder();
-		buf.append(format("| %20s | %-12s | %-12s |\n", "Key", "Quantity", "Cost"));
-		buf.append("|----------------------|--------------|--------------|--------------|");
-		final String row = "| %20s | %0,9.10f | %0,9.10f ||";
+		buf.append(format("| %-20s | %9s | %-12s |\n", "Key", "Quantity", "Cost"));
+		buf.append("|----------------------|-----------|--------------|");
+		final String row = "| %-20s | %,9d | %0,9.10f |";
 		for ( UsageTier tier : tiers ) {
 			buf.append("\n");
 			buf.append(format(row, tier.getKey(), tier.getQuantity(), tier.getCost()));
