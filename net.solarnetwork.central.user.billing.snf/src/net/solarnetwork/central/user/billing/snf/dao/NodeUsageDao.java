@@ -24,14 +24,14 @@ package net.solarnetwork.central.user.billing.snf.dao;
 
 import java.time.LocalDate;
 import java.util.List;
-import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTiers;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
+import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 
 /**
  * DAO API for billing usage data.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public interface NodeUsageDao {
 
@@ -41,37 +41,18 @@ public interface NodeUsageDao {
 	 * @param date
 	 *        the date to get the effective node usage tiers for
 	 * @return the tiers, or {@literal null} if no tiers are available
+	 * @since 2.0
 	 */
-	EffectiveNodeUsageTiers effectiveNodeUsageTiers(LocalDate date);
-
-	/**
-	 * Find all node usage for a given user and time range.
-	 * 
-	 * <p>
-	 * This method applies all metered tier rates to the <b>node</b> level.
-	 * </p>
-	 * 
-	 * <p>
-	 * This method differs from
-	 * {@link #findNodeUsageForAccount(Long, LocalDate, LocalDate)} in that rows
-	 * with no associated cost are <b>excluded</b> from the output.
-	 * </p>
-	 * 
-	 * @param userId
-	 *        the user to get usage for
-	 * @param startDate
-	 *        the minimum date to get usage for (inclusive)
-	 * @param endDate
-	 *        the maximum date to get usage for (exclusive)
-	 * @return the matching usage, never {@literal null}
-	 */
-	List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate);
+	UsageTiers effectiveUsageTiers(LocalDate date);
 
 	/**
 	 * Find all usage for a given user and time range.
 	 * 
 	 * <p>
 	 * This method applies all metered tier rates to the <b>account</b> level.
+	 * The {@link NodeUsage#getId()} values will be {@literal null} for all
+	 * returned instances.
+	 * </p>
 	 * </p>
 	 * 
 	 * @param userId
@@ -81,7 +62,7 @@ public interface NodeUsageDao {
 	 * @param endDate
 	 *        the maximum date to get usage for (exclusive)
 	 * @return the matching usage, never {@literal null}
-	 * @since 1.1
+	 * @since 2.0
 	 */
 	List<NodeUsage> findUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate);
 
@@ -104,7 +85,7 @@ public interface NodeUsageDao {
 	 * @param endDate
 	 *        the maximum date to get usage for (exclusive)
 	 * @return the matching usage, never {@literal null}
-	 * @since 1.1
+	 * @since 2.0
 	 */
 	List<NodeUsage> findNodeUsageForAccount(Long userId, LocalDate startDate, LocalDate endDate);
 

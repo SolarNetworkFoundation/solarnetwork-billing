@@ -22,24 +22,21 @@
 
 package net.solarnetwork.central.user.billing.snf.dao.mybatis;
 
-import static java.util.stream.Collectors.toList;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.solarnetwork.central.dao.mybatis.support.BaseMyBatisGenericDaoSupport;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
-import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTier;
-import net.solarnetwork.central.user.billing.snf.domain.EffectiveNodeUsageTiers;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
-import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTier;
-import net.solarnetwork.central.user.billing.snf.domain.NodeUsageTiers;
+import net.solarnetwork.central.user.billing.snf.domain.UsageTier;
+import net.solarnetwork.central.user.billing.snf.domain.UsageTiers;
 
 /**
  * MyBatis implementation of {@link NodeUsageDao}.
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage, Long>
 		implements NodeUsageDao {
@@ -47,15 +44,10 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	/** Query name enumeration. */
 	public enum QueryName {
 
-		FindEffectiveUsageTierForDate("find-EffectiveNodeUsageTier-for-date"),
-
-		/**
-		 * Find all available usage for a given user and date range, by node.
-		 */
-		FindMonthlyUsageForUser("find-NodeUsage-for-user"),
+		FindEffectiveUsageTierForDate("find-EffectiveUsageTier-for-date"),
 
 		/** Find all available usage for a given user and date range. */
-		FindMonthlyUsageForAccount("find-Usage-for-user"),
+		FindMonthlyUsageForAccount("find-Usage-for-account"),
 
 		/**
 		 * Find all available usage for a given user and date range, by node.
@@ -88,17 +80,16 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 	}
 
 	@Override
-	public EffectiveNodeUsageTiers effectiveNodeUsageTiers(LocalDate date) {
+	public UsageTiers effectiveUsageTiers(LocalDate date) {
 		if ( date == null ) {
 			date = LocalDate.now();
 		}
-		List<EffectiveNodeUsageTier> results = selectList(
-				QueryName.FindEffectiveUsageTierForDate.getQueryName(), date, null, null);
+		List<UsageTier> results = selectList(QueryName.FindEffectiveUsageTierForDate.getQueryName(),
+				date, null, null);
 		if ( results == null ) {
 			return null;
 		}
-		List<NodeUsageTier> tierList = results.stream().map(e -> e.getTier()).collect(toList());
-		return new EffectiveNodeUsageTiers(results.get(0).getDate(), new NodeUsageTiers(tierList));
+		return new UsageTiers(results, date);
 	}
 
 	private List<NodeUsage> usageForUser(String queryName, Long userId, LocalDate startDate,
@@ -114,12 +105,6 @@ public class MyBatisNodeUsageDao extends BaseMyBatisGenericDaoSupport<NodeUsage,
 		params.put("startDate", startDate);
 		params.put("endDate", startDate.plusMonths(1));
 		return selectList(queryName, params, null, null);
-	}
-
-	@Override
-	public List<NodeUsage> findUsageForUser(Long userId, LocalDate startDate, LocalDate endDate) {
-		return usageForUser(QueryName.FindMonthlyUsageForUser.getQueryName(), userId, startDate,
-				endDate);
 	}
 
 	@Override
