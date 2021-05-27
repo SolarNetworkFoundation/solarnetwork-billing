@@ -204,7 +204,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
 		debugQuery(format(
-				"select * from solarbill.billing_tier_details(%d, '2010-01-01'::timestamp, '2010-02-01'::timestamp, '2010-01-01'::date)",
+				"select * from solarbill.billing_node_tier_details(%d, '2010-01-01'::timestamp, '2010-02-01'::timestamp, '2010-01-01'::date)",
 				userId));
 
 		// WHEN
@@ -252,7 +252,7 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 
 		debugRows("solardatm.aud_acc_datm_daily", "ts_start");
 		debugQuery(format(
-				"select * from solarbill.billing_tier_details(%d, '2020-07-01'::timestamp, '2020-08-01'::timestamp, '2020-07-01'::date)",
+				"select * from solarbill.billing_usage_tier_details(%d, '2020-07-01'::timestamp, '2020-08-01'::timestamp, '2020-07-01'::date)",
 				userId));
 
 		// WHEN

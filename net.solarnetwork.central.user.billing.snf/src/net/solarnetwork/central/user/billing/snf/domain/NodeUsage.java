@@ -56,7 +56,7 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 1.1
+ * @version 2.0
  */
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage> {
@@ -88,7 +88,7 @@ public class NodeUsage extends BasicLongEntity
 	private NodeUsageCost[] costsTiers;
 
 	/**
-	 * Compare {@link NodeUsage} instances by quantity in ascending order.
+	 * Compare {@link NodeUsage} instances by node ID in ascending order.
 	 */
 	public static final class NodeUsageNodeIdComparator implements Comparator<NodeUsage> {
 
@@ -102,34 +102,35 @@ public class NodeUsage extends BasicLongEntity
 	/**
 	 * Constructor.
 	 * 
-	 * @param id
-	 *        the node ID
+	 * <p>
+	 * This creates a {@literal null} node ID, for usage not associated with a
+	 * specific node.
+	 * </p>
 	 */
-	public NodeUsage(Long id) {
-		this(id, Instant.now());
+	public NodeUsage() {
+		this(null);
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param created
-	 *        the creation date
-	 * @since 1.1
+	 * @param nodeId
+	 *        the node ID
 	 */
-	public NodeUsage(Instant created) {
-		this(null, created);
+	public NodeUsage(Long nodeId) {
+		this(nodeId, null);
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param id
+	 * @param nodeId
 	 *        the node ID
 	 * @param created
 	 *        the creation date
 	 */
-	public NodeUsage(Long id, Instant created) {
-		super(id, created);
+	public NodeUsage(Long nodeId, Instant created) {
+		super(nodeId, created);
 		setDatumPropertiesIn(BigInteger.ZERO);
 		setDatumOut(BigInteger.ZERO);
 		setDatumDaysStored(BigInteger.ZERO);
@@ -141,9 +142,12 @@ public class NodeUsage extends BasicLongEntity
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("NodeUsage{");
-		builder.append("nodeId=");
-		builder.append(getId());
-		builder.append(", datumPropertiesIn=");
+		if ( getNodeId() != null ) {
+			builder.append("nodeId=");
+			builder.append(getNodeId());
+			builder.append(", ");
+		}
+		builder.append("datumPropertiesIn=");
 		builder.append(datumPropertiesIn);
 		builder.append(", datumOut=");
 		builder.append(datumOut);
@@ -164,8 +168,8 @@ public class NodeUsage extends BasicLongEntity
 	 * instance.
 	 * 
 	 * <p>
-	 * The {@code id} and {@code created} properties and all {@code cost}
-	 * properties are not compared by this method.
+	 * The {@code nodeId} and all {@code cost} properties are not compared by
+	 * this method.
 	 * </p>
 	 * 
 	 * @param other
@@ -191,7 +195,7 @@ public class NodeUsage extends BasicLongEntity
 
 	@Override
 	public Long getUsageKey() {
-		return getId();
+		return getNodeId();
 	}
 
 	@Override
@@ -612,6 +616,15 @@ public class NodeUsage extends BasicLongEntity
 	@JsonIgnore
 	public List<NamedCost> getDatumOutTiersCostBreakdown() {
 		return tiersCostBreakdown(datumOutTiers, costsTiers, NodeUsageCost::getDatumOutCost);
+	}
+
+	/**
+	 * Get the node ID.
+	 * 
+	 * @return the node ID
+	 */
+	public Long getNodeId() {
+		return getId();
 	}
 
 	/**

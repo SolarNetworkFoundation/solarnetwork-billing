@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="net.solarnetwork.central.user.billing.snf.dao.mybatis.NodeUsage">
-	
+
+	<!-- Effective tier details -->
+
 	<resultMap id="EffectiveUsageTier-FullResult" type="net.solarnetwork.central.user.billing.snf.domain.UsageTier">
 		<constructor>
 			<arg column="usage_tier_meter_key" 			javaType="java.lang.String"/>
@@ -35,9 +37,6 @@
 	</sql>
 
 	<resultMap id="Usage-CountsResult" type="net.solarnetwork.central.user.billing.snf.domain.NodeUsage">
-		<constructor>
-			<arg column="node_usage_created" javaType="java.time.Instant"/>
-		</constructor>
 		<result property="datumPropertiesIn" 		column="node_usage_prop_in"/>
 		<result property="datumOut"	 				column="node_usage_datum_out"/>
 		<result property="datumDaysStored" 			column="node_usage_datum_stored"/>
@@ -103,7 +102,7 @@
 			<include refid="fragment-NodeUsage-full-result"/>
 			, CURRENT_TIMESTAMP AS node_usage_created
 		FROM
-			solarbill.billing_details(
+			solarbill.billing_node_details(
 			      #{userId,jdbcType=BIGINT}
 				, #{startDate,jdbcType=TIMESTAMP}
 				, #{endDate,jdbcType=TIMESTAMP}

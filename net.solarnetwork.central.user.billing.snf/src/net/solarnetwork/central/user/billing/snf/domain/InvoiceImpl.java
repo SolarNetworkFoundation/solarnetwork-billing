@@ -151,7 +151,7 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		if ( invoice == null ) {
 			return Collections.emptyList();
 		}
-		Set<NodeUsage> usages = invoice.getUsages();
+		Set<SnfInvoiceNodeUsage> usages = invoice.getUsages();
 		if ( usages == null || usages.isEmpty() ) {
 			return Collections.emptyList();
 		}

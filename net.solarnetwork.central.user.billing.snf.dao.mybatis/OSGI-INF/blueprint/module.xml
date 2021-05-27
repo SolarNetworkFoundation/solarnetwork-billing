@@ -33,6 +33,7 @@
 	<service ref="addresssDao" interface="net.solarnetwork.central.user.billing.snf.dao.AddressDao"/>
 	<service ref="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 	<service ref="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
+	<service ref="invoiceNodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao"/>
 	<service ref="nodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao"/>
 	<service ref="paymentDao" interface="net.solarnetwork.central.user.billing.snf.dao.PaymentDao"/>
 	<service ref="taxCodeDao" interface="net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao"/>
@@ -55,6 +56,9 @@
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	<bean id="invoiceItemDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceItemDao">
+		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
+	</bean>
+	<bean id="invoiceNodeUsageDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisSnfInvoiceNodeUsageDao">
 		<property name="sqlSessionTemplate" ref="sqlSessionTemplate"/>
 	</bean>
 	<bean id="nodeUsageDao" class="net.solarnetwork.central.user.billing.snf.dao.mybatis.MyBatisNodeUsageDao">
@@ -82,7 +86,7 @@
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Account.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/AccountTask.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceItem.xml</value>
-				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceUsage.xml</value>
+				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoiceNodeUsage.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/SnfInvoice.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/NodeUsage.xml</value>
 				<value>classpath:/net/solarnetwork/central/user/billing/snf/dao/mybatis/map/Payment.xml</value>

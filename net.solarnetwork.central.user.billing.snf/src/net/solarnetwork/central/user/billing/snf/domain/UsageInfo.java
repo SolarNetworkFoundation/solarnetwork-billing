@@ -33,7 +33,7 @@ import net.solarnetwork.domain.Differentiable;
  * Information about resource usage.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageInfo> {
 
@@ -66,6 +66,26 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * The {@code cost} will be stored as {@literal 0}.
+	 * </p>
+	 * 
+	 * @param unitType
+	 *        the usage unit type
+	 * @param amount
+	 *        the usage amount; will be stored as {@literal 0} if
+	 *        {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code unitType} is {@literal null}
+	 * @since 1.1
+	 */
+	public UsageInfo(String unitType, BigDecimal amount) {
+		this(unitType, amount, null);
 	}
 
 	/**
@@ -195,6 +215,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 * 
 	 * @return the cost, never {@literal null}
 	 */
+	@Override
 	public BigDecimal getCost() {
 		return cost;
 	}

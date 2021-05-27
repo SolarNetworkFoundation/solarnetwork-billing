@@ -26,6 +26,9 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsage.DATUM_DAYS_STORED_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsage.DATUM_OUT_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsage.DATUM_PROPS_IN_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.DEFAULT_ITEM_ORDER;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
@@ -79,6 +82,7 @@ import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 import net.solarnetwork.central.user.billing.snf.domain.Account;
 import net.solarnetwork.central.user.billing.snf.domain.AccountBalance;
@@ -91,6 +95,7 @@ import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
@@ -131,14 +136,15 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	private final AccountDao accountDao;
 	private final SnfInvoiceDao invoiceDao;
 	private final SnfInvoiceItemDao invoiceItemDao;
+	private final SnfInvoiceNodeUsageDao invoiceNodeUsageDao;
 	private final NodeUsageDao usageDao;
 	private final TaxCodeDao taxCodeDao;
 	private final VersionedMessageDao messageDao;
 	private Cache<String, VersionedMessages> messageCache;
 	private OptionalService<SnfTaxCodeResolver> taxCodeResolver;
-	private String datumPropertiesInKey = NodeUsage.DATUM_PROPS_IN_KEY;
-	private String datumOutKey = NodeUsage.DATUM_OUT_KEY;
-	private String datumDaysStoredKey = NodeUsage.DATUM_DAYS_STORED_KEY;
+	private String datumPropertiesInKey = DATUM_PROPS_IN_KEY;
+	private String datumOutKey = DATUM_OUT_KEY;
+	private String datumDaysStoredKey = DATUM_DAYS_STORED_KEY;
 	private String accountCreditKey = AccountBalance.ACCOUNT_CREDIT_KEY;
 	private OptionalServiceCollection<SnfInvoiceDeliverer> deliveryServices;
 	private OptionalServiceCollection<SnfInvoiceRendererResolver> rendererResolvers;
@@ -155,6 +161,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 *        the invoice DAO
 	 * @param invoiceItemDao
 	 *        the invoice item DAO
+	 * @param invoiceNodeUsageDao
+	 *        the invoice node usage DAO
 	 * @param usageDao
 	 *        the usage DAO
 	 * @param taxCodeDao
@@ -165,8 +173,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	 *         if any argument is {@literal null}
 	 */
 	public SnfBillingSystem(AccountDao accountDao, SnfInvoiceDao invoiceDao,
-			SnfInvoiceItemDao invoiceItemDao, NodeUsageDao usageDao, TaxCodeDao taxCodeDao,
-			VersionedMessageDao messageDao) {
+			SnfInvoiceItemDao invoiceItemDao, SnfInvoiceNodeUsageDao invoiceNodeUsageDao,
+			NodeUsageDao usageDao, TaxCodeDao taxCodeDao, VersionedMessageDao messageDao) {
 		super();
 		if ( accountDao == null ) {
 			throw new IllegalArgumentException("The accountDao argument must be provided.");
@@ -180,6 +188,10 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new IllegalArgumentException("The invoiceItemDao argument must be provided.");
 		}
 		this.invoiceItemDao = invoiceItemDao;
+		if ( invoiceNodeUsageDao == null ) {
+			throw new IllegalArgumentException("The invoiceNodeUsageDao argument must be provided.");
+		}
+		this.invoiceNodeUsageDao = invoiceNodeUsageDao;
 		if ( usageDao == null ) {
 			throw new IllegalArgumentException("The usageDao argument must be provided.");
 		}
@@ -429,10 +441,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		return filter;
 	}
 
-	public static Map<String, Object> usageMetadata(Long nodeId, Map<String, UsageInfo> usageData,
+	public static Map<String, Object> usageMetadata(Map<String, UsageInfo> usageData,
 			Map<String, List<NamedCost>> tierData, String tierKey) {
 		Map<String, Object> result = new LinkedHashMap<>(2);
-		result.put(SnfInvoiceItem.META_NODE_ID, nodeId);
 		if ( usageData.containsKey(tierKey) ) {
 			result.put(SnfInvoiceItem.META_USAGE, usageData.get(tierKey).toMetadata());
 		}
@@ -486,11 +497,6 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 
 		// query for node usage counts
 		final List<NodeUsage> nodeUsages = usageDao.findNodeUsageForAccount(userId, startDate, endDate);
-		if ( nodeUsages != null ) {
-			invoice.setUsages(new LinkedHashSet<>(nodeUsages));
-		} else {
-			invoice.setUsages(Collections.emptySet());
-		}
 
 		// for dryRun support, we generate a negative invoice ID based on current time
 		final UserLongPK invoiceId = (dryRun ? new UserLongPK(userId, -System.currentTimeMillis())
@@ -511,8 +517,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			if ( usage.getDatumPropertiesIn().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumPropertiesInKey,
 						new BigDecimal(usage.getDatumPropertiesIn()), usage.getDatumPropertiesInCost());
-				item.setMetadata(usageMetadata(usage.getId(), usageInfo, tiersBreakdown,
-						NodeUsage.DATUM_PROPS_IN_KEY));
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_PROPS_IN_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -521,8 +526,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			if ( usage.getDatumOut().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumOutKey,
 						new BigDecimal(usage.getDatumOut()), usage.getDatumOutCost());
-				item.setMetadata(usageMetadata(usage.getId(), usageInfo, tiersBreakdown,
-						NodeUsage.DATUM_OUT_KEY));
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_OUT_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -531,8 +535,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			if ( usage.getDatumDaysStored().compareTo(BigInteger.ZERO) > 0 ) {
 				SnfInvoiceItem item = newItem(invoiceId.getId(), Usage, datumDaysStoredKey,
 						new BigDecimal(usage.getDatumDaysStored()), usage.getDatumDaysStoredCost());
-				item.setMetadata(usageMetadata(usage.getId(), usageInfo, tiersBreakdown,
-						NodeUsage.DATUM_DAYS_STORED_KEY));
+				item.setMetadata(usageMetadata(usageInfo, tiersBreakdown, DATUM_DAYS_STORED_KEY));
 				if ( !dryRun ) {
 					invoiceItemDao.save(item);
 				}
@@ -568,6 +571,23 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 					invoice.getItems().add(creditItem);
 				}
 			}
+		}
+
+		// populate node usages
+		if ( nodeUsages != null ) {
+			List<SnfInvoiceNodeUsage> invoiceNodeUsages = new ArrayList<>(nodeUsages.size());
+			for ( NodeUsage nodeUsage : nodeUsages ) {
+				SnfInvoiceNodeUsage u = new SnfInvoiceNodeUsage(invoiceId.getId(), nodeUsage.getId(),
+						invoice.getCreated(), nodeUsage.getDatumPropertiesIn(), nodeUsage.getDatumOut(),
+						nodeUsage.getDatumDaysStored());
+				invoiceNodeUsages.add(u);
+				if ( !dryRun ) {
+					invoiceNodeUsageDao.save(u);
+				}
+			}
+			invoice.setUsages(new LinkedHashSet<>(invoiceNodeUsages));
+		} else {
+			invoice.setUsages(Collections.emptySet());
 		}
 
 		log.info("Generated invoice for user {} for date {}: {}", userId, startDate, invoice);

@@ -62,7 +62,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	private LocalDate endDate;
 	private String currencyCode;
 	private Set<SnfInvoiceItem> items;
-	private Set<NodeUsage> usages;
+	private Set<SnfInvoiceNodeUsage> usages;
 
 	/**
 	 * Compare {@link SnfInvoice} instances by start date in ascending order.
@@ -266,9 +266,9 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 		if ( getUsagesCount() != other.getUsagesCount() ) {
 			return false;
 		}
-		Map<Long, NodeUsage> otherUsages = other.usageMap();
-		for ( NodeUsage usage : usages ) {
-			NodeUsage otherUsage = otherUsages.remove(usage.getId());
+		Map<Long, SnfInvoiceNodeUsage> otherUsages = other.usageMap();
+		for ( SnfInvoiceNodeUsage usage : usages ) {
+			SnfInvoiceNodeUsage otherUsage = otherUsages.remove(usage.getNodeId());
 			if ( usage.differsFrom(otherUsage) ) {
 				return false;
 			}
@@ -432,7 +432,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * @return the usage records
 	 * @since 1.1
 	 */
-	public Set<NodeUsage> getUsages() {
+	public Set<SnfInvoiceNodeUsage> getUsages() {
 		return usages;
 	}
 
@@ -443,7 +443,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 *        the usages to set
 	 * @since 1.1
 	 */
-	public void setUsages(Set<NodeUsage> usages) {
+	public void setUsages(Set<SnfInvoiceNodeUsage> usages) {
 		this.usages = usages;
 	}
 
@@ -462,11 +462,11 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 * 
 	 * @return the map
 	 */
-	public Map<Long, NodeUsage> usageMap() {
+	public Map<Long, SnfInvoiceNodeUsage> usageMap() {
 		if ( usages == null ) {
 			return Collections.emptyMap();
 		}
-		return usages.stream().collect(Collectors.toMap(e -> e.getId(), e -> e));
+		return usages.stream().collect(Collectors.toMap(e -> e.getNodeId(), e -> e));
 	}
 
 }

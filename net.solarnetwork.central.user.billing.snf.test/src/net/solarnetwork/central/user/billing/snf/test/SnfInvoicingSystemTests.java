@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.test;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singleton;
@@ -37,6 +38,7 @@ import static org.easymock.EasyMock.same;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
@@ -61,6 +63,7 @@ import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
@@ -178,6 +181,24 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 				equalTo(remainingCredit.toPlainString()));
 	}
 
+	private static void assertInvoiceNodeUsage(SnfInvoice invoice, SnfInvoiceNodeUsage usage,
+			Long nodeId, BigInteger datumPropertiesIn, BigInteger datumOut, BigInteger datumDaysStored) {
+		assertThat(format("Invoice %d node usage node ID", invoice.getId().getId()), usage.getNodeId(),
+				is(equalTo(nodeId)));
+		assertThat(format("Invoice %d node usage datumPropertiesIn", invoice.getId().getId()),
+				usage.getDatumPropertiesIn(), is(equalTo(datumPropertiesIn)));
+		assertThat(format("Invoice %d node usage datumOut", invoice.getId().getId()),
+				usage.getDatumOut(), is(equalTo(datumOut)));
+		assertThat(format("Invoice %d node usage datumDaysStored", invoice.getId().getId()),
+				usage.getDatumDaysStored(), is(equalTo(datumDaysStored)));
+	}
+
+	private static void assertInvoiceNodeUsage(SnfInvoice invoice, SnfInvoiceNodeUsage usage,
+			NodeUsage expected) {
+		assertInvoiceNodeUsage(invoice, usage, expected.getId(), expected.getDatumPropertiesIn(),
+				expected.getDatumOut(), expected.getDatumDaysStored());
+	}
+
 	@Test
 	public void generateInvoice_basic_dryRun() {
 		// GIVEN
@@ -189,7 +210,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		account.setAddress(addr);
 		expect(accountDao.getForUser(userId)).andReturn(account);
 
-		final NodeUsage usage = new NodeUsage(Instant.now());
+		final NodeUsage usage = new NodeUsage();
 		usage.setDatumPropertiesIn(new BigInteger("123"));
 		usage.setDatumPropertiesInCost(new BigDecimal("1.23"));
 		usage.setDatumOut(new BigInteger("234"));
@@ -218,11 +239,11 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		SnfInvoice invoice = system.generateInvoice(userId, startDate, endDate, dryRunOptions());
 
 		// THEN
-		assertThat("InvoiceImpl created", invoice, notNullValue());
-		assertThat("InvoiceImpl items created for all usage", invoice.getItems(), hasSize(3));
+		assertThat("Invoice created", invoice, notNullValue());
+		assertThat("Invoice items created for all usage", invoice.getItems(), hasSize(3));
 
 		Map<String, SnfInvoiceItem> itemMap = invoice.getItemsByKey();
-		assertThat("InvoiceImpl item mapping contains all items", itemMap.keySet(), contains(
+		assertThat("Invoice item mapping contains all items", itemMap.keySet(), contains(
 				NodeUsage.DATUM_PROPS_IN_KEY, NodeUsage.DATUM_OUT_KEY, NodeUsage.DATUM_DAYS_STORED_KEY));
 
 		SnfInvoiceItem item;
@@ -235,6 +256,10 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		assertThat("Filtered for appropriate tax codes", taxCodeFilterCaptor.getValue(), matchesFilter(
 				invoice.getStartDate().atStartOfDay(addr.getTimeZone()).toInstant(), "NZ"));
+
+		assertThat("Invoice node usage items created", invoice.getUsages(), hasSize(1));
+		SnfInvoiceNodeUsage invoiceNodeUsage = invoice.getUsages().iterator().next();
+		assertInvoiceNodeUsage(invoice, invoiceNodeUsage, nodeUsage);
 	}
 
 	@Test
@@ -312,6 +337,10 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		assertThat("Filtered for appropriate tax codes", taxCodeFilterCaptor.getValue(), matchesFilter(
 				invoice.getStartDate().atStartOfDay(addr.getTimeZone()).toInstant(), "NZ"));
+
+		assertThat("Invoice node usage items created", invoice.getUsages(), hasSize(1));
+		SnfInvoiceNodeUsage invoiceNodeUsage = invoice.getUsages().iterator().next();
+		assertInvoiceNodeUsage(invoice, invoiceNodeUsage, nodeUsage);
 	}
 
 	@Test
@@ -404,6 +433,10 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		assertThat("Filtered for appropriate tax codes", taxCodeFilterCaptor.getValue(), matchesFilter(
 				invoice.getStartDate().atStartOfDay(addr.getTimeZone()).toInstant(), "NZ"));
+
+		assertThat("Invoice node usage items created", invoice.getUsages(), hasSize(1));
+		SnfInvoiceNodeUsage invoiceNodeUsage = invoice.getUsages().iterator().next();
+		assertInvoiceNodeUsage(invoice, invoiceNodeUsage, nodeUsage);
 	}
 
 	@Test
@@ -498,5 +531,9 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
 		assertThat("Filtered for appropriate tax codes", taxCodeFilterCaptor.getValue(), matchesFilter(
 				invoice.getStartDate().atStartOfDay(addr.getTimeZone()).toInstant(), "NZ"));
+
+		assertThat("Invoice node usage items created", invoice.getUsages(), hasSize(1));
+		SnfInvoiceNodeUsage invoiceNodeUsage = invoice.getUsages().iterator().next();
+		assertInvoiceNodeUsage(invoice, invoiceNodeUsage, nodeUsage);
 	}
 }
