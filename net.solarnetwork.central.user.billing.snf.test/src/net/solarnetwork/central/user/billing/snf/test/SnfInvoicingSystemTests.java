@@ -72,7 +72,7 @@ import net.solarnetwork.dao.BasicFilterResults;
  * {@link SnfInvoicingSystem}.
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
 public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 
@@ -198,7 +198,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		BasicFilterResults<TaxCode, Long> taxCodeResults = new BasicFilterResults<>(emptyList());
@@ -249,7 +249,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",
@@ -318,7 +318,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",
@@ -402,7 +402,7 @@ public class SnfInvoicingSystemTests extends AbstractSnfBililngSystemTest {
 		usage.setDatumDaysStoredCost(new BigDecimal("3.45"));
 		usage.setTotalCost(new BigDecimal("7.02"));
 
-		expect(usageDao.findUsageForUser(userId, startDate, endDate)).andReturn(singletonList(usage));
+		expect(usageDao.findUsageForAccount(userId, startDate, endDate)).andReturn(singletonList(usage));
 
 		Capture<TaxCodeFilter> taxCodeFilterCaptor = new Capture<>();
 		TaxCode datumPropsTax = new TaxCode("NZ", NodeUsage.DATUM_PROPS_IN_KEY, "GST",

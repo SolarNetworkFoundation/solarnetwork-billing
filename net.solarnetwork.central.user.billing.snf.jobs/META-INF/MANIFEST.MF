@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Foundation Billing Jobs
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.snf.jobs
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.1
 Bundle-Vendor: SolarNetwork Foundation
 Automatic-Module-Name: net.solarnetwork.central.user.billing.snf.jobs
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
@@ -16,8 +16,8 @@ Import-Package:
  net.solarnetwork.central.support;version="[1.14,3.0)",
  net.solarnetwork.central.user.billing.domain;version="[1.0,2.0)",
  net.solarnetwork.central.user.billing.snf;version="[1.0,2.0)",
- net.solarnetwork.central.user.billing.snf.dao;version="[1.0,2.0)",
- net.solarnetwork.central.user.billing.snf.domain;version="[1.0,2.0)",
+ net.solarnetwork.central.user.billing.snf.dao;version="[1.0,3.0)",
+ net.solarnetwork.central.user.billing.snf.domain;version="[1.0,3.0)",
  net.solarnetwork.central.user.billing.support;version="[1.0,2.0)",
  net.solarnetwork.central.user.dao;version="[2.2,3.0)",
  net.solarnetwork.central.user.domain;version="[2.1,3.0)",

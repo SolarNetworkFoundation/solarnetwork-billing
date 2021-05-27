@@ -459,9 +459,21 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				: dryRun ? false : true);
 
 		// query for usage
-		List<NodeUsage> usages = usageDao.findUsageForUser(userId, startDate, endDate);
+		List<NodeUsage> usages = usageDao.findUsageForAccount(userId, startDate, endDate);
 		if ( usages == null || usages.isEmpty() ) {
 			// no invoice necessary
+			return null;
+		}
+
+		// check for no-cost usage, and remove
+		for ( Iterator<NodeUsage> itr = usages.iterator(); itr.hasNext(); ) {
+			NodeUsage usage = itr.next();
+			if ( usage.getTotalCost().compareTo(BigDecimal.ZERO) == 0 ) {
+				itr.remove();
+			}
+		}
+		if ( usages.isEmpty() ) {
+			// only zero cost usage, no invoice necessary
 			return null;
 		}
 
