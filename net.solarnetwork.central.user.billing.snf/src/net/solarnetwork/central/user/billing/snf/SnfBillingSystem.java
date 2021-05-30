@@ -96,6 +96,7 @@ import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceFilter;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoicingOptions;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCode;
 import net.solarnetwork.central.user.billing.snf.domain.TaxCodeFilter;
 import net.solarnetwork.central.user.billing.snf.domain.UsageInfo;
@@ -453,6 +454,33 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			result.put(SnfInvoiceItem.META_TIER_BREAKDOWN, tierMeta);
 		}
 		return result;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public Resource previewInvoice(Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale) {
+		Account account = accountDao.getForUser(userId);
+		if ( account == null ) {
+			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
+		}
+
+		// find current month in account's time zone
+		ZoneId zone = account.getTimeZone();
+		if ( zone == null ) {
+			zone = ZoneId.systemDefault();
+		}
+		LocalDate start = LocalDate.now(zone).withDayOfMonth(1);
+		LocalDate end = start.plusMonths(1);
+
+		log.debug("Generating preview invoice for account {} (user {}) month {}", account.getId(),
+				account.getUserId(), start);
+
+		SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
+				options != null ? options.isUseAccountCredit() : false);
+		SnfInvoice invoice = generateInvoice(userId, start, end, opts);
+		return renderInvoice(invoice, outputType, locale);
 	}
 
 	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
