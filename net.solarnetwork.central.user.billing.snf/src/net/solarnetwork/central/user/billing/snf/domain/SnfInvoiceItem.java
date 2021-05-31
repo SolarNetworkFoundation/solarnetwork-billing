@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -251,11 +252,14 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 * 
 	 * @return the usage info, or {@literal null} if none available
 	 */
+	@SuppressWarnings("unchecked")
 	@JsonIgnore
 	public UsageInfo getUsageInfo() {
-		@SuppressWarnings("unchecked")
 		Map<String, ?> usage = (metadata != null ? (Map<String, ?>) metadata.get(META_USAGE) : null);
-		return UsageInfo.of(usage);
+		List<Map<String, ?>> tiers = (metadata != null
+				? (List<Map<String, ?>>) metadata.get(META_TIER_BREAKDOWN)
+				: null);
+		return UsageInfo.of(usage, tiers);
 	}
 
 	/**

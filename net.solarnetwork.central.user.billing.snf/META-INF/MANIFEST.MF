@@ -10,7 +10,7 @@ Export-Package:
  net.solarnetwork.central.user.billing.snf;version="1.1.0",
  net.solarnetwork.central.user.billing.snf.dao;version="2.0.0",
  net.solarnetwork.central.user.billing.snf.domain;version="2.0.0",
- net.solarnetwork.central.user.billing.snf.util;version="1.0.0"
+ net.solarnetwork.central.user.billing.snf.util;version="1.1.0"
 Import-Package: 
  com.fasterxml.jackson.annotation;version="[2.10.1,3.0)",
  javax.cache;version="[1.0,2.0)",
@@ -48,4 +48,7 @@ Import-Package:
  org.springframework.dao;version="[4.3,5.0)",
  org.springframework.transaction;version="[4.3,5.0)",
  org.springframework.transaction.annotation;version="[4.3,5.0)",
- org.springframework.util;version="[4.3,5.0)"
+ org.springframework.util;version="[4.3,5.0)",
+ org.supercsv.io;version="[2.4,3.0)";resolution:=optional,
+ org.supercsv.prefs;version="[2.4,3.0)";resolution:=optional,
+ org.supercsv.util;version="[2.4,3.0)";resolution:=optional

@@ -152,6 +152,7 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<InvoiceItemUsageRecord> getItemUsageRecords() {
 		if ( itemUsageRecords != null ) {
@@ -159,8 +160,8 @@ public class InvoiceItemImpl extends BaseStringEntity implements InvoiceItem {
 		}
 		Map<String, Object> metadata = item.getMetadata();
 		if ( metadata != null && (metadata.get(SnfInvoiceItem.META_USAGE) instanceof Map) ) {
-			@SuppressWarnings("unchecked")
-			UsageInfo usage = UsageInfo.of((Map<String, ?>) metadata.get(SnfInvoiceItem.META_USAGE));
+			UsageInfo usage = UsageInfo.of((Map<String, ?>) metadata.get(SnfInvoiceItem.META_USAGE),
+					(List<Map<String, ?>>) metadata.get(SnfInvoiceItem.META_TIER_BREAKDOWN));
 			if ( usage != null ) {
 				return Collections.singletonList(usage);
 			}

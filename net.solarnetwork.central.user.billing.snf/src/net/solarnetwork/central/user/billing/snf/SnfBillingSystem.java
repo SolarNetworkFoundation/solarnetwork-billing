@@ -267,10 +267,22 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 				InvoiceItemImpl item;
 				UsageInfo usageInfo = e.getUsageInfo();
 				if ( usageInfo != null ) {
+					List<net.solarnetwork.central.user.billing.domain.NamedCost> tiers = usageInfo
+							.getUsageTiers();
+					String[] tierDescriptions = null;
+					if ( tiers != null && !tiers.isEmpty() ) {
+						tierDescriptions = new String[tiers.size()];
+						for ( int i = 0; i < tiers.size(); i++ ) {
+							tierDescriptions[i] = String.format("%s %d",
+									messageSource.getMessage("invoiceItemTier", null, null, locale),
+									i + 1);
+						}
+					}
 					String unitTypeDesc = messageSource.getMessage(usageInfo.getUnitType() + ".unit",
 							null, null, locale);
 					LocalizedInvoiceItemUsageRecord locInfo = new LocalizedInvoiceItemUsageRecord(
-							usageInfo, locale, unitTypeDesc, invoice.getCurrencyCode());
+							usageInfo, locale, unitTypeDesc, invoice.getCurrencyCode(),
+							tierDescriptions);
 					item = new InvoiceItemImpl(invoice, e, singletonList(locInfo));
 				} else {
 					if ( e.getItemType() == InvoiceItemType.Credit && e.getMetadata() != null
