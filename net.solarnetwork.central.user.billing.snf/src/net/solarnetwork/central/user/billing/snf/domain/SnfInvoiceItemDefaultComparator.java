@@ -34,7 +34,7 @@ import java.util.UUID;
  * 
  * <ol>
  * <li>item type</li>
- * <li>node ID (metadata)</li>
+ * <li>node ID (metadata) (if available)</li>
  * <li>key</li>
  * <li>ID</lI>
  * </ol>
@@ -50,6 +50,17 @@ public class SnfInvoiceItemDefaultComparator implements Comparator<SnfInvoiceIte
 		return (v != null && clazz.isAssignableFrom(v.getClass()) ? (T) v : null);
 	}
 
+	private static int orderForNodeUsage(String usage) {
+		if ( NodeUsage.DATUM_PROPS_IN_KEY.equals(usage) ) {
+			return 1;
+		} else if ( NodeUsage.DATUM_OUT_KEY.equals(usage) ) {
+			return 2;
+		} else if ( NodeUsage.DATUM_DAYS_STORED_KEY.equals(usage) ) {
+			return 3;
+		}
+		return 0;
+	}
+
 	@Override
 	public int compare(SnfInvoiceItem o1, SnfInvoiceItem o2) {
 		// first compare by type
@@ -63,16 +74,13 @@ public class SnfInvoiceItemDefaultComparator implements Comparator<SnfInvoiceIte
 		// next compare by node ID, with non-node items sorted first
 		Number n1 = metaValue(o1, SnfInvoiceItem.META_NODE_ID, Number.class);
 		Number n2 = metaValue(o2, SnfInvoiceItem.META_NODE_ID, Number.class);
-		if ( n1 == null ) {
-			return -1;
-		} else if ( n2 == null ) {
-			return 1;
-		}
-		long l1 = n1.longValue();
-		long l2 = n2.longValue();
-		result = (l1 < l2 ? -1 : l1 > l2 ? 1 : 0);
-		if ( result != 0 ) {
-			return result;
+		if ( n1 != null && n2 != null ) {
+			long l1 = n1.longValue();
+			long l2 = n2.longValue();
+			result = (l1 < l2 ? -1 : l1 > l2 ? 1 : 0);
+			if ( result != 0 ) {
+				return result;
+			}
 		}
 
 		// next compare by key, with NULLs sorted first
@@ -83,7 +91,14 @@ public class SnfInvoiceItemDefaultComparator implements Comparator<SnfInvoiceIte
 		} else if ( k2 == null ) {
 			return 1;
 		}
-		result = k1.compareTo(k2);
+		if ( (NodeUsage.DATUM_PROPS_IN_KEY.equals(k1) || NodeUsage.DATUM_OUT_KEY.equals(k1)
+				|| NodeUsage.DATUM_DAYS_STORED_KEY.equals(k1))
+				&& (NodeUsage.DATUM_PROPS_IN_KEY.equals(k2) || NodeUsage.DATUM_OUT_KEY.equals(k2)
+						|| NodeUsage.DATUM_DAYS_STORED_KEY.equals(k2)) ) {
+			result = Integer.compare(orderForNodeUsage(k1), orderForNodeUsage(k2));
+		} else {
+			result = k1.compareTo(k2);
+		}
 		if ( result != 0 ) {
 			return result;
 		}
