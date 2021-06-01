@@ -59,16 +59,7 @@ import net.solarnetwork.util.ArrayUtils;
  * @version 2.0
  */
 public class NodeUsage extends BasicLongEntity
-		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage> {
-
-	/** A key to use for datum properties added usage. */
-	public static final String DATUM_PROPS_IN_KEY = "datum-props-in";
-
-	/** A key to use for datum queried usage. */
-	public static final String DATUM_OUT_KEY = "datum-out";
-
-	/** A key to use for datum days stored usage. */
-	public static final String DATUM_DAYS_STORED_KEY = "datum-days-stored";
+		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in

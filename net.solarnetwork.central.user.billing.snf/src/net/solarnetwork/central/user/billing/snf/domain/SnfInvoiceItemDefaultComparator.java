@@ -50,17 +50,6 @@ public class SnfInvoiceItemDefaultComparator implements Comparator<SnfInvoiceIte
 		return (v != null && clazz.isAssignableFrom(v.getClass()) ? (T) v : null);
 	}
 
-	private static int orderForNodeUsage(String usage) {
-		if ( NodeUsage.DATUM_PROPS_IN_KEY.equals(usage) ) {
-			return 1;
-		} else if ( NodeUsage.DATUM_OUT_KEY.equals(usage) ) {
-			return 2;
-		} else if ( NodeUsage.DATUM_DAYS_STORED_KEY.equals(usage) ) {
-			return 3;
-		}
-		return 0;
-	}
-
 	@Override
 	public int compare(SnfInvoiceItem o1, SnfInvoiceItem o2) {
 		// first compare by type
@@ -91,12 +80,11 @@ public class SnfInvoiceItemDefaultComparator implements Comparator<SnfInvoiceIte
 		} else if ( k2 == null ) {
 			return 1;
 		}
-		if ( (NodeUsage.DATUM_PROPS_IN_KEY.equals(k1) || NodeUsage.DATUM_OUT_KEY.equals(k1)
-				|| NodeUsage.DATUM_DAYS_STORED_KEY.equals(k1))
-				&& (NodeUsage.DATUM_PROPS_IN_KEY.equals(k2) || NodeUsage.DATUM_OUT_KEY.equals(k2)
-						|| NodeUsage.DATUM_DAYS_STORED_KEY.equals(k2)) ) {
-			result = Integer.compare(orderForNodeUsage(k1), orderForNodeUsage(k2));
-		} else {
+		try {
+			NodeUsageType u1 = NodeUsageType.forKey(k1);
+			NodeUsageType u2 = NodeUsageType.forKey(k2);
+			result = Integer.compare(u1.getOrder(), u2.getOrder());
+		} catch ( IllegalArgumentException e ) {
 			result = k1.compareTo(k2);
 		}
 		if ( result != 0 ) {

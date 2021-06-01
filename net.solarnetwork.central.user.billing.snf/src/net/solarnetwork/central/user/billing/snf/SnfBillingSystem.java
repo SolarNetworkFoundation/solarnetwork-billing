@@ -26,9 +26,9 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType.Usage;
-import static net.solarnetwork.central.user.billing.snf.domain.NodeUsage.DATUM_DAYS_STORED_KEY;
-import static net.solarnetwork.central.user.billing.snf.domain.NodeUsage.DATUM_OUT_KEY;
-import static net.solarnetwork.central.user.billing.snf.domain.NodeUsage.DATUM_PROPS_IN_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_DAYS_STORED_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_OUT_KEY;
+import static net.solarnetwork.central.user.billing.snf.domain.NodeUsages.DATUM_PROPS_IN_KEY;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.DEFAULT_ITEM_ORDER;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.newItem;
@@ -132,7 +132,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	public static final int DEFAULT_DELIVERY_TIMEOUT = 60;
 
 	/** The invoice ID used for dry-run (draft) invoice generation. */
-	public static final Long DRAFT_INVOICE_ID = -23108249L; // -DRAFT base 36
+	public static final Long DRAFT_INVOICE_ID = Long.valueOf(Invoice.DRAFT_INVOICE_ID);
 
 	/** The invoice number used for dry-run (draft) invoice generation. */
 	public static final String DRAFT_INVOICE_NUMBER = SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID);

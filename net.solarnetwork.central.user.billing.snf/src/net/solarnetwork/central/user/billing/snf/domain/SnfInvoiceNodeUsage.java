@@ -159,9 +159,9 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	@Override
 	public List<InvoiceItemUsageRecord> getUsageRecords() {
 		List<InvoiceItemUsageRecord> recs = new ArrayList<>(3);
-		recs.add(new UsageInfo(NodeUsage.DATUM_PROPS_IN_KEY, new BigDecimal(datumPropertiesIn)));
-		recs.add(new UsageInfo(NodeUsage.DATUM_OUT_KEY, new BigDecimal(datumOut)));
-		recs.add(new UsageInfo(NodeUsage.DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored)));
+		recs.add(new UsageInfo(NodeUsages.DATUM_PROPS_IN_KEY, new BigDecimal(datumPropertiesIn)));
+		recs.add(new UsageInfo(NodeUsages.DATUM_OUT_KEY, new BigDecimal(datumOut)));
+		recs.add(new UsageInfo(NodeUsages.DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored)));
 		return recs;
 	}
 
