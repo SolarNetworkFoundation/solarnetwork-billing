@@ -30,6 +30,7 @@ import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.LinkedHashSet;
 import java.util.List;
 import org.joda.time.DateTime;
@@ -89,6 +90,7 @@ public class InvoiceTests {
 		assertThat("ID is Long string", invoice.getId(), equalTo(inv.getId().getId().toString()));
 		assertThat("Creation same", invoice.getCreated(),
 				equalTo(new DateTime(inv.getCreated().toEpochMilli())));
+		assertThat("Month populated", invoice.getInvoiceMonth(), equalTo(YearMonth.of(2020, 1)));
 		assertThat("Amount same as total amount", invoice.getAmount(), equalTo(inv.getTotalAmount()));
 		assertThat("Balance same as total amount", invoice.getBalance(), equalTo(inv.getTotalAmount()));
 		assertThat("Currency same", invoice.getCurrencyCode(), equalTo(inv.getCurrencyCode()));

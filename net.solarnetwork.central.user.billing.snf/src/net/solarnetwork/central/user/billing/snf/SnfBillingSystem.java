@@ -484,13 +484,20 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
 		}
 
-		// find current month in account's time zone
-		ZoneId zone = account.getTimeZone();
-		if ( zone == null ) {
-			zone = ZoneId.systemDefault();
+		LocalDate start;
+		LocalDate end;
+		if ( options != null && options.getMonth() != null ) {
+			start = options.getMonth().atDay(1);
+			end = start.plusMonths(1);
+		} else {
+			// find current month in account's time zone
+			ZoneId zone = account.getTimeZone();
+			if ( zone == null ) {
+				zone = ZoneId.systemDefault();
+			}
+			start = LocalDate.now(zone).withDayOfMonth(1);
+			end = start.plusMonths(1);
 		}
-		LocalDate start = LocalDate.now(zone).withDayOfMonth(1);
-		LocalDate end = start.plusMonths(1);
 
 		log.debug("Generating preview invoice for account {} (user {}) month {}", account.getId(),
 				account.getUserId(), start);

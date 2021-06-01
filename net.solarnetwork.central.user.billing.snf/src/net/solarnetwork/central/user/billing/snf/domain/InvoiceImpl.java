@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -96,6 +97,18 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		this.items = items;
 		setId(invoice.getId().getId().toString());
 		setCreated(new DateTime(invoice.getCreated().toEpochMilli()));
+	}
+
+	@Override
+	public YearMonth getInvoiceMonth() {
+		// as long as the start/end date range is two consecutive start-of-month values (day 1) then return the month
+		LocalDate startDate = invoice.getStartDate();
+		LocalDate endDate = invoice.getEndDate();
+		if ( startDate != null && startDate.getDayOfMonth() == 1
+				&& startDate.plusMonths(1).equals(endDate) ) {
+			return YearMonth.of(startDate.getYear(), startDate.getMonth());
+		}
+		return null;
 	}
 
 	@Override
