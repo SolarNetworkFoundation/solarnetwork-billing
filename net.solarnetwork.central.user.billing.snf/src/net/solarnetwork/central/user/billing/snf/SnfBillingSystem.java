@@ -131,6 +131,12 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	/** The default {@code deliveryTimeoutSecs} property value. */
 	public static final int DEFAULT_DELIVERY_TIMEOUT = 60;
 
+	/** The invoice ID used for dry-run (draft) invoice generation. */
+	public static final Long DRAFT_INVOICE_ID = -23108249L; // -DRAFT base 36
+
+	/** The invoice number used for dry-run (draft) invoice generation. */
+	public static final String DRAFT_INVOICE_NUMBER = SnfBillingUtils.invoiceNumForId(DRAFT_INVOICE_ID);
+
 	private static final String[] MESSAGE_BUNDLE_NAMES = new String[] { GLOBAL_MESSAGE_BUNDLE_NAME,
 			MESSAGE_BUNDLE_NAME };
 
@@ -538,8 +544,8 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		// query for node usage counts
 		final List<NodeUsage> nodeUsages = usageDao.findNodeUsageForAccount(userId, startDate, endDate);
 
-		// for dryRun support, we generate a negative invoice ID based on current time
-		final UserLongPK invoiceId = (dryRun ? new UserLongPK(userId, -System.currentTimeMillis())
+		// for dryRun support, we generate a negative invoice ID
+		final UserLongPK invoiceId = (dryRun ? new UserLongPK(userId, DRAFT_INVOICE_ID)
 				: invoiceDao.save(invoice));
 		invoice.getId().setId(invoiceId.getId()); // for return
 
