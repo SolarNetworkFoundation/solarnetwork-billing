@@ -371,7 +371,10 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		} else {
 			extension = "." + outputType.getSubtype();
 		}
-		Object[] filenameArgs = new Object[] { SnfBillingUtils.invoiceNumForId(invoice.getId().getId()),
+		Object[] filenameArgs = new Object[] {
+				DRAFT_INVOICE_ID.equals(invoice.getId().getId())
+						? messageSource.getMessage("draftInvoice", null, "DRAFT", locale)
+						: SnfBillingUtils.invoiceNumForId(invoice.getId().getId()),
 				YearMonth.from(invoice.getStartDate()).toString(), extension };
 		String filename = messageSource.getMessage("invoice.filename", filenameArgs,
 				"SolarNetwork Invoice {0} - {1}{2}", locale);
