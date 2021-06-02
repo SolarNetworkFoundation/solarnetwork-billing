@@ -474,11 +474,9 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		return result;
 	}
 
-	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
-	@Override
-	public Resource previewInvoice(Long userId,
+	private SnfInvoice createPreviewInvoice(Long userId,
 			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
-			MimeType outputType, Locale locale) {
+			Locale locale) {
 		Account account = accountDao.getForUser(userId);
 		if ( account == null ) {
 			throw new AuthorizationException(Reason.UNKNOWN_OBJECT, userId);
@@ -505,6 +503,25 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 		SnfInvoicingOptions opts = new SnfInvoicingOptions(true,
 				options != null ? options.isUseAccountCredit() : false);
 		SnfInvoice invoice = generateInvoice(userId, start, end, opts);
+		return invoice;
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public Invoice getPreviewInvoice(Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			Locale locale) {
+		SnfInvoice invoice = createPreviewInvoice(userId, options, locale);
+		final MessageSource messageSource = messageSourceForInvoice(invoice);
+		return invoiceForSnfInvoice(invoice, messageSource, locale);
+	}
+
+	@Transactional(readOnly = true, propagation = Propagation.REQUIRED)
+	@Override
+	public Resource previewInvoice(Long userId,
+			net.solarnetwork.central.user.billing.domain.InvoiceGenerationOptions options,
+			MimeType outputType, Locale locale) {
+		SnfInvoice invoice = createPreviewInvoice(userId, options, locale);
 		return renderInvoice(invoice, outputType, locale);
 	}
 
