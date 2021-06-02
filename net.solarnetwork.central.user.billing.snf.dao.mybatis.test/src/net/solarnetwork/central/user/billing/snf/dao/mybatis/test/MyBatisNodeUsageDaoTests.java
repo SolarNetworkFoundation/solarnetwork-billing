@@ -155,20 +155,22 @@ public class MyBatisNodeUsageDaoTests extends AbstractMyBatisDaoTestSupport {
 		assertThat("Effective date", result.getDate(), equalTo(date));
 		List<UsageTier> tiers = result.getTiers();
 		assertThat("3x4 usage tiers available", tiers, hasSize(12));
-
+		// @formatter:off
 		String[][] expectedTiers = new String[][] {
-				new String[] { "datum-days-stored", "0", "0.0000001" },
-				new String[] { "datum-days-stored", "10000000", "0.00000001" },
-				new String[] { "datum-days-stored", "1000000000", "0.000000003" },
-				new String[] { "datum-days-stored", "100000000000", "0.0000000005" },
-				new String[] { "datum-out", "0", "0.000001" },
-				new String[] { "datum-out", "1000000", "0.0000002" },
-				new String[] { "datum-out", "100000000", "0.00000003" },
-				new String[] { "datum-out", "10000000000", "0.000000006" },
-				new String[] { "datum-props-in", "0", "0.000006" },
-				new String[] { "datum-props-in", "500000", "0.000004" },
-				new String[] { "datum-props-in", "10000000", "0.000001" },
-				new String[] { "datum-props-in", "500000000", "0.0000002" }, };
+				new String[] { "datum-days-stored", "0", 			"0.00000005" },
+				new String[] { "datum-days-stored", "10000000", 	"0.00000001" },
+				new String[] { "datum-days-stored", "1000000000", 	"0.000000004" },
+				new String[] { "datum-days-stored", "100000000000", "0.000000001" },
+				new String[] { "datum-out", "0", 			"0.0000005" },
+				new String[] { "datum-out", "1000000", 		"0.0000002" },
+				new String[] { "datum-out", "100000000", 	"0.00000003" },
+				new String[] { "datum-out", "10000000000", 	"0.000000008" },
+				new String[] { "datum-props-in", "0", 			"0.000005" },
+				new String[] { "datum-props-in", "500000", 		"0.000004" },
+				new String[] { "datum-props-in", "10000000", 	"0.0000008" },
+				new String[] { "datum-props-in", "500000000",	"0.0000002" },
+				};
+		// @formatter:on
 		LocalDate expectedDate = LocalDate.of(2021, 7, 1);
 		for ( int i = 0; i < expectedTiers.length; i++ ) {
 			assertThat("Usage tier " + i, tiers.get(i), is(equalTo(tier(expectedTiers[i][0],
