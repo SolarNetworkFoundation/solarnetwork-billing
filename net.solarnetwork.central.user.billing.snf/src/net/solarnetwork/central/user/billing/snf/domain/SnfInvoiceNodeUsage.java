@@ -37,10 +37,12 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice node usage details.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		implements Differentiable<SnfInvoiceNodeUsage>, InvoiceUsageRecord<Long> {
+
+	private static final long serialVersionUID = -2673333468313188077L;
 
 	private final BigInteger datumPropertiesIn;
 	private final BigInteger datumOut;

@@ -37,9 +37,11 @@ import net.solarnetwork.domain.Differentiable;
  * SNF invoice item entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
+
+	private static final long serialVersionUID = 3844737823712570024L;
 
 	/** A metadata key for a node ID. */
 	public static final String META_NODE_ID = "nodeId";

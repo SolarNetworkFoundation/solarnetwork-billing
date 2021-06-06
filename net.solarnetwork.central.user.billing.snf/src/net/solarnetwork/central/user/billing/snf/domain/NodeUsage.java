@@ -61,6 +61,8 @@ import net.solarnetwork.util.ArrayUtils;
 public class NodeUsage extends BasicLongEntity
 		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
+	private static final long serialVersionUID = -3736903812257042879L;
+
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
 	 * ascending order.

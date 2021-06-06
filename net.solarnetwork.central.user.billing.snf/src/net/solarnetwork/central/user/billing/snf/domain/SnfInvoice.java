@@ -50,6 +50,8 @@ import net.solarnetwork.domain.Differentiable;
 public class SnfInvoice extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
 
+	private static final long serialVersionUID = 4095505242827622567L;
+
 	/**
 	 * Comparator that sorts {@link SnfInvoice} objects by {@code startDate} in
 	 * ascending order.
