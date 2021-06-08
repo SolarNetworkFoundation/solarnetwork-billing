@@ -37,6 +37,7 @@
 	<reference id="accountDao" interface="net.solarnetwork.central.user.billing.snf.dao.AccountDao"/>
 	<reference id="invoiceDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao"/>
 	<reference id="invoiceItemDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao"/>
+	<reference id="invoiceNodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao"/>
 	<reference id="nodeUsageDao" interface="net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao"/>
 	<reference id="taxCodeDao" interface="net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao"/>
 
@@ -70,6 +71,7 @@
 		<argument ref="accountDao"/>
 		<argument ref="invoiceDao"/>
 		<argument ref="invoiceItemDao"/>
+		<argument ref="invoiceNodeUsageDao"/>
 		<argument ref="nodeUsageDao"/>
 		<argument ref="taxCodeDao"/>
 		<argument ref="messageDao"/>

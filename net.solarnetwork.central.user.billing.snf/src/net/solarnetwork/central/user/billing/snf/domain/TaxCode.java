@@ -32,9 +32,11 @@ import net.solarnetwork.domain.Differentiable;
  * Tax code entity, which defines a tax rate to apply to a given item key.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class TaxCode extends BasicLongEntity implements Differentiable<TaxCode> {
+
+	private static final long serialVersionUID = 3366589227496726636L;
 
 	private final String zone;
 	private final String itemKey;

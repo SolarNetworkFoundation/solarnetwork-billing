@@ -32,9 +32,13 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
+import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.dao.BasicLongEntity;
+import net.solarnetwork.domain.Differentiable;
 import net.solarnetwork.util.ArrayUtils;
 
 /**
@@ -52,18 +56,12 @@ import net.solarnetwork.util.ArrayUtils;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 2.0
  */
-public class NodeUsage extends BasicLongEntity {
+public class NodeUsage extends BasicLongEntity
+		implements InvoiceUsageRecord<Long>, Differentiable<NodeUsage>, NodeUsages {
 
-	/** A key to use for datum properties added usage. */
-	public static final String DATUM_PROPS_IN_KEY = "datum-props-in";
-
-	/** A key to use for datum queried usage. */
-	public static final String DATUM_OUT_KEY = "datum-out";
-
-	/** A key to use for datum days stored usage. */
-	public static final String DATUM_DAYS_STORED_KEY = "datum-days-stored";
+	private static final long serialVersionUID = -3736903812257042879L;
 
 	/**
 	 * Comparator that sorts {@link NodeUsage} objects by {@code id} in
@@ -81,10 +79,9 @@ public class NodeUsage extends BasicLongEntity {
 	private BigInteger[] datumOutTiers;
 	private BigInteger[] datumDaysStoredTiers;
 	private NodeUsageCost[] costsTiers;
-	private BigDecimal[] totalCostTiers;
 
 	/**
-	 * Compare {@link NodeUsageTier} instances by quantity in ascending order.
+	 * Compare {@link NodeUsage} instances by node ID in ascending order.
 	 */
 	public static final class NodeUsageNodeIdComparator implements Comparator<NodeUsage> {
 
@@ -98,23 +95,35 @@ public class NodeUsage extends BasicLongEntity {
 	/**
 	 * Constructor.
 	 * 
-	 * @param id
-	 *        the node ID
+	 * <p>
+	 * This creates a {@literal null} node ID, for usage not associated with a
+	 * specific node.
+	 * </p>
 	 */
-	public NodeUsage(Long id) {
-		this(id, Instant.now());
+	public NodeUsage() {
+		this(null);
 	}
 
 	/**
 	 * Constructor.
 	 * 
-	 * @param id
+	 * @param nodeId
+	 *        the node ID
+	 */
+	public NodeUsage(Long nodeId) {
+		this(nodeId, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param nodeId
 	 *        the node ID
 	 * @param created
 	 *        the creation date
 	 */
-	public NodeUsage(Long id, Instant created) {
-		super(id, created);
+	public NodeUsage(Long nodeId, Instant created) {
+		super(nodeId, created);
 		setDatumPropertiesIn(BigInteger.ZERO);
 		setDatumOut(BigInteger.ZERO);
 		setDatumDaysStored(BigInteger.ZERO);
@@ -126,9 +135,12 @@ public class NodeUsage extends BasicLongEntity {
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("NodeUsage{");
-		builder.append("nodeId=");
-		builder.append(getId());
-		builder.append(", datumPropertiesIn=");
+		if ( getNodeId() != null ) {
+			builder.append("nodeId=");
+			builder.append(getNodeId());
+			builder.append(", ");
+		}
+		builder.append("datumPropertiesIn=");
 		builder.append(datumPropertiesIn);
 		builder.append(", datumOut=");
 		builder.append(datumOut);
@@ -142,6 +154,52 @@ public class NodeUsage extends BasicLongEntity {
 		builder.append(totalCost);
 		builder.append("}");
 		return builder.toString();
+	}
+
+	/**
+	 * Test if the properties of another entity are the same as in this
+	 * instance.
+	 * 
+	 * <p>
+	 * The {@code nodeId} and all {@code cost} properties are not compared by
+	 * this method.
+	 * </p>
+	 * 
+	 * @param other
+	 *        the other entity to compare to
+	 * @return {@literal true} if the properties of this instance are equal to
+	 *         the other
+	 */
+	public boolean isSameAs(NodeUsage other) {
+		if ( other == null ) {
+			return false;
+		}
+		// @formatter:off
+		return Objects.equals(datumPropertiesIn, other.datumPropertiesIn)
+				&& Objects.equals(datumOut, other.datumOut)
+				&& Objects.equals(datumDaysStored, other.datumDaysStored);
+		// @formatter:on
+	}
+
+	@Override
+	public boolean differsFrom(NodeUsage other) {
+		return !isSameAs(other);
+	}
+
+	@Override
+	public Long getUsageKey() {
+		return getNodeId();
+	}
+
+	@Override
+	public List<InvoiceItemUsageRecord> getUsageRecords() {
+		List<InvoiceItemUsageRecord> recs = new ArrayList<>(3);
+		recs.add(new UsageInfo(DATUM_PROPS_IN_KEY, new BigDecimal(datumPropertiesIn),
+				costs.getDatumPropertiesInCost()));
+		recs.add(new UsageInfo(DATUM_OUT_KEY, new BigDecimal(datumOut), costs.getDatumOutCost()));
+		recs.add(new UsageInfo(DATUM_DAYS_STORED_KEY, new BigDecimal(datumDaysStored),
+				costs.getDatumDaysStoredCost()));
+		return recs;
 	}
 
 	/**
@@ -554,6 +612,15 @@ public class NodeUsage extends BasicLongEntity {
 	}
 
 	/**
+	 * Get the node ID.
+	 * 
+	 * @return the node ID
+	 */
+	public Long getNodeId() {
+		return getId();
+	}
+
+	/**
 	 * Get the count of datum queried.
 	 * 
 	 * @return the count
@@ -605,25 +672,6 @@ public class NodeUsage extends BasicLongEntity {
 					: null);
 			costsTiers[i].setDatumOutCost(val);
 		}
-	}
-
-	/**
-	 * Get the overall cost, per tier.
-	 * 
-	 * @return the costs
-	 */
-	public BigDecimal[] getTotalCostTiers() {
-		return totalCostTiers;
-	}
-
-	/**
-	 * Set the overall cost, per tier.
-	 * 
-	 * @param totalCostTiers
-	 *        the costs to set
-	 */
-	public void setTotalCostTiers(BigDecimal[] totalCostTiers) {
-		this.totalCostTiers = totalCostTiers;
 	}
 
 }

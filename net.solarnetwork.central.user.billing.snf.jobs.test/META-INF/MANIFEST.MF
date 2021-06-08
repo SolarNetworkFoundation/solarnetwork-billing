@@ -2,9 +2,9 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: SolarNetwork Foundation Billing Jobs Tests
 Bundle-SymbolicName: net.solarnetwork.central.user.billing.snf.jobs.test
-Bundle-Version: 1.0.0
+Bundle-Version: 1.0.1
 Bundle-Vendor: SolarNetwork Foundation
-Fragment-Host: net.solarnetwork.central.user.billing.snf.jobs;bundle-version="1.0.0"
+Fragment-Host: net.solarnetwork.central.user.billing.snf.jobs;bundle-version="[1.0.1,2.0)"
 Automatic-Module-Name: net.solarnetwork.central.user.billing.snf.jobs.test
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Import-Package: 

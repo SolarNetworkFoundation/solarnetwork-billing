@@ -47,6 +47,7 @@
 		<result property="currencyCode" column="bill_invoice_currency"/>
 		<association property="address" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.Address-FullResult"/>
 		<association property="items" notNullColumn="bill_invoice_item_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.SnfInvoiceItem-FullResult"/>
+		<association property="usages" notNullColumn="bill_invoice_node_usage_node_id" resultMap="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.SnfInvoiceNodeUsage-FullResult"/>
 	</resultMap>
 	
 	<select id="get-SnfInvoice-for-id" parameterType="net.solarnetwork.central.user.domain.UserLongPK" resultMap="SnfInvoice-FullResult">
@@ -55,6 +56,7 @@
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.fragment-SnfInvoiceNodeUsage-full-result"/>
 		FROM
 			solarbill.bill_invoice inv
 		INNER JOIN 
@@ -63,6 +65,8 @@
 			solarbill.bill_address addr ON addr.id = inv.addr_id
 		LEFT OUTER JOIN
 			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
 		WHERE
 			inv.id = #{id}
 			AND acct.user_id = #{userId}
@@ -77,6 +81,8 @@
 			solarbill.bill_address addr ON addr.id = inv.addr_id
 		LEFT OUTER JOIN
 			solarbill.bill_invoice_item invi ON invi.inv_id = inv.id
+		LEFT OUTER JOIN
+			solarbill.bill_invoice_node_usage invu ON invu.inv_id = inv.id
 		<if test="unpaidOnly and (offset == null or max == null)">
 			INNER JOIN LATERAL (
 				WITH paid AS (
@@ -177,6 +183,7 @@
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Account.fragment-Account-full-result"/>
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.Address.fragment-Address-full-result"/>
 			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceItem.fragment-SnfInvoiceItem-full-result"/>
+			, <include refid="net.solarnetwork.central.user.billing.snf.dao.mybatis.SnfInvoiceNodeUsage.fragment-SnfInvoiceNodeUsage-full-result"/>
 		<include refid="find-SnfInvoice-for-filter-body"/>
 		ORDER BY
 		<choose>

@@ -24,6 +24,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import net.solarnetwork.central.user.billing.domain.InvoiceItemUsageRecord;
@@ -33,13 +34,14 @@ import net.solarnetwork.domain.Differentiable;
  * Information about resource usage.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageInfo> {
 
 	private final String unitType;
 	private final BigDecimal cost;
 	private final BigDecimal amount;
+	private final List<NamedCost> tiers;
 
 	/**
 	 * Get an instance out of a usage Map.
@@ -50,22 +52,58 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *         or does not contain valid property values
 	 */
 	public static UsageInfo of(Map<String, ?> usage) {
+		return of(usage, null);
+	}
+
+	/**
+	 * Get an instance out of a usage Map.
+	 * 
+	 * @param usage
+	 *        the usage Map, whose keys match the properties of this class
+	 * @param tiers
+	 *        the usage tiers, as an array of cost objects
+	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
+	 *         or does not contain valid property values
+	 */
+	public static UsageInfo of(Map<String, ?> usage, List<Map<String, ?>> tiers) {
 		if ( usage == null ) {
 			return null;
 		}
 		Object unitType = usage.get("unitType");
 		Object amount = usage.get("amount");
 		Object cost = usage.get("cost");
+
 		if ( unitType != null ) {
+			List<NamedCost> namedCostTiers = NamedCost.of(tiers);
 			try {
 				return new UsageInfo(unitType.toString(),
 						amount != null ? new BigDecimal(amount.toString()) : null,
-						cost != null ? new BigDecimal(cost.toString()) : null);
+						cost != null ? new BigDecimal(cost.toString()) : null, namedCostTiers);
 			} catch ( IllegalArgumentException e ) {
 				// ignore
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * <p>
+	 * The {@code cost} will be stored as {@literal 0}.
+	 * </p>
+	 * 
+	 * @param unitType
+	 *        the usage unit type
+	 * @param amount
+	 *        the usage amount; will be stored as {@literal 0} if
+	 *        {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code unitType} is {@literal null}
+	 * @since 1.1
+	 */
+	public UsageInfo(String unitType, BigDecimal amount) {
+		this(unitType, amount, null);
 	}
 
 	/**
@@ -84,6 +122,26 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *         if {@code unitType} is {@literal null}
 	 */
 	public UsageInfo(String unitType, BigDecimal amount, BigDecimal cost) {
+		this(unitType, amount, cost, null);
+	}
+
+	/**
+	 * Constructor.
+	 * 
+	 * @param unitType
+	 *        the usage unit type
+	 * @param amount
+	 *        the usage amount; will be stored as {@literal 0} if
+	 *        {@literal null}
+	 * @param cost
+	 *        the usage cost, in the currency of the account or invoice this
+	 *        usage is associated with; will be stored as {@literal 0} if
+	 *        {@literal null}
+	 * @throws IllegalArgumentException
+	 *         if {@code unitType} is {@literal null}
+	 * @since 1.1
+	 */
+	public UsageInfo(String unitType, BigDecimal amount, BigDecimal cost, List<NamedCost> tiers) {
 		super();
 		if ( unitType == null ) {
 			throw new IllegalArgumentException("The unitType argument must be provided.");
@@ -91,6 +149,7 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 		this.unitType = unitType;
 		this.amount = amount != null ? amount : BigDecimal.ZERO;
 		this.cost = cost != null ? cost : BigDecimal.ZERO;
+		this.tiers = tiers;
 	}
 
 	@Override
@@ -170,33 +229,25 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 				&& Objects.equals(unitType, other.unitType);
 	}
 
-	/**
-	 * Get the unit type.
-	 * 
-	 * @return the unit type, never {@literal null}
-	 */
 	@Override
 	public String getUnitType() {
 		return unitType;
 	}
 
-	/**
-	 * Get the usage amount (quantity of usage).
-	 * 
-	 * @return the amount, never {@literal null}
-	 */
 	@Override
 	public BigDecimal getAmount() {
 		return amount;
 	}
 
-	/**
-	 * Get the cost.
-	 * 
-	 * @return the cost, never {@literal null}
-	 */
+	@Override
 	public BigDecimal getCost() {
 		return cost;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	@Override
+	public List<net.solarnetwork.central.user.billing.domain.NamedCost> getUsageTiers() {
+		return (List) tiers;
 	}
 
 }

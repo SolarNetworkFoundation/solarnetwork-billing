@@ -25,17 +25,20 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import net.solarnetwork.domain.Differentiable;
 
 /**
  * A named resource with associated cost.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
-public class NamedCost implements Differentiable<NamedCost> {
+public class NamedCost
+		implements Differentiable<NamedCost>, net.solarnetwork.central.user.billing.domain.NamedCost {
 
 	private final String name;
 	private final BigInteger quantity;
@@ -89,24 +92,40 @@ public class NamedCost implements Differentiable<NamedCost> {
 	}
 
 	/**
-	 * Get an instance out of a usage Map.
+	 * Get a list of instances out of a list of named cost Maps.
 	 * 
-	 * @param usage
-	 *        the usage Map, whose keys match the properties of this class
-	 * @return the usage, or {@literal null} if {@code usage} is {@literal null}
-	 *         or does not contain valid property values
+	 * @param namedCosts
+	 *        the named cost Maps, each of whose keys match the properties of
+	 *        this class
+	 * @return the named costs, or {@literal null} if {@code namedCosts} is
+	 *         {@literal null} or does not contain valid property values
 	 */
-	public static UsageInfo of(Map<String, ?> usage) {
-		if ( usage == null ) {
+	public static List<NamedCost> of(List<Map<String, ?>> namedCosts) {
+		if ( namedCosts == null || namedCosts.isEmpty() ) {
 			return null;
 		}
-		Object name = usage.get("name");
-		Object quantity = usage.get("quantity");
-		Object cost = usage.get("cost");
+		return namedCosts.stream().map(NamedCost::of).collect(Collectors.toList());
+	}
+
+	/**
+	 * Get an instance out of a named cost Map.
+	 * 
+	 * @param namedCost
+	 *        the named cost Map, whose keys match the properties of this class
+	 * @return the named cost, or {@literal null} if {@code namedCosts} is
+	 *         {@literal null} or does not contain valid property values
+	 */
+	public static NamedCost of(Map<String, ?> namedCost) {
+		if ( namedCost == null ) {
+			return null;
+		}
+		Object name = namedCost.get("name");
+		Object quantity = namedCost.get("quantity");
+		Object cost = namedCost.get("cost");
 		if ( name != null ) {
 			try {
-				return new UsageInfo(name.toString(),
-						quantity != null ? new BigDecimal(quantity.toString()) : null,
+				return new NamedCost(name.toString(),
+						quantity != null ? new BigInteger(quantity.toString()) : null,
 						cost != null ? new BigDecimal(cost.toString()) : null);
 			} catch ( IllegalArgumentException e ) {
 				// ignore
@@ -200,47 +219,19 @@ public class NamedCost implements Differentiable<NamedCost> {
 				&& (cost == other.cost) || (cost != null && cost.compareTo(other.cost) == 0);
 	}
 
-	/**
-	 * Get the resource name.
-	 * 
-	 * @return the name, never {@literal null}
-	 */
+	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * Get the resource quantity.
-	 * 
-	 * @return the quantity, never {@literal null}
-	 */
+	@Override
 	public BigInteger getQuantity() {
 		return quantity;
 	}
 
-	/**
-	 * Get the cost.
-	 * 
-	 * @return the cost, never {@literal null}
-	 */
+	@Override
 	public BigDecimal getCost() {
 		return cost;
-	}
-
-	/**
-	 * Get the effective rate, derived from the quantity and cost.
-	 * 
-	 * <p>
-	 * If {@code quantity} is {@literal 0} then {@code cost} is returned.
-	 * </p>
-	 * 
-	 * @return the effective rate
-	 */
-	public BigDecimal getEffectiveRate() {
-		if ( BigInteger.ZERO.compareTo(quantity) == 0 ) {
-			return cost;
-		}
-		return cost.divide(new BigDecimal(quantity));
 	}
 
 }

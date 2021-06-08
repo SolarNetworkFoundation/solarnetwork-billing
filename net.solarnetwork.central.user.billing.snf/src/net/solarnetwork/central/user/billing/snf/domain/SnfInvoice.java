@@ -45,10 +45,12 @@ import net.solarnetwork.domain.Differentiable;
  * SNF invoice entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfInvoice extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<SnfInvoice> {
+
+	private static final long serialVersionUID = 4095505242827622567L;
 
 	/**
 	 * Comparator that sorts {@link SnfInvoice} objects by {@code startDate} in
@@ -62,6 +64,7 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	private LocalDate endDate;
 	private String currencyCode;
 	private Set<SnfInvoiceItem> items;
+	private Set<SnfInvoiceNodeUsage> usages;
 
 	/**
 	 * Compare {@link SnfInvoice} instances by start date in ascending order.
@@ -256,7 +259,23 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 				return false;
 			}
 		}
-		return otherItems.isEmpty();
+		if ( !otherItems.isEmpty() ) {
+			return false;
+		}
+		if ( usages == other.usages ) {
+			return true;
+		}
+		if ( getUsagesCount() != other.getUsagesCount() ) {
+			return false;
+		}
+		Map<Long, SnfInvoiceNodeUsage> otherUsages = other.usageMap();
+		for ( SnfInvoiceNodeUsage usage : usages ) {
+			SnfInvoiceNodeUsage otherUsage = otherUsages.remove(usage.getNodeId());
+			if ( usage.differsFrom(otherUsage) ) {
+				return false;
+			}
+		}
+		return otherUsages.isEmpty();
 	}
 
 	@Override
@@ -407,6 +426,49 @@ public class SnfInvoice extends BasicEntity<UserLongPK>
 	 */
 	public void setItems(Set<SnfInvoiceItem> items) {
 		this.items = items;
+	}
+
+	/**
+	 * Get the node usage records.
+	 * 
+	 * @return the usage records
+	 * @since 1.1
+	 */
+	public Set<SnfInvoiceNodeUsage> getUsages() {
+		return usages;
+	}
+
+	/**
+	 * Set the node usage records.
+	 * 
+	 * @param usages
+	 *        the usages to set
+	 * @since 1.1
+	 */
+	public void setUsages(Set<SnfInvoiceNodeUsage> usages) {
+		this.usages = usages;
+	}
+
+	/**
+	 * Get the node usage record count.
+	 * 
+	 * @return the count
+	 * @since 1.1
+	 */
+	public int getUsagesCount() {
+		return (usages != null ? usages.size() : 0);
+	}
+
+	/**
+	 * Get a map of invoice usages using their ID as map keys.
+	 * 
+	 * @return the map
+	 */
+	public Map<Long, SnfInvoiceNodeUsage> usageMap() {
+		if ( usages == null ) {
+			return Collections.emptyMap();
+		}
+		return usages.stream().collect(Collectors.toMap(e -> e.getNodeId(), e -> e));
 	}
 
 }

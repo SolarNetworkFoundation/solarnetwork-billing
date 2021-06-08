@@ -35,9 +35,11 @@ import net.solarnetwork.domain.Differentiable;
  * An address for billing.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class Address extends BasicLongEntity implements Differentiable<Address> {
+
+	private static final long serialVersionUID = 2456834373588564668L;
 
 	private String name;
 	private String email;
