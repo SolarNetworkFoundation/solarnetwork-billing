@@ -137,6 +137,8 @@ public class UsageInfo implements InvoiceItemUsageRecord, Differentiable<UsageIn
 	 *        the usage cost, in the currency of the account or invoice this
 	 *        usage is associated with; will be stored as {@literal 0} if
 	 *        {@literal null}
+	 * @param tiers
+	 *        the named cost tiers
 	 * @throws IllegalArgumentException
 	 *         if {@code unitType} is {@literal null}
 	 * @since 1.1

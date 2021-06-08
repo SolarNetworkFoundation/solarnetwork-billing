@@ -53,7 +53,6 @@ public interface NodeUsageDao {
 	 * The {@link NodeUsage#getId()} values will be {@literal null} for all
 	 * returned instances.
 	 * </p>
-	 * </p>
 	 * 
 	 * @param userId
 	 *        the user to get usage for
@@ -71,8 +70,8 @@ public interface NodeUsageDao {
 	 * 
 	 * <p>
 	 * This method differs from
-	 * {@link #findUsageForUser(Long, LocalDate, LocalDate)} in that rows with
-	 * no cost are <b>included</b> in the output. This is meant to support
+	 * {@link #findUsageForAccount(Long, LocalDate, LocalDate)} in that rows
+	 * with no cost are <b>included</b> in the output. This is meant to support
 	 * finding the total metered usage by node by tier, which can be combined
 	 * with an account-level tier cost calculation provided by
 	 * {@link #findUsageForAccount(Long, LocalDate, LocalDate)}.
