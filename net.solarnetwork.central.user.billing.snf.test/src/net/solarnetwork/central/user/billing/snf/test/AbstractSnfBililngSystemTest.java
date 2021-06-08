@@ -36,6 +36,7 @@ import net.solarnetwork.central.user.billing.snf.dao.AccountDao;
 import net.solarnetwork.central.user.billing.snf.dao.NodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceDao;
 import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceItemDao;
+import net.solarnetwork.central.user.billing.snf.dao.SnfInvoiceNodeUsageDao;
 import net.solarnetwork.central.user.billing.snf.dao.TaxCodeDao;
 
 /**
@@ -49,6 +50,7 @@ public class AbstractSnfBililngSystemTest {
 	protected AccountDao accountDao;
 	protected SnfInvoiceDao invoiceDao;
 	protected SnfInvoiceItemDao invoiceItemDao;
+	protected SnfInvoiceNodeUsageDao invoiceNodeUsageDao;
 	protected NodeUsageDao usageDao;
 	protected TaxCodeDao taxCodeDao;
 	protected VersionedMessageDao messageDao;
@@ -64,14 +66,15 @@ public class AbstractSnfBililngSystemTest {
 		accountDao = EasyMock.createMock(AccountDao.class);
 		invoiceDao = EasyMock.createMock(SnfInvoiceDao.class);
 		invoiceItemDao = EasyMock.createMock(SnfInvoiceItemDao.class);
+		invoiceNodeUsageDao = EasyMock.createMock(SnfInvoiceNodeUsageDao.class);
 		usageDao = EasyMock.createMock(NodeUsageDao.class);
 		taxCodeDao = EasyMock.createMock(TaxCodeDao.class);
 		messageDao = EasyMock.createMock(VersionedMessageDao.class);
 		messageSource = new ResourceBundleMessageSource();
 		messageSource.setBasename(SnfBillingSystem.class.getName());
 
-		system = new SnfBillingSystem(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao,
-				messageDao);
+		system = new SnfBillingSystem(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao,
+				usageDao, taxCodeDao, messageDao);
 
 		userId = UUID.randomUUID().getMostSignificantBits();
 		startDate = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withDayOfMonth(1).minusMonths(1)
@@ -80,12 +83,14 @@ public class AbstractSnfBililngSystemTest {
 	}
 
 	protected void replayAll() {
-		EasyMock.replay(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao, messageDao);
+		EasyMock.replay(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao, usageDao,
+				taxCodeDao, messageDao);
 	}
 
 	@After
 	public void teardown() {
-		EasyMock.verify(accountDao, invoiceDao, invoiceItemDao, usageDao, taxCodeDao, messageDao);
+		EasyMock.verify(accountDao, invoiceDao, invoiceItemDao, invoiceNodeUsageDao, usageDao,
+				taxCodeDao, messageDao);
 	}
 
 }

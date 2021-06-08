@@ -33,9 +33,11 @@ import net.solarnetwork.domain.Differentiable;
  * An account task entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AccountTask extends BasicUuidEntity implements Differentiable<AccountTask> {
+
+	private static final long serialVersionUID = -6310585670232356068L;
 
 	/**
 	 * The task data property name for an entity ID value.

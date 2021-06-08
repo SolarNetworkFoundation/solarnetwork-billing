@@ -36,10 +36,12 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice payment entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InvoicePayment extends BasicEntity<UserUuidPK>
 		implements Differentiable<InvoicePayment>, UserRelatedEntity<UserUuidPK> {
+
+	private static final long serialVersionUID = -683725623467933053L;
 
 	/**
 	 * Comparator that sorts {@link Payment} objects by {@code created} in

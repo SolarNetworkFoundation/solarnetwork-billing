@@ -24,6 +24,8 @@ package net.solarnetwork.central.user.billing.snf.domain;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +35,7 @@ import net.solarnetwork.central.domain.BaseStringEntity;
 import net.solarnetwork.central.user.billing.domain.Invoice;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
 import net.solarnetwork.central.user.billing.domain.InvoiceMatch;
+import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 
 /**
@@ -40,7 +43,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
@@ -97,6 +100,18 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 	}
 
 	@Override
+	public YearMonth getInvoiceMonth() {
+		// as long as the start/end date range is two consecutive start-of-month values (day 1) then return the month
+		LocalDate startDate = invoice.getStartDate();
+		LocalDate endDate = invoice.getEndDate();
+		if ( startDate != null && startDate.getDayOfMonth() == 1
+				&& startDate.plusMonths(1).equals(endDate) ) {
+			return YearMonth.of(startDate.getYear(), startDate.getMonth());
+		}
+		return null;
+	}
+
+	@Override
 	public String getTimeZoneId() {
 		Address addr = invoice.getAddress();
 		return (addr != null ? addr.getTimeZoneId() : null);
@@ -143,4 +158,17 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		}
 		return items.stream().map(e -> new InvoiceItemImpl(invoice, e)).collect(Collectors.toList());
 	}
+
+	@Override
+	public List<InvoiceUsageRecord<Long>> getNodeUsageRecords() {
+		if ( invoice == null ) {
+			return Collections.emptyList();
+		}
+		Set<SnfInvoiceNodeUsage> usages = invoice.getUsages();
+		if ( usages == null || usages.isEmpty() ) {
+			return Collections.emptyList();
+		}
+		return new ArrayList<>(usages);
+	}
+
 }

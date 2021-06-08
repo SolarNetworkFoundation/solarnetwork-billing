@@ -25,6 +25,7 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -36,9 +37,11 @@ import net.solarnetwork.domain.Differentiable;
  * SNF invoice item entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<SnfInvoiceItem> {
+
+	private static final long serialVersionUID = 3844737823712570024L;
 
 	/** A metadata key for a node ID. */
 	public static final String META_NODE_ID = "nodeId";
@@ -251,11 +254,14 @@ public class SnfInvoiceItem extends BasicEntity<UUID> implements Differentiable<
 	 * 
 	 * @return the usage info, or {@literal null} if none available
 	 */
+	@SuppressWarnings("unchecked")
 	@JsonIgnore
 	public UsageInfo getUsageInfo() {
-		@SuppressWarnings("unchecked")
 		Map<String, ?> usage = (metadata != null ? (Map<String, ?>) metadata.get(META_USAGE) : null);
-		return UsageInfo.of(usage);
+		List<Map<String, ?>> tiers = (metadata != null
+				? (List<Map<String, ?>>) metadata.get(META_TIER_BREAKDOWN)
+				: null);
+		return UsageInfo.of(usage, tiers);
 	}
 
 	/**

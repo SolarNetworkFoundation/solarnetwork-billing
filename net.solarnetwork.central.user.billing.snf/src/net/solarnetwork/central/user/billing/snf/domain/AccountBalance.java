@@ -37,10 +37,12 @@ import net.solarnetwork.domain.Differentiable;
  * </p>
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class AccountBalance extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<AccountBalance> {
+
+	private static final long serialVersionUID = -7116991858593931605L;
 
 	/** A key to use for credit used in an invoice. */
 	public static final String ACCOUNT_CREDIT_KEY = "account-credit";

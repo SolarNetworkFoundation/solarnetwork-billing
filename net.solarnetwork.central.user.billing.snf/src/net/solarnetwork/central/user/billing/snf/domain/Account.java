@@ -37,10 +37,12 @@ import net.solarnetwork.domain.Differentiable;
  * Billing account entity.
  * 
  * @author matt
- * @version 1.0
+ * @version 1.1
  */
 public class Account extends BasicEntity<UserLongPK>
 		implements UserRelatedEntity<UserLongPK>, Differentiable<Account> {
+
+	private static final long serialVersionUID = 717659020214827158L;
 
 	private Address address;
 	private String currencyCode;

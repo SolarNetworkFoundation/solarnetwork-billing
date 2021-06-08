@@ -176,20 +176,35 @@ public abstract class AbstractMyBatisDaoTestSupport extends AbstractCentralTrans
 		return jdbcTemplate.queryForList(buf.toString());
 	}
 
-	protected void addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
+	protected UUID setupDatumStream(Long nodeId, String sourceId) {
+		jdbcTemplate.update(
+				"insert into solardatm.da_datm_meta " + "(stream_id,node_id,source_id) VALUES (?,?,?) "
+						+ "ON CONFLICT (node_id, source_id) DO NOTHING",
+				UUID.randomUUID(), nodeId, sourceId);
+		UUID streamId = jdbcTemplate.queryForObject(
+				"select stream_id from solardatm.da_datm_meta where node_id = ? and source_id = ?",
+				UUID.class, nodeId, sourceId);
+		return streamId;
+	}
+
+	protected UUID addAuditDatumMonthly(Long nodeId, String sourceId, Instant date, long propCount,
 			long datumQueryCount, int datumCount, short datumHourlyCount, short datumDailyCount,
 			boolean monthPresent) {
-		jdbcTemplate.update("insert into solaragg.aud_datum_monthly "
-				+ "(ts_start,node_id,source_id,prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
-				+ "VALUES (?,?,?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
-				propCount, datumQueryCount, datumCount, datumHourlyCount, datumDailyCount, monthPresent);
+		UUID streamId = setupDatumStream(nodeId, sourceId);
+		jdbcTemplate.update("insert into solardatm.aud_datm_monthly "
+				+ "(ts_start,stream_id,prop_count,datum_q_count,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_pres)"
+				+ "VALUES (?,?::uuid,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()),
+				streamId.toString(), propCount, datumQueryCount, datumCount, datumHourlyCount,
+				datumDailyCount, monthPresent);
+		return streamId;
 	}
 
 	protected void addAuditAccumulatingDatumDaily(Long nodeId, String sourceId, Instant date,
 			int datumCount, int datumHourlyCount, int datumDailyCount, int datumMonthlyCount) {
-		jdbcTemplate.update("insert into solaragg.aud_acc_datum_daily "
-				+ "(ts_start,node_id,source_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
-				+ "VALUES (?,?,?,?,?,?,?)", new Timestamp(date.toEpochMilli()), nodeId, sourceId,
+		UUID streamId = setupDatumStream(nodeId, sourceId);
+		jdbcTemplate.update("insert into solardatm.aud_acc_datm_daily "
+				+ "(ts_start,stream_id,datum_count,datum_hourly_count,datum_daily_count,datum_monthly_count)"
+				+ "VALUES (?,?::uuid,?,?,?,?)", new Timestamp(date.toEpochMilli()), streamId.toString(),
 				datumCount, datumHourlyCount, datumDailyCount, datumMonthlyCount);
 	}
 
