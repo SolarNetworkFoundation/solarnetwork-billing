@@ -25,7 +25,6 @@ package net.solarnetwork.central.user.billing.snf.domain;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -168,7 +167,8 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		if ( usages == null || usages.isEmpty() ) {
 			return Collections.emptyList();
 		}
-		return new ArrayList<>(usages);
+		return usages.stream().sorted(InvoiceUsageRecordUsageKeyComparator.LONG_USAGE_COMPARATOR)
+				.collect(Collectors.toList());
 	}
 
 }

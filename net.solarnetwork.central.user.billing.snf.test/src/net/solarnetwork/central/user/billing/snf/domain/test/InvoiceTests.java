@@ -26,22 +26,27 @@ import static java.util.Arrays.asList;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Test;
 import net.solarnetwork.central.user.billing.domain.InvoiceItem;
+import net.solarnetwork.central.user.billing.domain.InvoiceUsageRecord;
 import net.solarnetwork.central.user.billing.snf.domain.Address;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceImpl;
 import net.solarnetwork.central.user.billing.snf.domain.InvoiceItemType;
 import net.solarnetwork.central.user.billing.snf.domain.NodeUsage;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoice;
 import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem;
+import net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceNodeUsage;
 import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
 
 /**
@@ -107,6 +112,43 @@ public class InvoiceTests {
 		assertInvoiceItem("Item 2", itm2, items.get(1));
 		assertInvoiceItem("Item 3", tax1, items.get(2));
 		assertInvoiceItem("Item 4", tax2, items.get(3));
+	}
+
+	@Test
+	public void invoiceUsageItemsSortOrder() {
+		// GIVEN
+		Address addr = new Address();
+		addr.setCountry("NZ");
+		addr.setTimeZoneId("Pacific/Auckland");
+		SnfInvoice inv = new SnfInvoice(randomUUID().getMostSignificantBits(),
+				randomUUID().getMostSignificantBits(), randomUUID().getMostSignificantBits(),
+				Instant.now());
+		inv.setAddress(addr);
+		inv.setStartDate(LocalDate.of(2020, 1, 1));
+		inv.setEndDate(LocalDate.of(2020, 2, 1));
+
+		// create set with reverse node ID order, to test sort output
+		Set<SnfInvoiceNodeUsage> nodeUsages = new LinkedHashSet<>(4);
+		for ( int i = 5; i > 0; i-- ) {
+			SnfInvoiceNodeUsage usage = new SnfInvoiceNodeUsage(inv.getId().getId(), (long) i,
+					inv.getCreated(), BigInteger.valueOf(1L), BigInteger.valueOf(2L),
+					BigInteger.valueOf(3L));
+			nodeUsages.add(usage);
+		}
+
+		inv.setUsages(nodeUsages);
+
+		// WHEN
+		InvoiceImpl invoice = new InvoiceImpl(inv);
+
+		// THEN
+		List<InvoiceUsageRecord<Long>> invoiceUsages = invoice.getNodeUsageRecords();
+		assertThat("All usage records accounted for", invoiceUsages, hasSize(5));
+		for ( int i = 1; i <= 5; i++ ) {
+			InvoiceUsageRecord<Long> usage = invoiceUsages.get(i - 1);
+			assertThat(String.format("Usage %d proper order", i), usage.getUsageKey(),
+					is(equalTo((long) i)));
+		}
 	}
 
 }
