@@ -37,7 +37,7 @@ import net.solarnetwork.domain.Differentiable;
  * Invoice node usage details.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 		implements Differentiable<SnfInvoiceNodeUsage>, InvoiceUsageRecord<Long> {
@@ -151,6 +151,38 @@ public class SnfInvoiceNodeUsage extends BasicEntity<SnfInvoiceRelatedPK>
 	@Override
 	public boolean differsFrom(SnfInvoiceNodeUsage other) {
 		return !isSameAs(other);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("SnfInvoiceNodeUsage{");
+		if ( getInvoiceId() != null ) {
+			builder.append("invoiceId=");
+			builder.append(getInvoiceId());
+			builder.append(", ");
+		}
+		if ( getNodeId() != null ) {
+			builder.append("nodeId=");
+			builder.append(getNodeId());
+			builder.append(", ");
+		}
+		if ( datumPropertiesIn != null ) {
+			builder.append("datumPropertiesIn=");
+			builder.append(datumPropertiesIn);
+			builder.append(", ");
+		}
+		if ( datumOut != null ) {
+			builder.append("datumOut=");
+			builder.append(datumOut);
+			builder.append(", ");
+		}
+		if ( datumDaysStored != null ) {
+			builder.append("datumDaysStored=");
+			builder.append(datumDaysStored);
+		}
+		builder.append("}");
+		return builder.toString();
 	}
 
 	@Override
