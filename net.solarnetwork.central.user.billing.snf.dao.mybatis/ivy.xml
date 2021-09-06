@@ -14,6 +14,6 @@
 	</publications>
 	<dependencies defaultconfmapping="runtime->default(runtime);compile->default(runtime)">
  		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.common.dao.mybatis" rev="[2.6,)"/>
- 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing.snf" rev="[1.1,)"/>
+ 		<dependency org="net.solarnetwork.central" name="net.solarnetwork.central.user.billing.snf" rev="[2.2,)"/>
 	</dependencies>
 </ivy-module>

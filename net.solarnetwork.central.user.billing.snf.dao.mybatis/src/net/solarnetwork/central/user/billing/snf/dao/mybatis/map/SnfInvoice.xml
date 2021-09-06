@@ -100,6 +100,19 @@
 				WHERE COALESCE(paid, 0::NUMERIC) &lt; COALESCE(bill, 0::NUMERIC) 
 			) pay ON pay.inv_id = inv.id
 		</if>
+		<if test="ignoreCreditOnly and (offset == null or max == null)">
+			INNER JOIN LATERAL (
+				SELECT inv.id AS inv_id
+				FROM solarbill.bill_invoice_item invi1
+				WHERE invi1.inv_id = inv.id
+				AND NOT EXISTS(
+					SELECT invi1.inv_id
+					FROM solarbill.bill_invoice_item invi1 
+					WHERE invi1.inv_id = inv.id
+					AND invi1.item_key = 'account-credit-add'
+				)
+			) noncred ON noncred.inv_id = inv.id
+		</if>
 		<where>
 			<choose>
 				<!-- Limiting done via sub-query because we want unlimited items pulled back for our limited invoices. -->
@@ -139,6 +152,14 @@
 							</if>
 							<if test="endDate != null">
 								AND inv1.date_start &lt; #{endDate,javaType=java.time.LocalDate,jdbcType=DATE}
+							</if>
+							<if test="ignoreCreditOnly">
+								AND NOT EXISTS(
+									SELECT invi1.inv_id
+									FROM solarbill.bill_invoice_item invi1 
+									WHERE invi1.inv_id = inv1.id
+									AND invi1.item_key = 'account-credit-add'
+								)
 							</if>
 						</where>
 						ORDER BY

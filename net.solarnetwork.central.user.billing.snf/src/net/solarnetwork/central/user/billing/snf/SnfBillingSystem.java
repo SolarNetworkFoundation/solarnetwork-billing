@@ -398,6 +398,7 @@ public class SnfBillingSystem implements BillingSystem, SnfInvoicingSystem, SnfT
 	@Override
 	public SnfInvoice findLatestInvoiceForAccount(UserLongPK accountId) {
 		SnfInvoiceFilter filter = SnfInvoiceFilter.forAccount(accountId.getId());
+		filter.setIgnoreCreditOnly(true);
 		net.solarnetwork.dao.FilterResults<SnfInvoice, UserLongPK> results = invoiceDao
 				.findFiltered(filter, SnfInvoiceDao.SORT_BY_INVOICE_DATE_DESCENDING, 0, 1);
 		Iterator<SnfInvoice> itr = (results != null ? results.iterator() : null);
