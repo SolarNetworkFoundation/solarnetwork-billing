@@ -22,6 +22,7 @@
 
 package net.solarnetwork.central.user.billing.snf.domain;
 
+import static net.solarnetwork.central.user.billing.snf.domain.SnfInvoiceItem.META_AVAILABLE_CREDIT;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -42,7 +43,7 @@ import net.solarnetwork.central.user.billing.snf.util.SnfBillingUtils;
  * {@link net.solarnetwork.central.user.billing.domain.Invoice}.
  * 
  * @author matt
- * @version 1.1
+ * @version 1.2
  */
 public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMatch {
 
@@ -139,6 +140,34 @@ public class InvoiceImpl extends BaseStringEntity implements Invoice, InvoiceMat
 		}
 		return items.stream().filter(e -> InvoiceItemType.Tax.equals(e.getItemType()))
 				.map(e -> e.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	@Override
+	public BigDecimal getCreditAmount() {
+		Set<SnfInvoiceItem> items = invoice.getItems();
+		if ( items == null ) {
+			items = Collections.emptySet();
+		}
+		BigDecimal sum = items.stream().filter(e -> InvoiceItemType.Credit.equals(e.getItemType()))
+				.map(e -> e.getAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return (!sum.equals(BigDecimal.ZERO) ? sum : null);
+	}
+
+	@Override
+	public BigDecimal getRemainingCreditAmount() {
+		Set<SnfInvoiceItem> items = invoice.getItems();
+		if ( items == null ) {
+			items = Collections.emptySet();
+		}
+		BigDecimal amount = items
+				.stream().filter(e -> InvoiceItemType.Credit.equals(e.getItemType())
+						&& e.getMetadata() != null && e.getMetadata().containsKey(META_AVAILABLE_CREDIT))
+				.map(e -> {
+					Object availCreditVal = e.getMetadata().get(META_AVAILABLE_CREDIT);
+					return (availCreditVal instanceof BigDecimal ? (BigDecimal) availCreditVal
+							: new BigDecimal(availCreditVal.toString()));
+				}).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return (!amount.equals(BigDecimal.ZERO) ? amount : null);
 	}
 
 	@Override
