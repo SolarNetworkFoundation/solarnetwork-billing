@@ -3,6 +3,9 @@
 This repository contains projects to support billing for the SolarNetwork Foundation
 hosted SolarNetwork platform.
 
+> :warning: This repository is no longer used as the code has been migrated directly into the
+> [solarnetwork-central](https://github.com/SolarNetwork/solarnetwork-central/) repository.
+
 # Development setup
 
 For command-line builds to work, the `SolarNetwork/solarnetwork-build`
